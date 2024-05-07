@@ -27,9 +27,8 @@ const PromptPage = () => {
             message: prompt
         }
         const newData = [...data, newMessage]
-
         setData(newData)
-        handleGetResponse().then(res => setData([...data, res]))
+        handleGetResponse().then(res => setData([...newData, res]))
         setPrompt("")
     }
 
@@ -43,11 +42,13 @@ const PromptPage = () => {
     }
 
   return (
-    <div className='flex flex-col w-full justify-end p-5'>
-        <div className="w-full flex flex-col justify-center items-center py-10">
-            { data.map((item, i) => (
-                <ChatBox variant={item.type} message={item.message} key={i}/>
-            )) }
+    <div className='flex flex-col w-full justify-end p-5 h-screen'>
+        <div className="w-full flex-1 overflow-y-auto p-5">
+            <div className="flex flex-col justify-end items-center h-full">
+                { data.map((item, i) => (
+                    <ChatBox variant={item.type} message={item.message} key={i}/>
+                )) }
+            </div>
         </div>
         <form action="submit" onSubmit={handleSendPrompt} className='flex items-center gap-x-4'>
             <Textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder='Enter a prompt...' className='resize-none'/>
