@@ -1,5 +1,7 @@
+"use client"
 import React from 'react'
 import Image from 'next/image'
+import { useState, useEffect } from 'react'
 import { Button } from './ui/button'
 import { BsPencil } from "react-icons/bs"
 import UserProfile from './user-profile'
@@ -34,6 +36,15 @@ const dummyChats = [
 ]
 
 const SidebarPrompt = () => {
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    if (!isMounted) {
+        return null;
+    }
 
   return (
     <div className='border border-r px-3 py-5 flex flex-col w-72 justify-between'>
@@ -58,7 +69,7 @@ const SidebarPrompt = () => {
             </div>
         )) }
         </div>
-
+        
         <UserProfile/>
     </div>
   )
