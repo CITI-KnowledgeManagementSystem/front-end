@@ -1,179 +1,170 @@
-import { NextResponse, NextRequest } from 'next/server';
-import { access, writeFile } from 'fs/promises';
-import fs from 'fs';
-import path from 'path';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { NextResponse, NextRequest } from "next/server";
+import { access, writeFile } from "fs/promises";
+import fs from "fs";
+import path from "path";
+import { PrismaClient, Prisma } from "@prisma/client";
 
 export async function POST(req: Response) {
     const prisma = new PrismaClient();
     const formData = await req.formData();
-    console.log(formData);
 
-    const file = formData.get('file');
-    const title = formData.get('title');
-    const topic=  formData.get('topic');
-    
+    const file = formData.get("file");
+    const title = formData.get("title");
+    const topic = formData.get("topic");
+
     if (!title || !topic) {
         return NextResponse.json(
-            { message: 'Please fill in all fields' },
+            { message: "Please fill in all fields" },
             { status: 400 }
-        )
+        );
     }
-    
+
     if (!file) {
-        return NextResponse.json(
-            { message: 'No file uploaded' },
-            { status: 400 }
-        )
+        return NextResponse.json({ message: "No file uploaded" }, { status: 400 });
     }
 
     const buffer = Buffer.from(await (file as File).arrayBuffer());
-    const filename = (file as File).name.replaceAll(' ', '_');
-    const file_size = Buffer.byteLength(buffer, 'utf8');
-
-    console.log(filename);
+    const filename = (file as File).name.replaceAll(" ", "_");
+    const file_size = Buffer.byteLength(buffer, "utf8");
 
     try {
-        const docs_id = await createDocument(title as string, topic as string, filename,  file_size as number) as unknown as Document;
+        const docs_id = (await createDocument(
+            title as string,
+            topic as string,
+            filename,
+            file_size as number
+        )) as unknown as Document;
 
         if (!docs_id) {
-            return NextResponse.json({ message: 'Error insert to SQL', status: 500 });
+            return NextResponse.json({ message: "Error insert to SQL", status: 500 });
         }
 
-        const parts = filename.split('.');
+        const parts = filename.split(".");
         if (parts.length === 1) {
             // If there's no '.' in the filename or it starts with a dot
-            return ''; // No file format found or empty file format
+            return ""; // No file format found or empty file format
         }
         const format = parts[parts.length - 1].toLowerCase();
-        
+
         await writeFile(
-            path.join(process.cwd(), "storage/" + docs_id + '.' + format),
+            path.join(process.cwd(), "storage/" + docs_id + "." + format),
             buffer
-        ); 
-        
-        return NextResponse.json({ message: 'File uploaded successfully', status: 201 });
+        );
+
+        return NextResponse.json({
+            message: "File uploaded successfully",
+            status: 201,
+        });
     } catch (err) {
-        console.log(err);
-        return NextResponse.json({ message: 'Error Occured', status: 500 });
+        return NextResponse.json({ message: "Error Occured", status: 500 });
     }
 }
 
 export async function GET(request: NextRequest) {
-    console.log(request.nextUrl.searchParams.get('filename'));
-    const filename = request.nextUrl.searchParams.get('filename');
-    // const { query } = request;
-    // const filename = formData.get('filename');
-    // console.log(filename);
+    const id = request.nextUrl.searchParams.get("id");
 
-    if (!filename) {
+    if (!id) {
         return NextResponse.json(
-            { message: 'Please provide a filename' },
+            { message: "Please provide a id" },
             { status: 400 }
-        )
+        );
     }
 
-    const files = searchFilesByName(path.join(process.cwd(), 'storage'), filename as string);    
-    
+    const files = searchFilesByName(
+        path.join(process.cwd(), "storage"),
+        id as string
+    );
+
     if (files.length === 0) {
-        return NextResponse.json(
-            { message: 'File not found' },
-            { status: 404 }
-        )
+        return NextResponse.json({ message: "File not found" }, { status: 404 });
     }
 
-    const data = fs.readFileSync(path.join(process.cwd(), 'storage/', files[0]));
-    const sizeInBytes = Buffer.byteLength(data, 'utf8');
-    console.log(data);
+    const data = fs.readFileSync(path.join(process.cwd(), "storage/", files[0]));
+    const sizeInBytes = Buffer.byteLength(data, "utf8");
 
     const headers = new Headers();
-    headers.set('Content-Type', 'application/octet-stream');
-    headers.set('Content-Disposition', `attachment; filename=${files[0]}`);
+    headers.set("Content-Type", "application/octet-stream");
+    headers.set("Content-Disposition", `attachment; filename=${files[0]}`);
 
     if (!data) {
         return NextResponse.json(
-            { message: 'Error reading file' },
+            { message: "Error reading file" },
             { status: 500 }
-        )
-    }
-    else {
-        console.log('sini');
+        );
+    } else {
         return new NextResponse(data, {
             status: 200,
-            statusText: 'OK',
-            headers 
+            statusText: "OK",
+            headers,
         });
     }
 }
 
-export async function PUT(request: NextRequest){
+export async function PUT(request: NextRequest) {
     const formData = await request.formData();
-    const title = formData.get('title');
-    const topic = formData.get('topic');
+    const title = formData.get("title");
+    const topic = formData.get("topic");
 
     if (!title || !topic) {
         return NextResponse.json(
-            { message: 'Please fill in all fields' },
+            { message: "Please fill in all fields" },
             { status: 400 }
-        )
+        );
     }
 
+    updateRecord(Number(formData.get("id")), title as string, topic as string);
+    return NextResponse.json({ message: "Document updated successfully", status: 200 });
 
-    // const buffer = Buffer.from(await (file as File).arrayBuffer());
-    // const filename = (file as File).name.replaceAll
-    
 }
 
 export async function DELETE(request: NextRequest) {
-    const filename = request.nextUrl.searchParams.get('filename');
-    const extension = findFileWithExtension(path.join(process.cwd(), 'storage'), filename as string);
+    const id = request.nextUrl.searchParams.get("id");
+    const extension = findFileWithExtension(
+        path.join(process.cwd(), "storage"),
+        id as string
+    );
 
-    if (!filename) {
+    if (!id) {
         return NextResponse.json(
-            { message: 'Please provide a filename' },
+            { message: "Please provide a id" },
             { status: 400 }
-        )
+        );
     }
 
     if (!extension) {
-        return NextResponse.json(
-            { message: 'File not found' },
-            { status: 404 }
-        )
+        return NextResponse.json({ message: "File not found" }, { status: 404 });
     }
 
     try {
-        fs.unlinkSync(path.join(process.cwd(), 'storage/', filename + extension));
-        console.log('File deleted successfully');
-    }
-    catch (err) {
-        console.error('Error deleting file', err);
+        fs.unlinkSync(path.join(process.cwd(), "storage/", id + extension));
+    } catch (err) {
+        console.error("Error deleting file", err);
     }
 
-    deleteRecord(Number(filename));
-    
+    deleteRecord(Number(id));
 
-    return NextResponse.json(
-        { message: 'File deleted successfully' }
-    )
+    return NextResponse.json({ message: "File deleted successfully" });
 }
 
-async function createDocument(title: string, topic: string, filename: string, file_size: number) {
+async function createDocument(
+    title: string,
+    topic: string,
+    filename: string,
+    file_size: number
+) {
     const prisma = new PrismaClient();
     try {
         const document = await prisma.document.create({
-            data : {
-                title :  title,
-                topic : topic,
-                original_name : filename,
-                file_size : file_size
-            }
+            data: {
+                title: title,
+                topic: topic,
+                original_name: filename,
+                file_size: file_size,
+            },
         });
-        console.log('Document created successfully', document);
-        console.log(document.id);
         return document.id;
     } catch (error) {
-        console.error('Error creating document', error);
+        console.error("Error creating document", error);
     } finally {
         await prisma.$disconnect();
     }
@@ -183,7 +174,7 @@ function searchFilesByName(directory: string, fileName: string): string[] {
     const files: string[] = [];
     const entries = fs.readdirSync(directory); // Synchronously read the directory
 
-    entries.forEach(entry => {
+    entries.forEach((entry) => {
         const fullPath = path.join(directory, entry);
         const stats = fs.statSync(fullPath);
 
@@ -198,7 +189,10 @@ function searchFilesByName(directory: string, fileName: string): string[] {
     return files;
 }
 
-function findFileWithExtension(directory: string, filenameWithoutExtension: string): string | null {
+function findFileWithExtension(
+    directory: string,
+    filenameWithoutExtension: string
+): string | null {
     const files = fs.readdirSync(directory);
     for (const file of files) {
         const ext = path.extname(file); // Get the extension of the current file
@@ -214,37 +208,31 @@ async function deleteRecord(id: number) {
     const prisma = new PrismaClient();
     try {
         const deletedUser = await prisma.document.delete({
-            where : {
-                id : id,
-            }
+            where: {
+                id: id,
+            },
         });
-        console.log(`Document with ID ${id} deleted successfully.`);
     } catch (error) {
-        console.error('Error deleting document', error);
-    }
-    finally {
+        console.error("Error deleting document", error);
+    } finally {
         await prisma.$disconnect();
     }
 }
 
-async function updateRecord(id: number, title : string, topic :  string) {
+async function updateRecord(id: number, title: string, topic: string) {
     const prisma = new PrismaClient();
     try {
         const updateRecord = await prisma.document.update({
-            where : {id : id},
-            data : {
-                title : title,
-                topic : topic
-            }
+            where: { id: id },
+            data: {
+                title: title,
+                topic: topic,
+            },
         });
-        console.log(`Document with ID ${id} updated successfully.`);
-    }
-    catch (error) {
-        console.error('Error updating document', error);
-    }
-    finally {
+    } catch (error) {
+        console.error("Error updating document", error);
+        return NextResponse.json({ message: "Error updating document", status: 500 });
+    } finally {
         await prisma.$disconnect();
     }
-
 }
-
