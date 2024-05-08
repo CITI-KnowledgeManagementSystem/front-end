@@ -60,7 +60,7 @@ async function getListOfDocumentsByUserId(userId: number){
                 title: list[i].title,
                 topic: list[i].topic,
                 file_size: list[i].file_size,
-                file_size_formatted: sizeInMegabytes,
+                file_size_formatted: sizeFormatted,
                 original_name: list[i].original_name,
             });
         }
