@@ -4,6 +4,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { MessageProps } from '@/types'
 import ChatBox from '@/components/chat-box'
+import { answerQuestions } from '@/lib/utils'
 
 const dummyChats = [
     {
@@ -35,10 +36,12 @@ const PromptPage = () => {
     }
 
     const handleGetResponse = async () => {
+        const data = await answerQuestions(prompt);
+
         // async
         const newResponse = {
             type: "response",
-            message: "It's okayy, just chill my brother"
+            message: data
         }
         return newResponse      
     }
