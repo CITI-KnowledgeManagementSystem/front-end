@@ -21,7 +21,44 @@ const dummyChats = [
             },
             {
                 chatTitle: "How to beatbox"
-            }
+            },
+            {
+                chatTitle: "How to cook a chicken"
+            },
+            {
+                chatTitle: "How to beatbox"
+            },
+            {
+                chatTitle: "How to cook a chicken"
+            },
+            {
+                chatTitle: "How to beatbox"
+            },
+            {
+                chatTitle: "How to cook a chicken"
+            },
+            {
+                chatTitle: "How to beatbox"
+            },
+            {
+                chatTitle: "How to cook a chicken"
+            },
+            {
+                chatTitle: "How to beatbox"
+            },
+            {
+                chatTitle: "How to cook a chicken"
+            },
+            {
+                chatTitle: "How to beatbox"
+            },
+            {
+                chatTitle: "How to cook a chicken"
+            },
+            {
+                chatTitle: "How to beatbox"
+            },
+
         ]
     },
     {
@@ -39,7 +76,7 @@ const dummyChats = [
 
 const SidebarPrompt = () => {
     const [isMounted, setIsMounted] = useState(false)
-    const [isOpen, setIsOpen] = useState(true)
+    const [isOpen, setIsOpen] = useState(false)
 
     useEffect(() => {
         setIsMounted(true);
@@ -96,14 +133,16 @@ const SidebarPrompt = () => {
                 </HoverCardContent>
             </HoverCard>}
 
-            {isOpen && <div className='flex-1'>
+            {isOpen && <div className='flex-1 overflow-y-auto mb-3'>
             { dummyChats.map((item, i) => (
                 <div className="w-full my-2" key={i}>
                     <label className='text-muted-foreground text-xs font-semibold'>{ item.dateGroup }</label>
                     { item.chats.map((item, i) => (
-                        <Button key={i} variant={"ghost"} className='flex justify-between items-center w-full'>
+                        <Button key={i} variant={"ghost"} className={`flex justify-between items-center w-full relative group ${i === 1 && 'bg-white hover:bg-white'}`}>
                             { item.chatTitle.length > 20 ? item.chatTitle.slice(0,20) : item.chatTitle }
-                            <ThreeDotSidebar/>
+                            <div className="absolute right-4 group-hover:block hidden">
+                                <ThreeDotSidebar/>
+                            </div>
                         </Button>
                     )) }
                 </div>
