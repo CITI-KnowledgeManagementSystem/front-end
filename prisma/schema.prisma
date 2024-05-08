@@ -3,25 +3,30 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
-  Docs  Doc[]
+generator client {
+  provider = "prisma-client-js"
 }
 
-model Doc {
+model User {
+  id    Int    @id @default(autoincrement())
+  email String @unique
+  name  String
+  Documents  Document[]
+}
+
+model Document {
   id             Int    @id @default(autoincrement())
   title          String
   original_name  String
-  displayed_name String
-  userId         Int
-  user           User   @relation(fields: [userId], references: [id])
+  topic          String
+  userId         Int?
+  file_size      Int
+  user           User?  @relation(fields: [userId], references: [id])
   vdb            vdb[]
 }
 
 model vdb {
   id    Int @id @default(autoincrement())
   docId Int
-  doc   Doc @relation(fields: [docId], references: [id])
+  documents   Document @relation(fields: [docId], references: [id])
 }
