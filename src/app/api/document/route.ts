@@ -5,7 +5,6 @@ import path from "path";
 import { PrismaClient, Prisma } from "@prisma/client";
 
 export async function POST(req: Response) {
-    const prisma = new PrismaClient();
     const formData = await req.formData();
 
     const file = formData.get("file");
