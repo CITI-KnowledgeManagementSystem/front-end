@@ -1,6 +1,7 @@
 import React from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Popover, PopoverTrigger, PopoverContent } from './ui/popover'
+import Link from "next/link"
 import { Button } from './ui/button'
 import { Separator } from './ui/separator'
 import { FaUserEdit } from "react-icons/fa"
@@ -21,10 +22,12 @@ const UserProfile = () => {
         </PopoverTrigger>
         <PopoverContent className='w-full p-1' align='center'>
             <div className="w-48">
-                <Button className='w-full justify-start' variant={"ghost"} size={"sm"}>
-                    <MdDashboard className='mr-3' size={16}/>
-                    Go to your dashboard
-                </Button>
+                <Link href={"/dashboard/my-documents"}>
+                    <Button className='w-full justify-start' variant={"ghost"} size={"sm"}>
+                        <MdDashboard className='mr-3' size={16}/>
+                        Go to your dashboard
+                    </Button>
+                </Link>
                 <Button className='w-full justify-start' variant={"ghost"} size={"sm"}>
                     <FaUserEdit className='mr-3' size={16}/>
                     Profile Settings
