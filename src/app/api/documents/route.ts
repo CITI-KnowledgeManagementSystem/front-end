@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { parse } from "path";
 import { BsTrophy } from "react-icons/bs";
 
-export async function GET(request: NextRequest){
+export async function GET(request: NextRequest) {
     const id = request.nextUrl.searchParams.get("id");
 
     if (!id) {
@@ -22,9 +22,9 @@ export async function GET(request: NextRequest){
 
 }
 
-async function getListOfDocumentsByUserId(userId: number){
+async function getListOfDocumentsByUserId(userId: number) {
     const prisma = new PrismaClient();
-    
+
     try {
         const list = await prisma.document.findMany({
             // where: {
@@ -39,7 +39,7 @@ async function getListOfDocumentsByUserId(userId: number){
             },
         });
         let list_new = [];
-        console.log(typeof(list[0]))
+        console.log(typeof (list[0]))
         for (let i = 0; i < list.length; i++) {
             let sizeFormatted = '';
             if (list[i].file_size < 1024) {
