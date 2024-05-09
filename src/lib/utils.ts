@@ -10,7 +10,7 @@ export function parseDate(date:string) {
 }
 
 export const answerQuestions = async (prompt:string) => {
-  const response = await fetch('http://localhost:5000/answer_questions', {
+  const response = await fetch('http://140.118.101.254:5000/answer_questions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

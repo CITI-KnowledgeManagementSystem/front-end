@@ -23,7 +23,7 @@ const PromptPage = () => {
     const [data, setData] = useState<MessageProps[]>([])
     const [prompt, setPrompt] = useState<string>("")
 
-    const handleSendPrompt = (e:React.ChangeEvent<HTMLFormElement>) => {
+    const handleSendPrompt = (e:React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         const newMessage = {
             type: "request",
@@ -35,9 +35,14 @@ const PromptPage = () => {
         setPrompt("")
     }
 
-    const handleGetResponse = async () => {
-        const data = await answerQuestions(prompt);
+    const handleKeyPressDown = (e:React.KeyboardEvent<HTMLFormElement>) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            handleSendPrompt(e)
+        }
+    }
 
+    const handleGetResponse = async () => {
+        const data = await answerQuestions(prompt)
         // async
         const newResponse = {
             type: "response",
@@ -46,7 +51,6 @@ const PromptPage = () => {
         return newResponse      
     }
       
-
   return (
     <div className='flex flex-col w-full p-5 h-screen'>
         <div className="w-full flex-1 overflow-y-auto mb-5 py-5 px-[100px]">
@@ -63,7 +67,7 @@ const PromptPage = () => {
             </div>
         </div>
         <div className="flex justify-center items-center">
-            <form action="submit" onSubmit={handleSendPrompt} className='flex w-full max-w-[900px] items-center gap-x-4'>
+            <form action="submit" onSubmit={handleSendPrompt} onKeyDown={handleKeyPressDown} className='flex w-full max-w-[900px] items-center gap-x-4'>
                 <Textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder='Enter a prompt...' className='resize-none w-full'/>
                 <Button disabled={prompt.length === 0}>Send</Button>
             </form>
