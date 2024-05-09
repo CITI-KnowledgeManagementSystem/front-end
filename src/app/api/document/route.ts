@@ -112,8 +112,10 @@ export async function PUT(request: NextRequest) {
     }
 
     updateRecord(Number(formData.get("id")), title as string, topic as string);
-    return NextResponse.json({ message: "Document updated successfully", status: 200 });
-
+    return NextResponse.json({
+        message: "Document updated successfully",
+        status: 200,
+    });
 }
 
 export async function DELETE(request: NextRequest) {
@@ -159,6 +161,7 @@ async function createDocument(
                 topic: topic,
                 original_name: filename,
                 file_size: file_size,
+                createdAt: new Date(),
             },
         });
         return document.id;
@@ -206,10 +209,11 @@ function findFileWithExtension(
 async function deleteRecord(id: number) {
     const prisma = new PrismaClient();
     try {
-        const deletedUser = await prisma.document.delete({
-            where: {
-                id: id,
-            },
+        const deletedUser = await prisma.document.update({
+            where: { id: id },
+            data: {
+                deletedAt: new Date(),
+            } as Prisma.DocumentUpdateInput,
         });
     } catch (error) {
         console.error("Error deleting document", error);
@@ -226,11 +230,15 @@ async function updateRecord(id: number, title: string, topic: string) {
             data: {
                 title: title,
                 topic: topic,
+                updatedAt: new Date(),
             },
         });
     } catch (error) {
         console.error("Error updating document", error);
-        return NextResponse.json({ message: "Error updating document", status: 500 });
+        return NextResponse.json({
+            message: "Error updating document",
+            status: 500,
+        });
     } finally {
         await prisma.$disconnect();
     }
