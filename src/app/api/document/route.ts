@@ -39,11 +39,15 @@ export async function POST(req: Response) {
         }
 
         const parts = filename.split(".");
+        var format = "";
         if (parts.length === 1) {
             // If there's no '.' in the filename or it starts with a dot
-            return ""; // No file format found or empty file format
+            format = ""; // No file format found or empty file format
         }
-        const format = parts[parts.length - 1].toLowerCase();
+        else {
+            // The last part is the extension
+            format = parts[parts.length - 1].toLowerCase();
+        }
 
         await writeFile(
             path.join(process.cwd(), "storage/" + docs_id + "." + format),
