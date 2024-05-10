@@ -29,6 +29,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
         {
             message: 'Message has been successfully saved',
+        },
+        {
             status: 200
         }
     )
@@ -70,6 +72,8 @@ async function getRecordLLM(questions: string): Promise<unknown> {
         return NextResponse.json(
             {
                 message: 'Error fetching record',
+            },
+            {
                 status: 500
             }
         )

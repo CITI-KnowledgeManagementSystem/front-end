@@ -19,7 +19,10 @@ export async function POST(req: Response) {
     }
 
     if (!file) {
-        return NextResponse.json({ message: "No file uploaded" }, { status: 400 });
+        return NextResponse.json(
+            { message: "No file uploaded" }, 
+            { status: 400 }
+        );
     }
 
     const buffer = Buffer.from(await (file as File).arrayBuffer());
@@ -35,7 +38,10 @@ export async function POST(req: Response) {
         )) as unknown as Document;
 
         if (!docs_id) {
-            return NextResponse.json({ message: "Error insert to SQL", status: 500 });
+            return NextResponse.json(
+                { message: "Error insert to SQL"},
+                { status: 400 }
+            );
         }
 
         const parts = filename.split(".");
@@ -54,12 +60,15 @@ export async function POST(req: Response) {
             buffer
         );
 
-        return NextResponse.json({
-            message: "File uploaded successfully",
-            status: 201,
-        });
+        return NextResponse.json(
+            { message: "File uploaded successfully" },
+            { status: 200 }
+        );
     } catch (err) {
-        return NextResponse.json({ message: "Error Occured", status: 500 });
+        return NextResponse.json(
+            { message: "Error Occured"},
+            { status: 400 }
+        );
     }
 }
 
@@ -79,7 +88,10 @@ export async function GET(request: NextRequest) {
     );
 
     if (files.length === 0) {
-        return NextResponse.json({ message: "File not found" }, { status: 404 });
+        return NextResponse.json(
+            { message: "File not found" },
+            { status: 404 }
+        );
     }
 
     const data = fs.readFileSync(path.join(process.cwd(), "storage/", files[0]));
@@ -92,11 +104,10 @@ export async function GET(request: NextRequest) {
     if (!data) {
         return NextResponse.json(
             { message: "Error reading file" },
-            { status: 500 }
+            { status: 400 }
         );
     } else {
         return new NextResponse(data, {
-            status: 200,
             statusText: "OK",
             headers,
         });
@@ -116,10 +127,10 @@ export async function PUT(request: NextRequest) {
     }
 
     updateRecord(Number(formData.get("id")), title as string, topic as string);
-    return NextResponse.json({
-        message: "Document updated successfully",
-        status: 200,
-    });
+    return NextResponse.json(
+        { message: "Document updated successfully" },
+        { status: 200 }
+    );
 }
 
 export async function DELETE(request: NextRequest) {
@@ -137,7 +148,10 @@ export async function DELETE(request: NextRequest) {
     }
 
     if (!extension) {
-        return NextResponse.json({ message: "File not found" }, { status: 404 });
+        return NextResponse.json(
+            { message: "File not found" },
+            { status: 404 }
+        );
     }
 
     try {
@@ -148,7 +162,10 @@ export async function DELETE(request: NextRequest) {
 
     deleteRecord(Number(id));
 
-    return NextResponse.json({ message: "File deleted successfully" });
+    return NextResponse.json(
+        { message: "File deleted successfully" },
+        { status: 200 }
+    );
 }
 
 async function createDocument(
@@ -239,10 +256,10 @@ async function updateRecord(id: number, title: string, topic: string) {
         });
     } catch (error) {
         console.error("Error updating document", error);
-        return NextResponse.json({
-            message: "Error updating document",
-            status: 500,
-        });
+        return NextResponse.json(
+            { message: "Error updating document" },
+            { status: 500 }
+        );
     } finally {
         await prisma.$disconnect();
     }
