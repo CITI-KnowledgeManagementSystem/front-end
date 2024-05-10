@@ -10,7 +10,9 @@ export async function GET(request: NextRequest, context: any) {
         {
             message: 'Record fetched successfully',
             data: record,
-            status: 200
+        },
+        {
+            status: 200,
         }
     )
 }

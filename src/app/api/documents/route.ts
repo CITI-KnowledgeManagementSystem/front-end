@@ -14,11 +14,15 @@ export async function GET(request: NextRequest) {
     }
 
     const list = await getListOfDocumentsByUserId(Number(id));
-    return NextResponse.json({
+    return NextResponse.json(
+    {
         message: "List of documents",
-        data: list,
-        status: 200,
-    });
+        data: list
+    },
+    { 
+        status: 200 
+    }
+    );
 
 }
 
@@ -27,9 +31,9 @@ async function getListOfDocumentsByUserId(userId: number) {
 
     try {
         const list = await prisma.document.findMany({
-            // where: {
-            //     userId: userId,
-            // },
+            where: {
+                userId: userId,
+            },
             select: {
                 id: true,
                 title: true,

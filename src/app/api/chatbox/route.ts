@@ -16,7 +16,9 @@ export async function GET(request: NextRequest) {
         {
             message: 'Record fetched successfully',
             data: record,
-            status: 200
+        },
+        {
+            status: 200,
         }
     )
 }
@@ -36,8 +38,11 @@ export async function POST(request: NextRequest) {
 
     createRecord(Number(userId), name as string);
     return NextResponse.json(
-        { message: 'Record created successfully',
-          status: 200
+        { 
+            message: 'Record created successfully',
+        },
+        {
+            status: 200
         }
     )
 }
@@ -57,8 +62,11 @@ export async function PUT(request: NextRequest) {
 
     updateRecord(Number(id), name as string);
     return NextResponse.json(
-        { message: 'Record updated successfully',
-          status: 200
+        { 
+            message: 'Record updated successfully',
+        },
+        {
+            status: 200
         }
     )
 }
@@ -74,8 +82,11 @@ export async function DELETE(request: NextRequest) {
     }
     deleteRecord(Number(id));
     return NextResponse.json(
-        { message: 'Record deleted successfully',
-          status: 200
+        { 
+            message: 'Record deleted successfully',
+        },
+        {
+            status: 200
         }
     )
 }
@@ -94,6 +105,8 @@ async function getRecord(id: number) {
         return NextResponse.json(
             {
                 message: 'Error fetching record',
+            }, 
+            {
                 status: 500
             }
         )
@@ -118,6 +131,8 @@ async function createRecord(userId: number, name: string) {
         return NextResponse.json(
             {
                 message: 'Error creating record',
+            },
+            { 
                 status: 500
             }
         )
@@ -143,6 +158,8 @@ async function updateRecord(id: number, name: string) {
         return NextResponse.json(
             {
                 message: 'Error updating record',
+            },
+            {
                 status: 500
             }
         )
@@ -167,6 +184,8 @@ async function deleteRecord(id: number) {
         return NextResponse.json(
             {
                 message: 'Error deleting record',
+            },
+            {
                 status: 500
             }
         )
