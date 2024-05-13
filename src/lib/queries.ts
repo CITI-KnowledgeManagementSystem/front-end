@@ -1,24 +1,38 @@
-"use server"
-import { PrismaClient } from "@prisma/client"
+import { NextResponse, NextRequest } from 'next/server';
+import { PrismaClient } from '@prisma/client';
 
-// get users document size
-export async function getUserUsedStorage(userId:number) {
+export async function accumulatedSizeOfDocuments(id : number) {
     const prisma = new PrismaClient();
-    console.log("Getting the user storage");
-    
     try {
-        const query = await prisma.document.aggregate({
-            where: {
-                userId
+        const documents = await prisma.document.groupBy({
+            by: ['userId'],
+            _sum: {
+                file_size: true,
             },
-            _sum: { file_size: true }
-        })
+            where: {
+                userId: id,
+            },
+        });
+        return documents;
+    } catch (err) {
+        console.error('Error fetching documents', err);
+    } finally {
+        await prisma.$disconnect();
+    }
+}
 
-        const userFileSize = query._sum.file_size ? query._sum.file_size / (1000 * 1000 * 1000) : 0
-
-        return Number(userFileSize.toFixed(2))
-    } catch (error) {
-        console.log(error);
-        return 0
+export async function numberOfDocuments(id : number) {
+    const prisma = new PrismaClient();
+    try {
+        const documents = await prisma.document.count({
+            where: {
+                userId: id,
+            },
+        });
+        return documents;
+    } catch (err) {
+        console.error('Error fetching documents', err);
+    } finally {
+        await prisma.$disconnect();
     }
 }

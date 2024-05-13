@@ -4,18 +4,15 @@ import fs from "fs";
 import path from "path";
 import { PrismaClient, Prisma } from "@prisma/client";
 
-function delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 export async function POST(req: Response) {
     const formData = await req.formData();
 
     const file = formData.get("file");
     const title = formData.get("title");
     const topic = formData.get("topic");
+    const user_id = formData.get("user_id");
 
-    if (!title || !topic) {
+    if (!title || !topic || !user_id) {
         return NextResponse.json(
             { message: "Please fill in all fields" },
             { status: 400 }
@@ -23,7 +20,10 @@ export async function POST(req: Response) {
     }
 
     if (!file) {
-        return NextResponse.json({ message: "No file uploaded" }, { status: 400 });
+        return NextResponse.json(
+            { message: "No file uploaded" }, 
+            { status: 400 }
+        );
     }
 
     const buffer = Buffer.from(await (file as File).arrayBuffer());
@@ -35,32 +35,42 @@ export async function POST(req: Response) {
             title as string,
             topic as string,
             filename,
-            file_size as number
+            file_size as number,
+            Number(user_id)
         )) as unknown as Document;
-        
+
         if (!docs_id) {
-            return NextResponse.json({ message: "Error insert to SQL", status: 500 });
+            return NextResponse.json(
+                { message: "Error insert to SQL"},
+                { status: 400 }
+            );
         }
 
         const parts = filename.split(".");
+        var format = "";
         if (parts.length === 1) {
             // If there's no '.' in the filename or it starts with a dot
-            return ""; // No file format found or empty file format
+            format = ""; // No file format found or empty file format
         }
-        const format = parts[parts.length - 1].toLowerCase();
+        else {
+            // The last part is the extension
+            format = parts[parts.length - 1].toLowerCase();
+        }
 
         await writeFile(
             path.join(process.cwd(), "storage/" + docs_id + "." + format),
             buffer
         );
-        console.log("returning 201");
-        
-        return NextResponse.json({
-            message: "File uploaded successfully",
-            status: 201,
-        });
+
+        return NextResponse.json(
+            { message: "File uploaded successfully" },
+            { status: 200 }
+        );
     } catch (err) {
-        return NextResponse.json({ message: "Error Occured", status: 500 });
+        return NextResponse.json(
+            { message: "Error Occured"},
+            { status: 400 }
+        );
     }
 }
 
@@ -80,7 +90,10 @@ export async function GET(request: NextRequest) {
     );
 
     if (files.length === 0) {
-        return NextResponse.json({ message: "File not found" }, { status: 404 });
+        return NextResponse.json(
+            { message: "File not found" },
+            { status: 404 }
+        );
     }
 
     const data = fs.readFileSync(path.join(process.cwd(), "storage/", files[0]));
@@ -93,11 +106,10 @@ export async function GET(request: NextRequest) {
     if (!data) {
         return NextResponse.json(
             { message: "Error reading file" },
-            { status: 500 }
+            { status: 400 }
         );
     } else {
         return new NextResponse(data, {
-            status: 200,
             statusText: "OK",
             headers,
         });
@@ -117,10 +129,10 @@ export async function PUT(request: NextRequest) {
     }
 
     updateRecord(Number(formData.get("id")), title as string, topic as string);
-    return NextResponse.json({
-        message: "Document updated successfully",
-        status: 200,
-    });
+    return NextResponse.json(
+        { message: "Document updated successfully" },
+        { status: 200 }
+    );
 }
 
 export async function DELETE(request: NextRequest) {
@@ -138,7 +150,10 @@ export async function DELETE(request: NextRequest) {
     }
 
     if (!extension) {
-        return NextResponse.json({ message: "File not found" }, { status: 404 });
+        return NextResponse.json(
+            { message: "File not found" },
+            { status: 404 }
+        );
     }
 
     try {
@@ -149,17 +164,20 @@ export async function DELETE(request: NextRequest) {
 
     deleteRecord(Number(id));
 
-    return NextResponse.json({ message: "File deleted successfully" });
+    return NextResponse.json(
+        { message: "File deleted successfully" },
+        { status: 200 }
+    );
 }
 
 async function createDocument(
     title: string,
     topic: string,
     filename: string,
-    file_size: number
+    file_size: number,
+    user_id: number
 ) {
-    const prisma = new PrismaClient()
-
+    const prisma = new PrismaClient();
     try {
         const document = await prisma.document.create({
             data: {
@@ -168,9 +186,9 @@ async function createDocument(
                 original_name: filename,
                 file_size: file_size,
                 createdAt: new Date(),
+                userId: user_id,
             },
         });
-
         return document.id;
     } catch (error) {
         console.error("Error creating document", error);
@@ -242,10 +260,10 @@ async function updateRecord(id: number, title: string, topic: string) {
         });
     } catch (error) {
         console.error("Error updating document", error);
-        return NextResponse.json({
-            message: "Error updating document",
-            status: 500,
-        });
+        return NextResponse.json(
+            { message: "Error updating document" },
+            { status: 500 }
+        );
     } finally {
         await prisma.$disconnect();
     }
