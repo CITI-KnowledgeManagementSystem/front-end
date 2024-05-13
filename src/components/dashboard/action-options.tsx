@@ -1,6 +1,7 @@
 import React, { Dispatch, useState } from 'react'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent ,AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import Link from "next/link"
 import { Separator } from '../ui/separator'
 import { Button } from '../ui/button'
 import { FiDelete } from "react-icons/fi"
@@ -51,7 +52,9 @@ const ActionsOption = ({ documentId, tableContents, setTableContents }:Props) =>
         <PopoverContent className='p-0 w-32 right-0' align='end'>
             <div className='p-1'>
                 <Button size={"sm"} className='w-full text-xs h-7 rounded justify-start font-normal' variant={"ghost"}>Edit </Button>
-                <Button size={"sm"} className='w-full text-xs h-7 rounded justify-between font-normal' variant={"ghost"}>Download <MdOutlineFileDownload className='text-muted-foreground' size={13}/> </Button>
+                <Link href={`/api/document?id=${documentId}`}>
+                  <Button size={"sm"} className='w-full text-xs h-7 rounded justify-between font-normal' variant={"ghost"}>Download <MdOutlineFileDownload className='text-muted-foreground' size={13}/> </Button>
+                </Link>
                 <Separator className='my-1'/>
                 <Button size={"sm"} className='w-full text-red-500 hover:text-red-500 text-xs h-7 rounded justify-between font-normal' variant={"ghost"} onClick={() => setIsAlertOpen(true)}>Delete <FiDelete size={13}/></Button>
             </div>

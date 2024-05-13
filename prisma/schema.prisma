@@ -3,25 +3,65 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
-  Docs  Doc[]
+generator client {
+  provider = "prisma-client-js"
 }
 
-model Doc {
+model User {
+  id    Int    @id @default(autoincrement())
+  email String @unique
+  name  String
+  Documents  Document[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  deletedAt DateTime?
+  ChatBoxes ChatBox[]
+  Messages Message[]
+}
+
+model Document {
   id             Int    @id @default(autoincrement())
   title          String
   original_name  String
-  displayed_name String
-  userId         Int
-  user           User   @relation(fields: [userId], references: [id])
+  topic          String
+  userId         Int?
+  file_size      Int
+  user           User?  @relation(fields: [userId], references: [id])
   vdb            vdb[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime? @updatedAt
+  deletedAt      DateTime?
 }
 
 model vdb {
   id    Int @id @default(autoincrement())
-  docId Int
-  doc   Doc @relation(fields: [docId], references: [id])
+  docId Int?
+  documents   Document? @relation(fields: [docId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  deletedAt DateTime?
+}
+
+model ChatBox {
+  id        Int    @id @default(autoincrement())
+  userId    Int?
+  user      User?   @relation(fields: [userId], references: [id])
+  name      String
+  messages  Message[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  deletedAt DateTime?
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  chatBoxId Int?
+  chatBox   ChatBox?  @relation(fields: [chatBoxId], references: [id])
+  userId    Int?
+  user      User?     @relation(fields: [userId], references: [id])
+  request   String
+  response  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  deletedAt DateTime?
 }

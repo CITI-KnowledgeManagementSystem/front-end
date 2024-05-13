@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import Link from "next/link"
 import { FiUpload } from "react-icons/fi";
 import { Card, CardTitle, CardContent, CardDescription, CardFooter, CardHeader } from '../ui/card'
 import { Label } from '../ui/label'
@@ -7,6 +8,21 @@ import { toast } from 'sonner'
 import { Button } from '../ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 
+interface SuccessToastProp {
+    msg: string
+}
+
+const SuccessToast = ({ msg } : SuccessToastProp) => {
+    return (
+        <div className="w-full">
+            <p className="text-sm font-semibold">{ msg }</p>
+            <p className="text-sm">Refresh the page to see the file</p>
+            <div className="w-full flex justify-end">
+                <Button size={"sm"} className='bg-blue-700'>Refresh</Button>
+            </div>
+        </div>
+    )
+}
 
 const UploadCard = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -14,11 +30,14 @@ const UploadCard = () => {
   const [topic, setTopic] = useState<string>("")
   const [isOpen, setIsOpen] = useState<boolean>(false)
   const [error, setError] = useState<string>("")
-  const [isLoading, setIsLoading] = useState<boolean>(false)
 
-  const showToast = () => {
-    toast("Your file is being uploaded", {
-        description: "This page will be refreshed automatically when it's finished",
+  const showToast = (promise:Promise<string>) => {
+    toast.promise(promise, {
+        loading: "You're file is being uploaded",
+        success: (msg) => {
+            return <SuccessToast msg={msg}/>
+        },
+        error: "Error when uploading the file"
     })
 }
 
@@ -34,13 +53,34 @@ const uploadDocument = () => {
         setError("Fill all the required fields")
         return
     }
-    setIsLoading(true)
     setIsOpen(false)
-    showToast()
-    // postDocument('1', selectedFile, title, topic).then(_ => {
-    //     setIsLoading(false)
-    //     window.location.reload()
-    // }).catch(_ => setError("Upload error"))
+
+    // form data definition
+    const formData = new FormData()
+    formData.append('file', selectedFile)
+    formData.append('title', title)
+    formData.append('topic', topic)
+
+    const upload = async () => {
+        try {
+            const res = await fetch('/api/document', {
+                method: 'POST',
+                body: formData,
+            });
+            if (!res.ok) {
+                throw new Error();
+            }
+            return "The file has been uploaded"
+        } catch (error) {
+            throw new Error()
+        }
+    }
+
+    showToast(upload())
+
+    setSelectedFile(null)
+    setTitle("")
+    setTopic("")
 }
 
   return (

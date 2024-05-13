@@ -15,8 +15,8 @@ export interface TableContentProps {
     id:string,
     user_id:string,
     title: string,
-    created_at: string,
-    size: string,
+    createdAt: string,
+    file_size_formatted: string,
     tag: string,
     topic: string
 }

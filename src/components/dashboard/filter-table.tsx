@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { BsTags } from "react-icons/bs"
 import { MdOutlineClear } from "react-icons/md";
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover'
@@ -10,6 +10,9 @@ import CommandOption from './command-option'
 import UploadCard from './upload-card'
 import { OptionProps } from '@/types'
 
+// APIS
+import { getUserUsedStorage } from '@/lib/queries'
+
 const dummyTags = [
     { value: 'pdf' }, { value: 'txt' }, { value: 'md' },
 ]
@@ -17,9 +20,10 @@ const dummyTags = [
 const FilterTable = () => {
   const [open, setOpen] = useState(false)
   const [tags, setTags] = useState<OptionProps[]>([])
-  const [storageSize, setStorageSize] = useState<number>(12.5)
+  const [storageSize, setStorageSize] = useState<number>(0)
   const [limitStorageSize, setLimitStorageSize] = useState<number>(25)
   const [searchTerm, setSearchTerm] = useState<string>("")
+
 
   const chooseTag = (newTag:OptionProps) => {
     const tagIndex = tags.indexOf(newTag)
@@ -42,6 +46,11 @@ const FilterTable = () => {
   const clearTags = () => {
     setTags([])
   }
+
+  useEffect(() => {
+    getUserUsedStorage(1).then(res => setStorageSize(res)).catch(err => console.log(err)
+    )
+  }, [])
 
   return (
     <div className="flex items-center mb-5 justify-between">

@@ -1,5 +1,5 @@
 "use client"
-import React from 'react'
+import React, { useEffect } from 'react'
 import PaginationTable from './pagination-table'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table'
 import { useState } from 'react'
@@ -15,40 +15,11 @@ import ActionsOption from './action-options'
 import FilterTable from './filter-table'
 import { TableContentProps } from '@/types'
 
-const dummyContents = [
-    {
-        id:'1',
-        user_id:'21',
-        title: 'Aku ganteng',
-        created_at: '11-11-2001',
-        size: '25 MB',
-        tag: 'pdf',
-        topic: 'Machine learning'
-    },
-    {
-        id:'1',
-        user_id:'21',
-        title: 'Aku ganteng',
-        created_at: '11-11-2001',
-        size: '25 MB',
-        tag: 'pdf',
-        topic: 'Machine learning'
-    },
-    {
-        id:'1',
-        user_id:'21',
-        title: 'Aku ganteng',
-        created_at: '11-11-2001',
-        size: '25 MB',
-        tag: 'md',
-        topic: 'Machine learning'
-    },
-
-]
-
 const DocTable = () => {
-    const [tableContents, setTableContents] = useState<TableContentProps[]>(dummyContents)
+    const [tableContents, setTableContents] = useState<TableContentProps[]>([])
     const [selectedItems, setSelectedItems] = useState<TableContentProps[]>([])
+    const [error, setError] = useState<string>("")
+    const [isLoading, setIsLoading] = useState<boolean>(false)
 
     const selectAllContents = () => {
         if (selectedItems.length === tableContents.length) {
@@ -71,15 +42,36 @@ const DocTable = () => {
     }
 
 
+    useEffect(() => {
+        setIsLoading(true)
+        fetch('/api/documents?id=1').then(async (res) => {
+            if (!res.ok) {
+                setError("An error has occured when fetching the data")
+            }
+            const newData = await res.json()
+            
+            setTableContents(newData.data)
+            setIsLoading(false)
+        })
+    }, [])
+
+
+    if (isLoading) {
+        return (
+            <div className="w-full h-full text-center">
+                Fetching the data...
+            </div>
+        )
+    }
   return (
     <>
         <FilterTable/>
-        <ScrollArea className='max-h-3/5 rounded-md border'>
+        <div className="max-h-[calc(100%-136px)] relative overflow-auto border rounded-md">
             <Table>
-                <TableHeader className='sticky w-full top-0 bg-white'>
+                <TableHeader className='sticky w-full top-0 bg-white z-40'>
                     <TableRow className='text-xs'>
                         <TableHead className='flex items-center'>
-                            <Checkbox checked={selectedItems.length === tableContents.length} onClick={selectAllContents} className='mr-3'/>
+                            <Checkbox checked={selectedItems.length === tableContents.length && tableContents.length !== 0} onClick={selectAllContents} className='mr-3'/>
                             <Button variant={"ghost"} size={"sm"} className='px-2'> 
                                 <span className='text-xs'>Title</span>
                                 <BsChevronExpand className='ml-2' size={12}/>
@@ -110,10 +102,10 @@ const DocTable = () => {
                                 { item.tag === 'pdf' ? <FaRegFilePdf size={16} className='mr-2'/> : item.tag === 'txt' ? <FiFileText size={16} className='mr-2'/> :  <SiObsidian size={16} className='mr-2'/>}
                                 { item.title }
                             </TableCell>
-                            <TableCell><Badge>{ item.tag }</Badge></TableCell>
+                            <TableCell><Badge variant={"default"} className='bg-blue-700 border-none hover:bg-blue-700'>{ item.tag }</Badge></TableCell>
                             <TableCell>{ item.topic }</TableCell>
-                            <TableCell>{ item.size } MB</TableCell>
-                            <TableCell>{ item.created_at }</TableCell>
+                            <TableCell>{ item.file_size_formatted }</TableCell>
+                            <TableCell>{ item.createdAt }</TableCell>
                             <TableCell><ActionsOption documentId={item.id} tableContents={tableContents} setTableContents={setTableContents}/></TableCell>
                         </TableRow>
                     )) }
@@ -124,8 +116,9 @@ const DocTable = () => {
                     </TableRow> }
                 </TableBody>
             </Table>
-        </ScrollArea>
+        </div>
         <PaginationTable selectedItems={selectedItems} tableContents={tableContents}/>
+        <p className="text-red-700 w-full text-center py-4 text-sm">{ error }</p>
     </>
   )
 }
