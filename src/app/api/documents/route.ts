@@ -49,6 +49,7 @@ async function getListOfDocumentsByUserId(userId: number, skip: number, take: nu
                 topic: true,
                 file_size: true,
                 original_name: true,
+                createdAt: true
             },
         });
         let list_new = [];
@@ -68,13 +69,16 @@ async function getListOfDocumentsByUserId(userId: number, skip: number, take: nu
                 sizeFormatted = (list[i].file_size / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
             }
 
+            const tagFile = list[i].original_name.substring(list[i].original_name.lastIndexOf('.') + 1, list[i].original_name.length)
+
             list_new.push({
                 id: list[i].id,
                 title: list[i].title,
                 topic: list[i].topic,
-                file_size: list[i].file_size,
                 file_size_formatted: sizeFormatted,
                 original_name: list[i].original_name,
+                createdAt: new Date(list[i].createdAt).toDateString(),
+                tag: tagFile
             });
         }
         return list_new;

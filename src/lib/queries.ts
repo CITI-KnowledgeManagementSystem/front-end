@@ -1,4 +1,4 @@
-import { NextResponse, NextRequest } from 'next/server';
+"use server"
 import { PrismaClient } from '@prisma/client';
 
 export async function accumulatedSizeOfDocuments(id: number) {
@@ -13,7 +13,9 @@ export async function accumulatedSizeOfDocuments(id: number) {
                 userId: id,
             },
         });
-        return documents;
+
+        const file_size= (documents[0]._sum.file_size ? documents[0]._sum.file_size / (1000 * 1000 * 1000) : 0) 
+        return Number(file_size.toFixed(2))
     } catch (err) {
         console.error('Error fetching documents', err);
     } finally {
