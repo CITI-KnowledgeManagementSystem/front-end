@@ -1,6 +1,7 @@
 "use client"
 import React from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { Button } from './ui/button'
 import { BsArrowLeftCircle, BsArrowRightCircle, BsPencil } from "react-icons/bs"
@@ -91,7 +92,9 @@ const SidebarPrompt = () => {
         <nav className={`h-full ${isOpen ? 'w-72 p-4' : 'w-0 py-4'} flex flex-col bg-slate-200 border-r shadow-sm relative duration-300 ease-in-out`}>
             {!isOpen && <HoverCard>
                 <HoverCardTrigger className='w-fit mx-3'>
-                    <GoPlus size={30} className='p-1 rounded-full bg-slate-200 cursor-pointer hover:bg-slate-300'/>
+                    <Link href={"/prompt"}>
+                        <GoPlus size={30} className='p-1 rounded-full bg-slate-200 cursor-pointer hover:bg-slate-300'/>
+                    </Link>
                 </HoverCardTrigger>
                 <HoverCardContent className='p-1 bg-slate-700 text-white w-fit' align='start'>
                     <p className="text-xs">
@@ -120,13 +123,15 @@ const SidebarPrompt = () => {
             }
             {isOpen && <HoverCard openDelay={300}>
                 <HoverCardTrigger asChild>
-                    <Button variant={"ghost"} className='w-full flex justify-between mb-5 relative'>
-                        <div className="flex items-center gap-x-2">
-                            <Image src={"/taiwan-tech.png"} alt='logo image' width={20} height={20} />
-                            <h2 className='font-semibold'>New Chat</h2>
-                        </div>
-                        <BsPencil/>
-                    </Button>
+                    <Link href={"/prompt"}>
+                        <Button variant={"ghost"} className='w-full flex justify-between mb-5 relative'>
+                            <div className="flex items-center gap-x-2">
+                                <Image src={"/taiwan-tech.png"} alt='logo image' width={20} height={20} />
+                                <h2 className='font-semibold'>New Chat</h2>
+                            </div>
+                            <BsPencil/>
+                        </Button>
+                    </Link>
                 </HoverCardTrigger>
                 <HoverCardContent className='w-fit text-xs p-2 bg-slate-700 text-white'>
                     <p>Create a new chat</p>
@@ -140,9 +145,7 @@ const SidebarPrompt = () => {
                     { item.chats.map((item, i) => (
                         <Button key={i} variant={"ghost"} className={`flex justify-between items-center w-full relative group ${i === 1 && 'bg-white hover:bg-white'}`}>
                             { item.chatTitle.length > 20 ? item.chatTitle.slice(0,20) : item.chatTitle }
-                            <div className="absolute right-4 group-hover:block hidden">
-                                <ThreeDotSidebar/>
-                            </div>
+                            <ThreeDotSidebar/>
                         </Button>
                     )) }
                 </div>

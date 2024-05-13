@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { PiDotsThreeOutlineFill } from "react-icons/pi"
 import { FiDelete,FiArchive } from "react-icons/fi";
 import { Popover, PopoverTrigger, PopoverContent } from './ui/popover'
@@ -8,16 +8,17 @@ import { Button } from './ui/button'
 import { Separator } from './ui/separator'
 
 const ThreeDotSidebar = () => {
+    const [isOpen, setIsOpen] = useState<boolean>(false)
   return (
-    <Popover>
-        <PopoverTrigger>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+        <PopoverTrigger className='relative'>
             <HoverCard openDelay={300}>
                 <HoverCardTrigger asChild>
-                    <button className="rounded-md hover:bg-slate-400 p-1">
+                    <button className={`rounded-md hover:bg-slate-400 p-1 group-hover:block ${isOpen ? 'block' : 'hidden'}`}>
                         <PiDotsThreeOutlineFill/>
                     </button>
                 </HoverCardTrigger>
-                <HoverCardContent className='w-fit text-xs py-1 px-2 bg-slate-700 text-white rounded-md mt-1'>
+                <HoverCardContent className='z-40 w-fit text-xs py-1 px-2 bg-slate-700 text-white rounded-md mt-1'>
                     <p>More</p>
                 </HoverCardContent>
             </HoverCard>
