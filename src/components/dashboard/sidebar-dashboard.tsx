@@ -57,7 +57,7 @@ const SidebarDashboard = () => {
 
             <HoverCard>
                 <HoverCardTrigger asChild className='w-fit'>
-                    <Link href={"/log-out"}>
+                    <Link href={"/log-out"} className='w-full'>
                         <Button variant={"ghost"} className={`${isOpen ? 'w-full justify-start' : 'w-fit px-2'} text-red-600 hover:text-red-700`}>
                             <CiLogout className={isOpen ? 'mr-3' : 'm-0'} size={20}/>
                             { isOpen && "Logout"}

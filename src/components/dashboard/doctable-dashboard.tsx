@@ -1,9 +1,7 @@
 "use client"
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import PaginationTable from './pagination-table'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table'
-import { useState } from 'react'
-import { ScrollArea } from '../ui/scroll-area'
 import { Checkbox } from '../ui/checkbox'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
@@ -14,12 +12,14 @@ import { FiFileText } from "react-icons/fi"
 import ActionsOption from './action-options'
 import FilterTable from './filter-table'
 import { TableContentProps } from '@/types'
+import { useAuth } from "@clerk/nextjs"
 
 const DocTable = () => {
     const [tableContents, setTableContents] = useState<TableContentProps[]>([])
     const [selectedItems, setSelectedItems] = useState<TableContentProps[]>([])
     const [error, setError] = useState<string>("")
     const [isLoading, setIsLoading] = useState<boolean>(false)
+    const { userId } = useAuth()
 
     const selectAllContents = () => {
         if (selectedItems.length === tableContents.length) {
@@ -44,7 +44,7 @@ const DocTable = () => {
 
     useEffect(() => {
         setIsLoading(true)
-        fetch('/api/documents?id=1').then(async (res) => {
+        fetch(`/api/documents?id=${userId}`).then(async (res) => {
             if (!res.ok) {
                 setError("An error has occured when fetching the data")
             }

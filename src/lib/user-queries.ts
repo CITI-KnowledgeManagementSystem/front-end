@@ -1,15 +1,15 @@
 "use server"
-import { PrismaClient } from "@prisma/client"
+import { prisma } from "@/db"
 
 
 export async function getUserInfo (userId: string) {
     try {
-        const prisma = new PrismaClient()
         const user = await prisma.user.findUnique({
             where: {
                 id: userId
             },
             select: {
+                id: true,
                 username: true,
                 img_url:true,
                 first_name:true,
@@ -26,7 +26,6 @@ export async function getUserInfo (userId: string) {
 
 export async function checkIfUserExistInDb (userId: string) : Promise<boolean>{
     try {
-        const prisma = new PrismaClient()
         const user = await prisma.user.findUnique({
             where: {
                 id: userId
@@ -44,7 +43,6 @@ export async function checkIfUserExistInDb (userId: string) : Promise<boolean>{
 
 export async function registerUser (userId: string, email:string, username: string, firstName:string, lastName:string, img_url:string) {
     try {
-        const prisma = new PrismaClient()
         const user = await prisma.user.create({
             data:{
                 id: userId,

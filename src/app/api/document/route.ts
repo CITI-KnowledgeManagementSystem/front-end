@@ -2,7 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import { access, writeFile } from "fs/promises";
 import fs from "fs";
 import path from "path";
-import { PrismaClient, Prisma } from "@prisma/client";
+import { prisma } from "@/db";
 
 export async function POST(req: Response) {
     const formData = await req.formData();
@@ -36,7 +36,7 @@ export async function POST(req: Response) {
             topic as string,
             filename,
             file_size as number,
-            Number(user_id)
+            user_id as string
         )) as unknown as Document;
 
         if (!docs_id) {
@@ -175,9 +175,9 @@ async function createDocument(
     topic: string,
     filename: string,
     file_size: number,
-    user_id: number
+    user_id: string
 ) {
-    const prisma = new PrismaClient();
+    
     try {
         const document = await prisma.document.create({
             data: {
@@ -192,8 +192,6 @@ async function createDocument(
         return document.id;
     } catch (error) {
         console.error("Error creating document", error);
-    } finally {
-        await prisma.$disconnect();
     }
 }
 
@@ -232,23 +230,20 @@ function findFileWithExtension(
 }
 
 async function deleteRecord(id: number) {
-    const prisma = new PrismaClient();
+
     try {
         const deletedUser = await prisma.document.update({
             where: { id: id },
             data: {
                 deletedAt: new Date(),
-            } as Prisma.DocumentUpdateInput,
+            }
         });
     } catch (error) {
         console.error("Error deleting document", error);
-    } finally {
-        await prisma.$disconnect();
     }
 }
 
 async function updateRecord(id: number, title: string, topic: string) {
-    const prisma = new PrismaClient();
     try {
         const updateRecord = await prisma.document.update({
             where: { id: id },
@@ -264,7 +259,5 @@ async function updateRecord(id: number, title: string, topic: string) {
             { message: "Error updating document" },
             { status: 500 }
         );
-    } finally {
-        await prisma.$disconnect();
     }
 }
