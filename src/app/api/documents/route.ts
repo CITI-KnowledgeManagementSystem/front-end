@@ -5,6 +5,8 @@ import { BsTrophy } from "react-icons/bs";
 
 export async function GET(request: NextRequest) {
     const id = request.nextUrl.searchParams.get("id");
+    const skip = request.nextUrl.searchParams.get("skip");
+    const take = request.nextUrl.searchParams.get("take");
 
     if (!id) {
         return NextResponse.json(
@@ -13,7 +15,7 @@ export async function GET(request: NextRequest) {
         );
     }
 
-    const list = await getListOfDocumentsByUserId(Number(id));
+    const list = await getListOfDocumentsByUserId(Number(id), Number(skip), Number(take));
     return NextResponse.json(
     {
         message: "List of documents",
@@ -26,11 +28,18 @@ export async function GET(request: NextRequest) {
 
 }
 
-async function getListOfDocumentsByUserId(userId: number) {
+async function getListOfDocumentsByUserId(userId: number, skip: number, take: number) {
     const prisma = new PrismaClient();
-
+    if (!take) {
+        take = 10;
+    }
+    if (!skip) {
+        skip = 0;
+    }
     try {
         const list = await prisma.document.findMany({
+            skip: skip,
+            take: take,
             where: {
                 userId: userId,
             },
