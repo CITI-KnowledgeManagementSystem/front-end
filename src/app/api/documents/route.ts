@@ -17,13 +17,13 @@ export async function GET(request: NextRequest) {
 
     const list = await getListOfDocumentsByUserId(Number(id), Number(skip), Number(take));
     return NextResponse.json(
-    {
-        message: "List of documents",
-        data: list
-    },
-    { 
-        status: 200 
-    }
+        {
+            message: "List of documents",
+            data: list
+        },
+        {
+            status: 200
+        }
     );
 
 }

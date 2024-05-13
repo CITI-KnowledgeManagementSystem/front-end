@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 
-export async function accumulatedSizeOfDocuments(id : number) {
+export async function accumulatedSizeOfDocuments(id: number) {
     const prisma = new PrismaClient();
     try {
         const documents = await prisma.document.groupBy({
@@ -21,7 +21,7 @@ export async function accumulatedSizeOfDocuments(id : number) {
     }
 }
 
-export async function numberOfDocuments(id : number) {
+export async function numberOfDocuments(id: number) {
     const prisma = new PrismaClient();
     try {
         const documents = await prisma.document.count({
