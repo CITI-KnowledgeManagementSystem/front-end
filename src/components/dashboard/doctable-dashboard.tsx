@@ -49,6 +49,9 @@ const DocTable = () => {
                 setError("An error has occured when fetching the data")
             }
             const newData = await res.json()
+
+            console.log(newData);
+            
             
             setTableContents(newData.data)
             setIsLoading(false)
