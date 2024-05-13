@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { GoSidebarCollapse, GoSidebarExpand } from "react-icons/go"
+import { CiLogout } from "react-icons/ci";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '../ui/hover-card'
 import { Button } from '../ui/button';
 import { dashboardMenu } from '@/constants'
@@ -16,9 +17,9 @@ const SidebarDashboard = () => {
     
   return (
     <aside className='h-screen'>
-        <nav className={`${isOpen ? 'w-72' : 'w-20'} border-r h-full shadow p-3 bg-white shadow-sm relative transition-all duration-300 ease-in-out`}>
+        <nav className={`${isOpen ? 'w-72' : 'w-20'} border-r h-full shadow p-3 bg-white shadow-sm relative transition-all duration-300 ease-in-out flex flex-col justify-between items-center`}>
             <HoverCard openDelay={200}>
-                <div className={`flex ${isOpen ? "justify-end" : 'justify-center'}`}>
+                <div className={`flex ${isOpen ? "justify-end" : 'justify-center'} w-full`}>
                     <HoverCardTrigger asChild className='w-fit'>
                         <Button className="mt-2 mb-5 px-2" variant={"ghost"} onClick={() => setIsOpen(!isOpen)}>
                             { isOpen ? <GoSidebarExpand className='text-muted-foreground hover:text-blue-700 cursor-pointer' size={20}/> : <GoSidebarCollapse className='text-muted-foreground hover:text-blue-700 cursor-pointer' size={20}/>}
@@ -36,7 +37,7 @@ const SidebarDashboard = () => {
                 </h1>
             </div>
 
-            <div className="w-full">
+            <div className="w-full flex-1">
                 { sidebarItems.map((item, i) => (
                     <HoverCard key={i}>
                         <HoverCardTrigger asChild className='flex flex-col items-center'>
@@ -53,6 +54,20 @@ const SidebarDashboard = () => {
                     </HoverCard>
                 )) }
             </div>
+
+            <HoverCard>
+                <HoverCardTrigger asChild className='w-fit'>
+                    <Link href={"/log-out"}>
+                        <Button variant={"ghost"} className={`${isOpen ? 'w-full justify-start' : 'w-fit px-2'} text-red-600 hover:text-red-700`}>
+                            <CiLogout className={isOpen ? 'mr-3' : 'm-0'} size={20}/>
+                            { isOpen && "Logout"}
+                        </Button> 
+                    </Link>
+                </HoverCardTrigger>
+                {!isOpen && <HoverCardContent className='p-1 bg-slate-700 text-white w-fit' align={isOpen ? 'center' : 'start'}>
+                    <p className='text-xs'>Logout</p>
+                </HoverCardContent>}
+            </HoverCard>
         </nav>
     </aside>
   )

@@ -8,7 +8,7 @@ generator client {
 }
 
 model User {
-  id    Int    @id @default(autoincrement())
+  id    String    @id
   email String @unique
   username  String
   first_name String
@@ -27,7 +27,7 @@ model Document {
   title          String
   original_name  String
   topic          String
-  userId         Int?
+  userId         String?
   file_size      Int
   user           User?  @relation(fields: [userId], references: [id])
   vdb            vdb[]
@@ -47,7 +47,7 @@ model vdb {
 
 model ChatBox {
   id        Int    @id @default(autoincrement())
-  userId    Int?
+  userId    String?
   user      User?   @relation(fields: [userId], references: [id])
   name      String
   messages  Message[]
@@ -60,7 +60,7 @@ model Message {
   id        Int      @id @default(autoincrement())
   chatBoxId Int?
   chatBox   ChatBox?  @relation(fields: [chatBoxId], references: [id])
-  userId    Int?
+  userId    String?
   user      User?     @relation(fields: [userId], references: [id])
   request   String
   response  String

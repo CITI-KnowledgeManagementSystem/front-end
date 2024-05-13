@@ -25,3 +25,11 @@ export interface OptionProps {
     value: string,
     isChoosen?: boolean
 }
+
+export interface UserProfileProps {
+    username: string,
+    email: string,
+    first_name: string,
+    last_name: string,
+    img_url: string
+}
