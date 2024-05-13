@@ -73,11 +73,7 @@ const dummyChats = [
     },
 ]
 
-type Props = {
-    userId: string | null
-}
-
-const SidebarPrompt = ({ userId } : Props) => {
+const SidebarPrompt = () => {
     const [isOpen, setIsOpen] = useState(false)
 
   return (
@@ -145,7 +141,7 @@ const SidebarPrompt = ({ userId } : Props) => {
             )) }
             </div>}
 
-            {isOpen && <UserProfile userId={userId}/>}
+            {isOpen && <UserProfile/>}
         </nav>
     </aside>
   )

@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import Link from "next/link"
 import { FiUpload } from "react-icons/fi";
 import { Card, CardTitle, CardContent, CardDescription, CardFooter, CardHeader } from '../ui/card'
 import { Label } from '../ui/label'
@@ -7,6 +6,7 @@ import { Input } from '../ui/input'
 import { toast } from 'sonner'
 import { Button } from '../ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
+import { useAuth } from "@clerk/nextjs"
 
 interface SuccessToastProp {
     msg: string
@@ -18,7 +18,7 @@ const SuccessToast = ({ msg } : SuccessToastProp) => {
             <p className="text-sm font-semibold">{ msg }</p>
             <p className="text-sm">Refresh the page to see the file</p>
             <div className="w-full flex justify-end">
-                <Button size={"sm"} className='bg-blue-700'>Refresh</Button>
+                <Button onClick={() => window.location.reload()} size={"sm"} className='bg-blue-700'>Refresh</Button>
             </div>
         </div>
     )
@@ -30,6 +30,7 @@ const UploadCard = () => {
   const [topic, setTopic] = useState<string>("")
   const [isOpen, setIsOpen] = useState<boolean>(false)
   const [error, setError] = useState<string>("")
+  const { userId } = useAuth()
 
   const showToast = (promise:Promise<string>) => {
     toast.promise(promise, {
@@ -60,6 +61,7 @@ const uploadDocument = () => {
     formData.append('file', selectedFile)
     formData.append('title', title)
     formData.append('topic', topic)
+    formData.append('user_id', userId || "")
 
     const upload = async () => {
         try {
@@ -67,6 +69,8 @@ const uploadDocument = () => {
                 method: 'POST',
                 body: formData,
             });
+            console.log(await res.json());
+            
             if (!res.ok) {
                 throw new Error();
             }

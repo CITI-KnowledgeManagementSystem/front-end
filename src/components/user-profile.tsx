@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { getUserInfo } from '@/lib/user-queries'
+import { useAuth } from "@clerk/nextjs";
 import { Popover, PopoverTrigger, PopoverContent } from './ui/popover'
 import Link from "next/link"
 import { UserProfileProps } from '@/types'
@@ -10,11 +11,8 @@ import { FaUserEdit } from "react-icons/fa"
 import { MdDashboard } from "react-icons/md"
 import { IoIosLogOut } from "react-icons/io"
 
-type Props = {
-    userId : string | null
-}
-
-const UserProfile =  ({ userId } : Props) => {
+const UserProfile =  () => {
+    const { userId } = useAuth() 
     const [user, setUser] = useState<UserProfileProps | null>()
     const [isLoading, setIsLoading] = useState(false)
 

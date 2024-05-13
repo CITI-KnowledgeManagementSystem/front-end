@@ -1,8 +1,7 @@
 "use server"
-import { PrismaClient } from '@prisma/client';
+import { prisma } from "@/db"
 
 export async function accumulatedSizeOfDocuments(id : string) {
-    const prisma = new PrismaClient();
     try {
         const documents = await prisma.document.groupBy({
             by: ['userId'],
@@ -18,14 +17,11 @@ export async function accumulatedSizeOfDocuments(id : string) {
         return Number(file_size.toFixed(2))
     } catch (err) {
         console.error('Error fetching documents', err);
-    } finally {
-        await prisma.$disconnect();
     }
 }
 
 
 export async function numberOfDocuments(id : string) {
-    const prisma = new PrismaClient();
     try {
         const documents = await prisma.document.count({
             where: {
@@ -35,7 +31,5 @@ export async function numberOfDocuments(id : string) {
         return documents;
     } catch (err) {
         console.error('Error fetching documents', err);
-    } finally {
-        await prisma.$disconnect();
     }
 }
