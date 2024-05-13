@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { request } from "http";
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/db";
 
 export async function GET(request: NextRequest) {
     return NextResponse.json(
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
 
     const response = await getRecordLLM(request_chat as string) as string[];
 
-    createRecord(request_chat as string, response[0] as string, Number(userId), Number(chatBoxId));
+    createRecord(request_chat as string, response[0] as string, userId.toString(), Number(chatBoxId));
 
     return NextResponse.json(
         {
@@ -36,8 +37,11 @@ export async function POST(request: NextRequest) {
     )
 }
 
-async function createRecord(request: string, response: string, userId: number, chatBoxId: number) {
-    const prisma = await new PrismaClient();
+async function createRecord(request: string, response: string, userId: string, chatBoxId: number) {
+    if (globalThis.prisma == null) {
+        globalThis.prisma = new PrismaClient();
+    }
+    
     try {
         await prisma.message.create({
             data: {
@@ -50,8 +54,6 @@ async function createRecord(request: string, response: string, userId: number, c
         });
     } catch (err) {
         console.error('Error creating record', err);
-    } finally {
-        await prisma.$disconnect();
     }
 }
 

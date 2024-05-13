@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { NextResponse, NextRequest } from 'next/server';
+import { prisma } from '@/db';
 
 export async function GET(request: NextRequest, context: any) {
     const { params } = context;
@@ -18,7 +19,9 @@ export async function GET(request: NextRequest, context: any) {
 }
 
 async function getRecord(id: number) {
-    const prisma = await new PrismaClient();
+    if (globalThis.prisma == null) {
+        globalThis.prisma = new PrismaClient();
+    }
     try {
         const record = await prisma.message.findMany({
             where: {
@@ -31,7 +34,5 @@ async function getRecord(id: number) {
         return record;
     } catch (err) {
         console.error('Error fetching record', err);
-    } finally {
-        await prisma.$disconnect();
     }
 }
