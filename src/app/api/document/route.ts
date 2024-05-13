@@ -10,8 +10,9 @@ export async function POST(req: Response) {
     const file = formData.get("file");
     const title = formData.get("title");
     const topic = formData.get("topic");
+    const user_id = formData.get("user_id");
 
-    if (!title || !topic) {
+    if (!title || !topic || !user_id) {
         return NextResponse.json(
             { message: "Please fill in all fields" },
             { status: 400 }
@@ -34,7 +35,8 @@ export async function POST(req: Response) {
             title as string,
             topic as string,
             filename,
-            file_size as number
+            file_size as number,
+            Number(user_id)
         )) as unknown as Document;
 
         if (!docs_id) {
@@ -172,7 +174,8 @@ async function createDocument(
     title: string,
     topic: string,
     filename: string,
-    file_size: number
+    file_size: number,
+    user_id: number
 ) {
     const prisma = new PrismaClient();
     try {
@@ -183,6 +186,7 @@ async function createDocument(
                 original_name: filename,
                 file_size: file_size,
                 createdAt: new Date(),
+                userId: user_id,
             },
         });
         return document.id;
