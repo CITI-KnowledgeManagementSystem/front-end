@@ -1,10 +1,17 @@
+import { auth, currentUser } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+import { checkIfUserExistInDb, registerUser } from "@/lib/user-queries";
 
-export default function Home() {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        Check checkan
-      </div>
-    </main>
-  );
+export default async function Home() {
+  const { userId } = auth();
+  
+  // check if the userId is already in the database, if not, create
+  if (userId && !await checkIfUserExistInDb(userId)) {
+    const user = await currentUser()
+    await registerUser(userId, user?.emailAddresses[0].emailAddress || "", (user?.firstName + " " + user?.lastName), user?.firstName || "", user?.lastName || "", user?.imageUrl || "")
+  }
+  
+  
+
+  return redirect('/prompt')
 }

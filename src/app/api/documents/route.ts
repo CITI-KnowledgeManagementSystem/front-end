@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
         );
     }
 
-    const list = await getListOfDocumentsByUserId(Number(id), Number(skip), Number(take));
+    const list = await getListOfDocumentsByUserId(id, Number(skip), Number(take));
     return NextResponse.json(
     {
         message: "List of documents",
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 
 }
 
-async function getListOfDocumentsByUserId(userId: number, skip: number, take: number) {
+async function getListOfDocumentsByUserId(userId: string, skip: number, take: number) {
     const prisma = new PrismaClient();
     if (!take) {
         take = 10;

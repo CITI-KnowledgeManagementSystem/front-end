@@ -1,7 +1,7 @@
 "use server"
 import { PrismaClient } from '@prisma/client';
 
-export async function accumulatedSizeOfDocuments(id : number) {
+export async function accumulatedSizeOfDocuments(id : string) {
     const prisma = new PrismaClient();
     try {
         const documents = await prisma.document.groupBy({
@@ -23,7 +23,8 @@ export async function accumulatedSizeOfDocuments(id : number) {
     }
 }
 
-export async function numberOfDocuments(id : number) {
+
+export async function numberOfDocuments(id : string) {
     const prisma = new PrismaClient();
     try {
         const documents = await prisma.document.count({

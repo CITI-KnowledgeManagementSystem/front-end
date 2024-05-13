@@ -11,7 +11,7 @@ import UploadCard from './upload-card'
 import { OptionProps } from '@/types'
 
 // APIS
-import { accumulatedSizeOfDocuments } from '@/lib/queries'
+import { accumulatedSizeOfDocuments } from '@/lib/document-queries'
 
 const dummyTags = [
     { value: 'pdf' }, { value: 'txt' }, { value: 'md' },
@@ -48,7 +48,7 @@ const FilterTable = () => {
   }
 
   useEffect(() => {
-    accumulatedSizeOfDocuments(1).then(res => setStorageSize(res || 0)).catch(err => console.log(err)
+    accumulatedSizeOfDocuments("user_2gOccPB3hREIrVp2mUFwFFgwvjg").then(res => setStorageSize(res || 0)).catch(err => console.log(err)
     )
   }, [])
 
