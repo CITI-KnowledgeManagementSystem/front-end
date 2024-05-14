@@ -3,6 +3,7 @@ import { access, writeFile } from "fs/promises";
 import fs from "fs";
 import path from "path";
 import { prisma } from "@/db";
+import { PrismaClient } from "@prisma/client";
 
 export async function POST(req: Response) {
     const formData = await req.formData();
@@ -21,7 +22,7 @@ export async function POST(req: Response) {
 
     if (!file) {
         return NextResponse.json(
-            { message: "No file uploaded" }, 
+            { message: "No file uploaded" },
             { status: 400 }
         );
     }
@@ -41,7 +42,7 @@ export async function POST(req: Response) {
 
         if (!docs_id) {
             return NextResponse.json(
-                { message: "Error insert to SQL"},
+                { message: "Error insert to SQL" },
                 { status: 400 }
             );
         }
@@ -68,7 +69,7 @@ export async function POST(req: Response) {
         );
     } catch (err) {
         return NextResponse.json(
-            { message: "Error Occured"},
+            { message: "Error Occured" },
             { status: 400 }
         );
     }
@@ -177,7 +178,10 @@ async function createDocument(
     file_size: number,
     user_id: string
 ) {
-    
+    if (globalThis.prisma == null) {
+        globalThis.prisma = new PrismaClient();
+    }
+
     try {
         const document = await prisma.document.create({
             data: {
@@ -230,6 +234,9 @@ function findFileWithExtension(
 }
 
 async function deleteRecord(id: number) {
+    if (globalThis.prisma == null) {
+        globalThis.prisma = new PrismaClient();
+    }
 
     try {
         const deletedUser = await prisma.document.update({
@@ -244,6 +251,10 @@ async function deleteRecord(id: number) {
 }
 
 async function updateRecord(id: number, title: string, topic: string) {
+    if (globalThis.prisma == null) {
+        globalThis.prisma = new PrismaClient();
+    }
+
     try {
         const updateRecord = await prisma.document.update({
             where: { id: id },

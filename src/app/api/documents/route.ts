@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { parse } from "path";
 import { BsTrophy } from "react-icons/bs";
+import { prisma } from "@/db";
 
 export async function GET(request: NextRequest) {
     const id = request.nextUrl.searchParams.get("id");
@@ -29,13 +30,17 @@ export async function GET(request: NextRequest) {
 }
 
 async function getListOfDocumentsByUserId(userId: string, skip: number, take: number) {
-    const prisma = new PrismaClient();
+    if (globalThis.prisma == null) {
+        globalThis.prisma = new PrismaClient();
+    }
+
     if (!take) {
         take = 10;
     }
     if (!skip) {
         skip = 0;
     }
+    
     try {
         const list = await prisma.document.findMany({
             skip: skip,

@@ -1,11 +1,12 @@
 "use client";
 import { notFound, useParams } from "next/navigation";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
+import { getUserInfo, updateUser } from "@/lib/user-queries";
 import {
-  Form,
+  Form, 
   FormControl,
   FormDescription,
   FormField,
@@ -14,8 +15,18 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-
+import { useAuth } from "@clerk/nextjs";
 import { z } from "zod";
+
+interface User {
+  id: string,
+  username : string,
+  email: string,
+  first_name: string,
+  last_name: string,
+  img_url: string,
+};
+
 const formSchema = z.object({
   username: z.string(),
   email: z.string().email(),
@@ -24,34 +35,66 @@ const formSchema = z.object({
   img_url: z.string(),
 });
 
-// const DashboardPage = () => {
-//   const params = useParams()
-
-//   if (params.pageName === 'my-documents') {
-//     return <DocumentPage/>
-//   }
-//   return (
-//     notFound()
-//   )
-// }
-
-// export default DashboardPage
-
-function onSubmit(values: z.infer<typeof formSchema>) {
-  console.log(values);
-}
-
 const ProfilePage = () => {
+
+  const { userId } = useAuth();
+  const [user, setUser] = useState<User | null>();
+  const [isLoading, setIsLoading] = useState(true);
+  const [formReady, setFormReady] = useState(false);
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      username: "karina",
-      email: "",
-      first_name: "",
-      last_name: "",
-      img_url: "",
+      username: '',
+      email: '',
+      first_name: '',
+      last_name: '',
+      img_url: '',
     },
   });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const userData = await getUserInfo(userId?.toString() || "");
+        setUser(userData);
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setIsLoading(false);
+        setFormReady(true);
+      }
+
+    };
+    fetchData();
+  }, [userId]);
+
+  useEffect(() => {
+    if (user && formReady) {
+      form.setValue("username", user.username);
+      form.setValue("email", user.email);
+      form.setValue("first_name", user.first_name);
+      form.setValue("last_name", user.last_name);
+      form.setValue("img_url", user.img_url);
+    }
+  }, [user, formReady, form]);
+
+  if (isLoading) {
+    return (
+      <div className="w-full h-full flex justify-center items-center">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    console.log(values);
+    try {
+      updateUser(userId?.toString() || "", values.email, values.username, values.first_name, values.last_name, values.img_url);
+    } catch(err) {
+      console.log(err);
+    }
+  }
 
   return (
     <div className="flex-col p-10">
@@ -61,7 +104,7 @@ const ProfilePage = () => {
       </div>
       <div className="p-10 border-2 rounded-lg">
         <img
-          src="https://upload.wikimedia.org/wikipedia/commons/1/12/230601_Karina_%28aespa%29.jpg"
+          src={user?.img_url || "https://via.placeholder.com/200"}
           alt=""
           className="rounded-full h-[200px] w-[200px] overflow-hidden object-cover mx-auto"
         />

@@ -1,9 +1,9 @@
 import { PrismaClient } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/db";
 
 
 export async function GET(request: NextRequest) {
-    console.log(request);
     const user_id = request.nextUrl.searchParams.get("user_id");
     if (!user_id) {
         return NextResponse.json(
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
             { status: 400 }
         )
     }
-    const record = await getRecord(Number(user_id));
+    const record = await getRecord(user_id.toString());
     return NextResponse.json(
         {
             message: 'Record fetched successfully',
@@ -24,7 +24,6 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-    console.log(request);
     const formData = await request.formData();
     const userId = formData.get("userId");
     const name = formData.get("name");
@@ -36,9 +35,9 @@ export async function POST(request: NextRequest) {
         )
     }
 
-    createRecord(Number(userId), name as string);
+    createRecord(userId.toString(), name as string);
     return NextResponse.json(
-        { 
+        {
             message: 'Record created successfully',
         },
         {
@@ -48,7 +47,6 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-    console.log(request);
     const formData = await request.formData();
     const id = formData.get("id");
     const name = formData.get("name");
@@ -62,7 +60,7 @@ export async function PUT(request: NextRequest) {
 
     updateRecord(Number(id), name as string);
     return NextResponse.json(
-        { 
+        {
             message: 'Record updated successfully',
         },
         {
@@ -72,7 +70,6 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-    console.log(request);
     const id = request.nextUrl.searchParams.get("id");
     if (!id) {
         return NextResponse.json(
@@ -82,7 +79,7 @@ export async function DELETE(request: NextRequest) {
     }
     deleteRecord(Number(id));
     return NextResponse.json(
-        { 
+        {
             message: 'Record deleted successfully',
         },
         {
@@ -91,13 +88,15 @@ export async function DELETE(request: NextRequest) {
     )
 }
 
-async function getRecord(id: number) {
-    console.log(id);
-    const prisma = new PrismaClient();
+async function getRecord(id: string) {
+    if (globalThis.prisma == null) {
+        globalThis.prisma = new PrismaClient();
+    }
+
     try {
         const record = await prisma.chatBox.findMany({
-            where : {
-                userId : id
+            where: {
+                userId: id
             }
         });
         return record;
@@ -105,18 +104,19 @@ async function getRecord(id: number) {
         return NextResponse.json(
             {
                 message: 'Error fetching record',
-            }, 
+            },
             {
                 status: 500
             }
         )
-    } finally {
-        await prisma.$disconnect();
     }
 }
 
-async function createRecord(userId: number, name: string) {
-    const prisma = new PrismaClient();
+async function createRecord(userId: string, name: string) {
+    if (globalThis.prisma == null) {
+        globalThis.prisma = new PrismaClient();
+    }
+
     try {
         const record = await prisma.chatBox.create({
             data: {
@@ -125,24 +125,24 @@ async function createRecord(userId: number, name: string) {
                 createdAt: new Date()
             }
         });
-        console.log(record);
     } catch (error) {
         console.error("Error creating record", error);
         return NextResponse.json(
             {
                 message: 'Error creating record',
             },
-            { 
+            {
                 status: 500
             }
         )
-    } finally {
-        await prisma.$disconnect();
     }
 }
 
 async function updateRecord(id: number, name: string) {
-    const prisma = new PrismaClient();
+    if (globalThis.prisma == null) {
+        globalThis.prisma = new PrismaClient();
+    }
+
     try {
         const record = await prisma.chatBox.update({
             where: {
@@ -163,13 +163,13 @@ async function updateRecord(id: number, name: string) {
                 status: 500
             }
         )
-    } finally {
-        await prisma.$disconnect();
     }
 }
 
 async function deleteRecord(id: number) {
-    const prisma = new PrismaClient();
+    if (globalThis.prisma == null) {
+        globalThis.prisma = new PrismaClient();
+    }
     try {
         const record = await prisma.chatBox.update({
             where: {
@@ -189,7 +189,5 @@ async function deleteRecord(id: number) {
                 status: 500
             }
         )
-    } finally {
-        await prisma.$disconnect();
     }
 }
