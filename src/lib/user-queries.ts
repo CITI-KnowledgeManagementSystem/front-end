@@ -2,7 +2,7 @@
 import { prisma } from "@/db"
 import { PrismaClient } from "@prisma/client"
 
-export async function getUserInfo(userId: string) {
+export async function getUserInfo(userId: string, ) {
     try {
         const user = await prisma.user.findUnique({
             where: {
