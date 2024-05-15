@@ -1,28 +1,32 @@
 import { BsDatabase } from "react-icons/bs";
-import { MdOutlineAnalytics } from "react-icons/md";
-import { MdOutlineWorkspacePremium } from "react-icons/md";
+import { MdOutlineAnalytics, MdOutlineWorkspacePremium, MdOutlineChat } from "react-icons/md";
 import { CgProfile } from "react-icons/cg";
 
 
 export const dashboardMenu = [
     {
         name: 'My Documents',
-        url: 'my-documents',
+        url: 'dashboard/my-documents',
         icon: BsDatabase
     },
     {
         name: 'My Profile',
-        url: 'profile',
+        url: 'dashboard/profile',
         icon: CgProfile
     },
     {
+        name: 'Chat',
+        url: 'prompt',
+        icon: MdOutlineChat
+    },
+    {
         name: 'Analytics',
-        url: 'my-analytics',
+        url: 'dashboard/my-analytics',
         icon: MdOutlineAnalytics
     },
     {
         name: 'Go Premium',
-        url: 'go-premium',
+        url: 'dashboard/go-premium',
         icon: MdOutlineWorkspacePremium
     }
 ]

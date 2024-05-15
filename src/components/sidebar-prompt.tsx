@@ -9,7 +9,18 @@ import { GoPlus } from "react-icons/go"
 import { HoverCard, HoverCardContent, HoverCardTrigger } from './ui/hover-card'
 import UserProfile from './user-profile'
 import ThreeDotSidebar from './three-dot-sidebar'
+import { getChatBox } from '@/lib/chat-queries'
+import { useAuth } from '@clerk/nextjs'; 
 
+interface T {
+    id: number;
+    name: string;
+    updatedAt: Date;
+}
+
+interface ChatBoxGroup {
+    [key: string]: T[];
+}
 
 const dummyChats = [
     {
@@ -75,6 +86,25 @@ const dummyChats = [
 
 const SidebarPrompt = () => {
     const [isOpen, setIsOpen] = useState(false)
+    const [chatBox, setChatBox] = useState< ChatBoxGroup | null>(null)
+    const { userId } = useAuth()
+
+    useEffect(() => {
+        if (chatBox === null) {
+            const fetchData = async () => {
+                try {
+                    const chatBox = await getChatBox(userId?.toString() || "");
+                    setChatBox(chatBox ? chatBox : null)
+                } catch (error) {
+                    console.log(error)
+                }
+            }
+            fetchData()
+        }
+    }, [])
+    console.log('chatbox', chatBox);
+
+    // console.log(dummyChats[])
 
   return (
     <aside className={`h-screen`}>
