@@ -13,7 +13,7 @@ export async function accumulatedSizeOfDocuments(id : string) {
             },
         });
 
-        const file_size= (documents[0]._sum.file_size ? documents[0]._sum.file_size / (1000 * 1000 * 1000) : 0) 
+        const file_size= (documents[0]._sum.file_size ? documents[0]._sum.file_size / (1024 * 1024 * 1024) : 0) 
         return Number(file_size.toFixed(2))
     } catch (err) {
         console.error('Error fetching documents', err);

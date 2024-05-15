@@ -12,6 +12,7 @@ import { OptionProps } from '@/types'
 
 // APIS
 import { accumulatedSizeOfDocuments } from '@/lib/document-queries'
+import { useAuth } from '@clerk/nextjs';
 
 const dummyTags = [
     { value: 'pdf' }, { value: 'txt' }, { value: 'md' },
@@ -23,7 +24,7 @@ const FilterTable = () => {
   const [storageSize, setStorageSize] = useState<number>(0)
   const [limitStorageSize, setLimitStorageSize] = useState<number>(25)
   const [searchTerm, setSearchTerm] = useState<string>("")
-
+  const { userId } = useAuth()
 
   const chooseTag = (newTag:OptionProps) => {
     const tagIndex = tags.indexOf(newTag)
@@ -48,7 +49,7 @@ const FilterTable = () => {
   }
 
   useEffect(() => {
-    accumulatedSizeOfDocuments("user_2gOccPB3hREIrVp2mUFwFFgwvjg").then(res => setStorageSize(res || 0)).catch(err => console.log(err)
+    accumulatedSizeOfDocuments(userId || "").then(res => setStorageSize(res || 0)).catch(err => console.log(err)
     )
   }, [])
 
