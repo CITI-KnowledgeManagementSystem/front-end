@@ -1,7 +1,7 @@
 "use client"
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { GoSidebarCollapse, GoSidebarExpand } from "react-icons/go"
 import { CiLogout } from "react-icons/ci";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '../ui/hover-card'
@@ -12,7 +12,9 @@ import { SidebarItems } from '@/types'
 const SidebarDashboard = () => {
     const [isOpen, setIsOpen] = useState<boolean>(false)
     const [sidebarItems, setSidebarItems] = useState<SidebarItems[]>(dashboardMenu)
-    const params = useParams()
+    const pathname = usePathname()
+    
+    
     
     
   return (
@@ -42,7 +44,7 @@ const SidebarDashboard = () => {
                     <HoverCard key={i}>
                         <HoverCardTrigger asChild className='flex flex-col items-center'>
                             <Link href={ '/dashboard/' + item.url } key={i}>
-                                <Button variant={"ghost"} key={i} className={`${isOpen ? 'w-full justify-start' : 'w-fit px-2'} ${item.url === params.pageName && 'bg-blue-700 text-white hover:bg-blue-700 hover:text-white'}`}>
+                                <Button variant={"ghost"} key={i} className={`${isOpen ? 'w-full justify-start' : 'w-fit px-2'} ${item.url === pathname.split("/")[2] && 'bg-blue-700 text-white hover:bg-blue-700 hover:text-white'}`}>
                                     {item.icon && <item.icon className={isOpen ? 'mr-3' : 'm-0'} size={20}/>}
                                     { isOpen && <p className="transition-opacity duration-1000">{ item.name }</p> }
                                 </Button>
@@ -56,7 +58,7 @@ const SidebarDashboard = () => {
             </div>
 
             <HoverCard>
-                <HoverCardTrigger asChild className='w-fit'>
+                <HoverCardTrigger asChild className='w-fit flex items-center justify-center'>
                     <Link href={"/log-out"} className='w-full'>
                         <Button variant={"ghost"} className={`${isOpen ? 'w-full justify-start' : 'w-fit px-2'} text-red-600 hover:text-red-700`}>
                             <CiLogout className={isOpen ? 'mr-3' : 'm-0'} size={20}/>

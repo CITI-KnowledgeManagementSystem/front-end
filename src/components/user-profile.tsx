@@ -48,7 +48,7 @@ const UserProfile =  () => {
         </PopoverTrigger>
         <PopoverContent className='w-full p-1' align='center'>
             <div className="w-48">
-                <Link href={"/dashboard/my-documents"}>
+                <Link href={"/dashboard/my-documents"} shallow>
                     <Button className='w-full justify-start' variant={"ghost"} size={"sm"}>
                         <MdDashboard className='mr-3' size={16}/>
                         Go to your dashboard
