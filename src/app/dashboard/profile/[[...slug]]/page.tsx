@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { getUserInfo, updateUser } from "@/lib/user-queries";
 // import Image from "next/image";
 import { useToast } from "@/components/ui/use-toast";
+import { Skeleton } from "@/components/ui/skeleton"
 
 import {
-  Form, 
+  Form,
   FormControl,
   FormDescription,
   FormField,
@@ -23,7 +24,7 @@ import { z } from "zod";
 
 interface User {
   id: string,
-  username : string,
+  username: string,
   email: string,
   first_name: string,
   last_name: string,
@@ -46,7 +47,7 @@ const ProfilePage = () => {
   const [formReady, setFormReady] = useState(false);
   const [imageURL, setImageURL] = useState<string>(user?.img_url.toString() || "");
   const { toast } = useToast();
-  
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -85,19 +86,23 @@ const ProfilePage = () => {
     }
   }, [user, formReady, form]);
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-full flex justify-center items-center">
-        <p>Loading...</p>
+  // if (isLoading) {
+  // }
+  return (
+    <div className="flex h-full items-center space-x-4 justify-center">
+      <Skeleton className="h-12 w-12 rounded-full" />
+      <div className="space-y-2">
+        <Skeleton className="h-10 w-[1000px]" />
+        <Skeleton className="h-10 w-[200px]" />
       </div>
-    );
-  }
+    </div>
+  );
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     console.log(values);
     try {
       updateUser(userId?.toString() || "", values.email, values.username, values.first_name, values.last_name, values.img_url);
-    } catch(err) {
+    } catch (err) {
       console.log(err);
       toast({
         title: "Uh oh! Something went wrong.",
@@ -191,20 +196,20 @@ const ProfilePage = () => {
                 />
               </div>
             </div>
-                <FormField
-                  control={form.control}
-                  name="img_url"
-                  render={({ field, formState }) => (
-                    <FormItem>
-                      <FormLabel>Image Profile URL</FormLabel>
-                      <Input placeholder="Duke" {...field} />
-                      <FormMessage>
-                        {formState.errors.img_url?.message}
-                      </FormMessage>
-                      {/* <FormDescription>Your username</FormDescription> */}
-                    </FormItem>
-                  )}
-                />
+            <FormField
+              control={form.control}
+              name="img_url"
+              render={({ field, formState }) => (
+                <FormItem>
+                  <FormLabel>Image Profile URL</FormLabel>
+                  <Input placeholder="Duke" {...field} />
+                  <FormMessage>
+                    {formState.errors.img_url?.message}
+                  </FormMessage>
+                  {/* <FormDescription>Your username</FormDescription> */}
+                </FormItem>
+              )}
+            />
             <Button className="bg-blue-700">
               <span>Save</span>
             </Button>
