@@ -1,6 +1,7 @@
 import { BsDatabase } from "react-icons/bs";
 import { MdOutlineAnalytics } from "react-icons/md";
 import { MdOutlineWorkspacePremium } from "react-icons/md";
+import { CgProfile } from "react-icons/cg";
 
 
 export const dashboardMenu = [
@@ -8,6 +9,11 @@ export const dashboardMenu = [
         name: 'My Documents',
         url: 'my-documents',
         icon: BsDatabase
+    },
+    {
+        name: 'My Profile',
+        url: 'profile',
+        icon: CgProfile
     },
     {
         name: 'Analytics',
