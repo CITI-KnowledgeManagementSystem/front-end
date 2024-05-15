@@ -62,6 +62,7 @@ const ProfilePage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        console.log(userId);
         const userData = await getUserInfo(userId?.toString() || "");
         setUser(userData);
       } catch (error) {
@@ -86,17 +87,17 @@ const ProfilePage = () => {
     }
   }, [user, formReady, form]);
 
-  // if (isLoading) {
-  // }
-  return (
-    <div className="flex h-full items-center space-x-4 justify-center">
-      <Skeleton className="h-12 w-12 rounded-full" />
-      <div className="space-y-2">
-        <Skeleton className="h-10 w-[1000px]" />
-        <Skeleton className="h-10 w-[200px]" />
+  if (isLoading) {
+    return (
+      <div className="flex h-full items-center space-x-4 justify-center">
+        <Skeleton className="h-12 w-12 rounded-full" />
+        <div className="space-y-2">
+          <Skeleton className="h-10 w-[1000px]" />
+          <Skeleton className="h-10 w-[200px]" />
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     console.log(values);
