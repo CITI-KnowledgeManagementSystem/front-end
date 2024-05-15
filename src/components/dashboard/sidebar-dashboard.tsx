@@ -20,7 +20,7 @@ const SidebarDashboard = () => {
   return (
     <aside className='h-screen'>
         <nav className={`${isOpen ? 'w-72' : 'w-20'} border-r h-full shadow p-3 bg-white shadow-sm relative transition-all duration-300 ease-in-out flex flex-col justify-between items-center`}>
-            <HoverCard openDelay={200}>
+            <HoverCard openDelay={1000}>
                 <div className={`flex ${isOpen ? "justify-end" : 'justify-center'} w-full`}>
                     <HoverCardTrigger asChild className='w-fit'>
                         <Button className="mt-2 mb-5 px-2" variant={"ghost"} onClick={() => setIsOpen(!isOpen)}>
@@ -43,7 +43,7 @@ const SidebarDashboard = () => {
                 { sidebarItems.map((item, i) => (
                     <HoverCard key={i}>
                         <HoverCardTrigger asChild className='flex flex-col items-center'>
-                            <Link href={ '/dashboard/' + item.url } key={i}>
+                            <Link href={ '/dashboard/' + item.url } key={i} className='my-1'>
                                 <Button variant={"ghost"} key={i} className={`${isOpen ? 'w-full justify-start' : 'w-fit px-2'} ${item.url === pathname.split("/")[2] && 'bg-blue-700 text-white hover:bg-blue-700 hover:text-white'}`}>
                                     {item.icon && <item.icon className={isOpen ? 'mr-3' : 'm-0'} size={20}/>}
                                     { isOpen && <p className="transition-opacity duration-1000">{ item.name }</p> }

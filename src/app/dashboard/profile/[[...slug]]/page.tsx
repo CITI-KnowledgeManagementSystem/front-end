@@ -5,6 +5,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { getUserInfo, updateUser } from "@/lib/user-queries";
+// import Image from "next/image";
+import { useToast } from "@/components/ui/use-toast";
+
 import {
   Form, 
   FormControl,
@@ -41,6 +44,8 @@ const ProfilePage = () => {
   const [user, setUser] = useState<User | null>();
   const [isLoading, setIsLoading] = useState(true);
   const [formReady, setFormReady] = useState(false);
+  const [imageURL, setImageURL] = useState<string>(user?.img_url.toString() || "");
+  const { toast } = useToast();
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -76,6 +81,7 @@ const ProfilePage = () => {
       form.setValue("first_name", user.first_name);
       form.setValue("last_name", user.last_name);
       form.setValue("img_url", user.img_url);
+      setImageURL(user.img_url);
     }
   }, [user, formReady, form]);
 
@@ -93,7 +99,18 @@ const ProfilePage = () => {
       updateUser(userId?.toString() || "", values.email, values.username, values.first_name, values.last_name, values.img_url);
     } catch(err) {
       console.log(err);
+      toast({
+        title: "Uh oh! Something went wrong.",
+        description: "There was a problem while updating your profile.",
+      });
     }
+    toast({
+      title: "Profile Updated!",
+      description: "Your profile has been updated successfully",
+    });
+    // window.location.reload();
+    const newImageURL = values.img_url;
+    setImageURL(newImageURL);
   }
 
   return (
@@ -104,10 +121,11 @@ const ProfilePage = () => {
       </div>
       <div className="p-10 border-2 rounded-lg">
         <img
-          src={user?.img_url || "https://via.placeholder.com/200"}
+          src={imageURL || "https://via.placeholder.com/200"}
           alt=""
           className="rounded-full h-[200px] w-[200px] overflow-hidden object-cover mx-auto"
         />
+        {/* <Image src={user?.img_url || "https://via.placeholder.com/200"} alt="" width={200} height={200} className="rounded-full h-[200px] w-[200px] overflow-hidden object-cover mx-auto" /> */}
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
@@ -173,6 +191,20 @@ const ProfilePage = () => {
                 />
               </div>
             </div>
+                <FormField
+                  control={form.control}
+                  name="img_url"
+                  render={({ field, formState }) => (
+                    <FormItem>
+                      <FormLabel>Image Profile URL</FormLabel>
+                      <Input placeholder="Duke" {...field} />
+                      <FormMessage>
+                        {formState.errors.img_url?.message}
+                      </FormMessage>
+                      {/* <FormDescription>Your username</FormDescription> */}
+                    </FormItem>
+                  )}
+                />
             <Button className="bg-blue-700">
               <span>Save</span>
             </Button>
