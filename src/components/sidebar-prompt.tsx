@@ -11,6 +11,7 @@ import UserProfile from './user-profile'
 import ThreeDotSidebar from './three-dot-sidebar'
 import { getChatBox } from '@/lib/chat-queries'
 import { useAuth } from '@clerk/nextjs'; 
+import { usePathname } from 'next/navigation'
 
 interface T {
     id: number;
@@ -20,6 +21,43 @@ interface T {
 
 interface ChatBoxGroup {
     [key: string]: T[];
+}
+
+export function sortChatBox(chatBox: ChatBoxGroup) {
+    const sortingOrder = {
+        'Today': 0,
+        'Yesterday': 1,
+        'Last 7 Days': 2,
+        'Last 30 Days': 3,
+        'December': 4,
+        'November': 5,
+        'October': 6,
+        'September': 7,
+        'August': 8,
+        'July': 9,
+        'June': 10,
+        'May': 11,
+        'April': 12,
+        'March': 13,
+        'February': 14,
+        'January': 15,
+    };
+
+    function getSortOrder(key: string) {
+        if (sortingOrder.hasOwnProperty(key)) {
+            return sortingOrder[key as keyof typeof sortingOrder];
+        } else {
+            return new Date().getFullYear() - Number(key) + 15;
+        }
+    }
+
+    const sortedKeys = Object.keys(chatBox).sort((a, b) => {
+        const orderA = getSortOrder(a) as number;
+        const orderB = getSortOrder(b) as number;
+        return orderA - orderB;
+    });
+
+    return sortedKeys;
 }
 
 const dummyChats = [
@@ -87,24 +125,25 @@ const dummyChats = [
 const SidebarPrompt = () => {
     const [isOpen, setIsOpen] = useState(false)
     const [chatBox, setChatBox] = useState< ChatBoxGroup | null>(null)
+    const [sortedKeys, setSortedKeys] = useState<string[]>([])
     const { userId } = useAuth()
+    const pathname = usePathname()
 
     useEffect(() => {
         if (chatBox === null) {
             const fetchData = async () => {
                 try {
-                    const chatBox = await getChatBox(userId?.toString() || "");
+                    let chatBox = await getChatBox(userId?.toString() || "");
+                    let sortedKeys = sortChatBox(chatBox as ChatBoxGroup); // Add type assertion here
                     setChatBox(chatBox ? chatBox : null)
+                    setSortedKeys(sortedKeys)
                 } catch (error) {
                     console.log(error)
                 }
             }
             fetchData()
         }
-    }, [])
-    console.log('chatbox', chatBox);
-
-    // console.log(dummyChats[])
+    }, [chatBox, userId])
 
   return (
     <aside className={`h-screen`}>
@@ -158,7 +197,7 @@ const SidebarPrompt = () => {
             </HoverCard>}
 
             {isOpen && <div className='flex-1 overflow-y-auto mb-3'>
-            { dummyChats.map((item, i) => (
+            {/* { dummyChats.map((item, i) => (
                 <div className="w-full my-2" key={i}>
                     <label className='text-muted-foreground text-xs font-semibold'>{ item.dateGroup }</label>
                     { item.chats.map((item, i) => (
@@ -168,7 +207,26 @@ const SidebarPrompt = () => {
                         </Button>
                     )) }
                 </div>
-            )) }
+            )) } */}
+            {
+                chatBox && sortedKeys.map((key) => {
+                    return (
+                        <div className="w-full my-2" key={key}>
+                            { chatBox[key].length === 0 ? null : (
+                                <>
+                                    <label className='text-muted-foreground text-xs font-semibold'>{ key }</label>
+                                    { chatBox[key].map((item, i) => (
+                                        <Button key={i} variant={"ghost"} className={`flex justify-between items-center w-full relative group ${item.id.toString() === pathname?.split('/')[2] && 'bg-white hover:bg-white'}`}>
+                                            { item.name.length > 20 ? item.name.slice(0,20) : item.name }
+                                            <ThreeDotSidebar/>
+                                        </Button>
+                                    )) }
+                                </>
+                            )}
+                        </div>
+                    )
+                })
+            }
             </div>}
 
             {isOpen && <UserProfile/>}
