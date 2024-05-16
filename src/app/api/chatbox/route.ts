@@ -2,6 +2,15 @@ import { PrismaClient } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/db";
 
+interface T {
+    id: number;
+    name: string;
+    updatedAt: Date;
+}
+
+interface ChatBoxGroup {
+    [key: string]: T[];
+}
 
 export async function GET(request: NextRequest) {
     const user_id = request.nextUrl.searchParams.get("user_id");
@@ -11,11 +20,70 @@ export async function GET(request: NextRequest) {
             { status: 400 }
         )
     }
-    const record = await getRecord(user_id.toString());
+    const chatBox = await getRecord(user_id.toString());
+    let chatBoxGroup: ChatBoxGroup = {};
+
+    if (Array.isArray(chatBox)) {
+        for (let i = 0; i < chatBox.length; i++) {
+            let dateNow = new Date();
+            let dateChat: Date = chatBox[i].updatedAt ?? new Date();
+            let differenceDays = (dateNow.getTime() - dateChat.getTime()) / (1000 * 3600 * 24);
+            if (differenceDays <= 1) {
+                chatBoxGroup['Today'] = chatBoxGroup['Today'] ?? [];
+                chatBoxGroup['Today'].push({
+                    id: chatBox[i].id,
+                    name: chatBox[i].name,
+                    updatedAt: chatBox[i].updatedAt ?? new Date(),
+                });
+            }
+            else if (differenceDays <= 2) {
+                chatBoxGroup['Yesterday'] = chatBoxGroup['Yesterday'] ?? [];
+                chatBoxGroup['Yesterday'].push({
+                    id: chatBox[i].id,
+                    name: chatBox[i].name,
+                    updatedAt: chatBox[i].updatedAt ?? new Date(),
+                });
+            }
+            else if (differenceDays <= 7){
+                chatBoxGroup['Last 7 Days'] = chatBoxGroup['Last 7 Days'] ?? [];
+                chatBoxGroup['Last 7 Days'].push({
+                    id: chatBox[i].id,
+                    name: chatBox[i].name,
+                    updatedAt: chatBox[i].updatedAt ?? new Date(),
+                });
+            }
+            else if (differenceDays <= 30) {
+                chatBoxGroup['Last 30 Days'] = chatBoxGroup['Last 30 Days'] ?? [];
+                chatBoxGroup['Last 30 Days'].push({
+                    id: chatBox[i].id,
+                    name: chatBox[i].name,
+                    updatedAt: chatBox[i].updatedAt ?? new Date(),
+                });
+            }
+            else if (dateNow.getFullYear() === dateChat.getFullYear()) {
+                let month = dateChat.getMonth();
+                let monthName = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                chatBoxGroup[monthName[month]] = chatBoxGroup[monthName[month]] ?? [];
+                chatBoxGroup[monthName[month]].push({
+                    id: chatBox[i].id,
+                    name: chatBox[i].name,
+                    updatedAt: chatBox[i].updatedAt ?? new Date(),
+                });
+            }
+            else {
+                chatBoxGroup[dateChat.getFullYear()] = chatBoxGroup[dateChat.getFullYear()] ?? [];
+                chatBoxGroup[Number(dateChat.getFullYear())].push({
+                    id: chatBox[i].id,
+                    name: chatBox[i].name,
+                    updatedAt: chatBox[i].updatedAt ?? new Date(),
+                });
+            }
+        }
+    }
     return NextResponse.json(
         {
             message: 'Record fetched successfully',
-            data: record,
+            data: chatBoxGroup,
         },
         {
             status: 200,
@@ -97,9 +165,17 @@ async function getRecord(id: string) {
         const record = await prisma.chatBox.findMany({
             where: {
                 userId: id
+            },
+            select: {
+                id: true,
+                name: true,
+                updatedAt: true,
+            },
+            orderBy: {
+                updatedAt: 'desc'
             }
         });
-        return record;
+        return record ?? [];
     } catch (error) {
         return NextResponse.json(
             {

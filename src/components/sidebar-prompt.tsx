@@ -9,9 +9,9 @@ import { GoPlus } from "react-icons/go"
 import { HoverCard, HoverCardContent, HoverCardTrigger } from './ui/hover-card'
 import UserProfile from './user-profile'
 import ThreeDotSidebar from './three-dot-sidebar'
-import { getChatBox } from '@/lib/chat-queries'
 import { useAuth } from '@clerk/nextjs'; 
 import { usePathname } from 'next/navigation'
+import useSWR from 'swr'
 
 interface T {
     id: number;
@@ -23,7 +23,7 @@ interface ChatBoxGroup {
     [key: string]: T[];
 }
 
-export function sortChatBox(chatBox: ChatBoxGroup) {
+async function sortChatBox(chatBox: ChatBoxGroup) {
     const sortingOrder = {
         'Today': 0,
         'Yesterday': 1,
@@ -60,67 +60,11 @@ export function sortChatBox(chatBox: ChatBoxGroup) {
     return sortedKeys;
 }
 
-const dummyChats = [
-    {
-        dateGroup: "Today",
-        chats:[
-            {
-                chatTitle: "How to cook a chicken"
-            },
-            {
-                chatTitle: "How to beatbox"
-            },
-            {
-                chatTitle: "How to cook a chicken"
-            },
-            {
-                chatTitle: "How to beatbox"
-            },
-            {
-                chatTitle: "How to cook a chicken"
-            },
-            {
-                chatTitle: "How to beatbox"
-            },
-            {
-                chatTitle: "How to cook a chicken"
-            },
-            {
-                chatTitle: "How to beatbox"
-            },
-            {
-                chatTitle: "How to cook a chicken"
-            },
-            {
-                chatTitle: "How to beatbox"
-            },
-            {
-                chatTitle: "How to cook a chicken"
-            },
-            {
-                chatTitle: "How to beatbox"
-            },
-            {
-                chatTitle: "How to cook a chicken"
-            },
-            {
-                chatTitle: "How to beatbox"
-            },
-
-        ]
-    },
-    {
-        dateGroup: "A While Ago",
-        chats:[
-            {
-                chatTitle: "How to buy a noodel in mandarin language"
-            },
-            {
-                chatTitle: "How to fly to mars"
-            }
-        ]
-    },
-]
+const fetcher = async (url: string | URL | Request) => {
+    const res = await fetch(url);
+    let data = await res.json();
+    return data.data;
+};
 
 const SidebarPrompt = () => {
     const [isOpen, setIsOpen] = useState(false)
@@ -128,22 +72,27 @@ const SidebarPrompt = () => {
     const [sortedKeys, setSortedKeys] = useState<string[]>([])
     const { userId } = useAuth()
     const pathname = usePathname()
+    const [response2, setResponse2] = useState<Response | null>(null)
+    const { data, error } = useSWR('/api/chatbox?user_id=' + userId?.toString(), fetcher);
+    // console.log(data);
 
     useEffect(() => {
-        if (chatBox === null) {
-            const fetchData = async () => {
-                try {
-                    let chatBox = await getChatBox(userId?.toString() || "");
-                    let sortedKeys = sortChatBox(chatBox as ChatBoxGroup); // Add type assertion here
-                    setChatBox(chatBox ? chatBox : null)
+        const fetchData = async () => {
+            try {
+                // let chatBox = await fetch('/api/chatbox?user_id=' + userId);
+                // let chatBoxData = await chatBox.json();
+                setChatBox(data ? data : null)
+                if (chatBox) {
+                    let sortedKeys = await sortChatBox(chatBox as ChatBoxGroup); // Add type assertion here
+                    console.log('sortedKeys', sortedKeys);
                     setSortedKeys(sortedKeys)
-                } catch (error) {
-                    console.log(error)
                 }
+            } catch (error) {
+                console.log(error)
             }
-            fetchData()
         }
-    }, [chatBox, userId])
+        fetchData()
+    }, [userId, data, chatBox])
 
   return (
     <aside className={`h-screen`}>
@@ -179,7 +128,7 @@ const SidebarPrompt = () => {
                     </HoverCardContent>
                 </HoverCard>
             }
-            {isOpen && <HoverCard openDelay={300}>
+            {isOpen && <HoverCard openDelay={100}>
                 <HoverCardTrigger asChild>
                     <Link href={"/prompt"}>
                         <Button variant={"ghost"} className='w-full flex justify-between mb-5 relative'>
@@ -197,17 +146,7 @@ const SidebarPrompt = () => {
             </HoverCard>}
 
             {isOpen && <div className='flex-1 overflow-y-auto mb-3'>
-            {/* { dummyChats.map((item, i) => (
-                <div className="w-full my-2" key={i}>
-                    <label className='text-muted-foreground text-xs font-semibold'>{ item.dateGroup }</label>
-                    { item.chats.map((item, i) => (
-                        <Button key={i} variant={"ghost"} className={`flex justify-between items-center w-full relative group ${i === 1 && 'bg-white hover:bg-white'}`}>
-                            { item.chatTitle.length > 20 ? item.chatTitle.slice(0,20) : item.chatTitle }
-                            <ThreeDotSidebar/>
-                        </Button>
-                    )) }
-                </div>
-            )) } */}
+
             {
                 chatBox && sortedKeys.map((key) => {
                     return (
@@ -217,7 +156,9 @@ const SidebarPrompt = () => {
                                     <label className='text-muted-foreground text-xs font-semibold'>{ key }</label>
                                     { chatBox[key].map((item, i) => (
                                         <Button key={i} variant={"ghost"} className={`flex justify-between items-center w-full relative group ${item.id.toString() === pathname?.split('/')[2] && 'bg-white hover:bg-white'}`}>
-                                            { item.name.length > 20 ? item.name.slice(0,20) : item.name }
+                                            <Link href={"/prompt/" + item.id}>
+                                                { item.name.length > 20 ? item.name.slice(0,20) : item.name }
+                                            </Link>
                                             <ThreeDotSidebar/>
                                         </Button>
                                     )) }
