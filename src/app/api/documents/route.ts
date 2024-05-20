@@ -1,7 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
-import { parse } from "path";
-import { BsTrophy } from "react-icons/bs";
 import { prisma } from "@/db";
 
 export async function GET(request: NextRequest) {
@@ -17,10 +15,14 @@ export async function GET(request: NextRequest) {
     }
 
     const list = await getListOfDocumentsByUserId(id, Number(skip), Number(take));
+    const docCounts = await getTotalCountByUserId(id)
     return NextResponse.json(
     {
         message: "List of documents",
-        data: list
+        data: {
+            list: list,
+            docCounts: docCounts
+        }
     },
     { 
         status: 200 
@@ -58,7 +60,7 @@ async function getListOfDocumentsByUserId(userId: string, skip: number, take: nu
             },
         });
         let list_new = [];
-        console.log(typeof (list[0]))
+        
         for (let i = 0; i < list.length; i++) {
             let sizeFormatted = '';
             if (list[i].file_size < 1024) {
@@ -95,4 +97,13 @@ async function getListOfDocumentsByUserId(userId: string, skip: number, take: nu
             { status: 500 }
         );
     }
+}
+
+async function getTotalCountByUserId(userId:string) {
+    const aggr = await prisma.document.aggregate({
+        where: { userId: userId },
+        _count: { id: true }
+    })
+
+    return aggr._count.id
 }
