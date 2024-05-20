@@ -13,6 +13,8 @@ import { getChatBox } from '@/lib/chat-queries'
 import { useAuth } from '@clerk/nextjs'; 
 import { usePathname } from 'next/navigation'
 
+
+
 interface T {
     id: number;
     name: string;
@@ -60,67 +62,6 @@ export function sortChatBox(chatBox: ChatBoxGroup) {
     return sortedKeys;
 }
 
-const dummyChats = [
-    {
-        dateGroup: "Today",
-        chats:[
-            {
-                chatTitle: "How to cook a chicken"
-            },
-            {
-                chatTitle: "How to beatbox"
-            },
-            {
-                chatTitle: "How to cook a chicken"
-            },
-            {
-                chatTitle: "How to beatbox"
-            },
-            {
-                chatTitle: "How to cook a chicken"
-            },
-            {
-                chatTitle: "How to beatbox"
-            },
-            {
-                chatTitle: "How to cook a chicken"
-            },
-            {
-                chatTitle: "How to beatbox"
-            },
-            {
-                chatTitle: "How to cook a chicken"
-            },
-            {
-                chatTitle: "How to beatbox"
-            },
-            {
-                chatTitle: "How to cook a chicken"
-            },
-            {
-                chatTitle: "How to beatbox"
-            },
-            {
-                chatTitle: "How to cook a chicken"
-            },
-            {
-                chatTitle: "How to beatbox"
-            },
-
-        ]
-    },
-    {
-        dateGroup: "A While Ago",
-        chats:[
-            {
-                chatTitle: "How to buy a noodel in mandarin language"
-            },
-            {
-                chatTitle: "How to fly to mars"
-            }
-        ]
-    },
-]
 
 const SidebarPrompt = () => {
     const [isOpen, setIsOpen] = useState(false)
@@ -197,17 +138,6 @@ const SidebarPrompt = () => {
             </HoverCard>}
 
             {isOpen && <div className='flex-1 overflow-y-auto mb-3'>
-            {/* { dummyChats.map((item, i) => (
-                <div className="w-full my-2" key={i}>
-                    <label className='text-muted-foreground text-xs font-semibold'>{ item.dateGroup }</label>
-                    { item.chats.map((item, i) => (
-                        <Button key={i} variant={"ghost"} className={`flex justify-between items-center w-full relative group ${i === 1 && 'bg-white hover:bg-white'}`}>
-                            { item.chatTitle.length > 20 ? item.chatTitle.slice(0,20) : item.chatTitle }
-                            <ThreeDotSidebar/>
-                        </Button>
-                    )) }
-                </div>
-            )) } */}
             {
                 chatBox && sortedKeys.map((key) => {
                     return (
@@ -228,7 +158,6 @@ const SidebarPrompt = () => {
                 })
             }
             </div>}
-
             {isOpen && <UserProfile/>}
         </nav>
     </aside>

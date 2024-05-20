@@ -120,12 +120,12 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="flex-col p-10">
+    <div className="flex flex-col p-10 border border-red-700">
       <div className="pb-7">
         <h1 className="text-3xl font-bold text-blue-700">Profile Setting</h1>
         <p>This is the profile page</p>
       </div>
-      <div className="p-10 border-2 rounded-lg">
+      <div className="p-10 border-2 rounded-lg flex-1">
         <img
           src={imageURL || "https://via.placeholder.com/200"}
           alt=""
