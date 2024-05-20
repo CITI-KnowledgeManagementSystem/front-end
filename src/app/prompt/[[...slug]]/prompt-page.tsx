@@ -1,12 +1,13 @@
 "use client"
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { MessageProps } from '@/types'
 import ChatBox from '@/components/chat-box'
 import { answerQuestions } from '@/lib/utils'
 import { UserProfileProps } from '@/types'
-import { useAuth } from "@clerk/nextjs"
+import { useParams } from 'next/navigation'
+import { getChatMessages } from '@/lib/utils'
 
 
 type Props = {
@@ -14,9 +15,20 @@ type Props = {
 }
 
 const PromptPage = ({ user }: Props) => {
+    const { slug } = useParams()
     const [data, setData] = useState<MessageProps[]>([])
     const [prompt, setPrompt] = useState<string>("")
     const [isLoading, setIsLoading] = useState<boolean>(false)
+    
+
+    useEffect(() => {
+        const getMessages = async () => {
+            const messages = slug ? await getChatMessages(slug[0]) : []
+            setData(messages)
+        }
+        getMessages()
+    }, [])
+
 
     const handleSendPrompt = (e:React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -42,7 +54,6 @@ const PromptPage = ({ user }: Props) => {
 
     const handleGetResponse = async () => {
         const data = await answerQuestions(prompt)
-        // async
         const newResponse = {
             type: "response",
             message: data

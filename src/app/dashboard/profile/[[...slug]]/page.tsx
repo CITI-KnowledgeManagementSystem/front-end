@@ -147,7 +147,6 @@ const ProfilePage = () => {
                   <FormMessage>
                     {formState.errors.username?.message}
                   </FormMessage>
-                  {/* <FormDescription>Your username</FormDescription> */}
                 </FormItem>
               )}
             />
@@ -159,7 +158,6 @@ const ProfilePage = () => {
                   <FormLabel>Email</FormLabel>
                   <Input placeholder="example@example.com" {...field} />
                   <FormMessage>{formState.errors.email?.message}</FormMessage>
-                  {/* <FormDescription>Your username</FormDescription> */}
                 </FormItem>
               )}
             />
@@ -175,7 +173,6 @@ const ProfilePage = () => {
                       <FormMessage>
                         {formState.errors.first_name?.message}
                       </FormMessage>
-                      {/* <FormDescription>Your username</FormDescription> */}
                     </FormItem>
                   )}
                 />
@@ -191,7 +188,6 @@ const ProfilePage = () => {
                       <FormMessage>
                         {formState.errors.last_name?.message}
                       </FormMessage>
-                      {/* <FormDescription>Your username</FormDescription> */}
                     </FormItem>
                   )}
                 />
@@ -207,7 +203,6 @@ const ProfilePage = () => {
                   <FormMessage>
                     {formState.errors.img_url?.message}
                   </FormMessage>
-                  {/* <FormDescription>Your username</FormDescription> */}
                 </FormItem>
               )}
             />

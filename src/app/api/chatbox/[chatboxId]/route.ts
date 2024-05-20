@@ -26,6 +26,7 @@ async function getRecord(id: number) {
         const record = await prisma.message.findMany({
             where: {
                 chatBoxId: id,
+                deletedAt: null,
             },
             orderBy: {
                 createdAt: 'asc',

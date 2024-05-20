@@ -13,10 +13,7 @@ const SidebarDashboard = () => {
     const [isOpen, setIsOpen] = useState<boolean>(false)
     const [sidebarItems, setSidebarItems] = useState<SidebarItems[]>(dashboardMenu)
     const pathname = usePathname()
-    
-    
-    
-    
+
   return (
     <aside className='h-screen'>
         <nav className={`${isOpen ? 'w-72' : 'w-20'} border-r h-full shadow p-3 bg-white shadow-sm relative transition-all duration-300 ease-in-out flex flex-col justify-between items-center`}>

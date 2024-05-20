@@ -9,11 +9,9 @@ import { GoPlus } from "react-icons/go"
 import { HoverCard, HoverCardContent, HoverCardTrigger } from './ui/hover-card'
 import UserProfile from './user-profile'
 import ThreeDotSidebar from './three-dot-sidebar'
-import { getChatBox } from '@/lib/chat-queries'
 import { useAuth } from '@clerk/nextjs'; 
 import { usePathname } from 'next/navigation'
-
-
+import useSWR from 'swr'
 
 interface T {
     id: number;
@@ -25,7 +23,7 @@ interface ChatBoxGroup {
     [key: string]: T[];
 }
 
-export function sortChatBox(chatBox: ChatBoxGroup) {
+async function sortChatBox(chatBox: ChatBoxGroup) {
     const sortingOrder = {
         'Today': 0,
         'Yesterday': 1,
@@ -62,6 +60,11 @@ export function sortChatBox(chatBox: ChatBoxGroup) {
     return sortedKeys;
 }
 
+const fetcher = async (url: string | URL | Request) => {
+    const res = await fetch(url);
+    let data = await res.json();
+    return data.data;
+};
 
 const SidebarPrompt = () => {
     const [isOpen, setIsOpen] = useState(false)
@@ -69,22 +72,23 @@ const SidebarPrompt = () => {
     const [sortedKeys, setSortedKeys] = useState<string[]>([])
     const { userId } = useAuth()
     const pathname = usePathname()
+    const { data, error } = useSWR('/api/chatbox?user_id=' + userId?.toString(), fetcher)
 
     useEffect(() => {
-        if (chatBox === null) {
-            const fetchData = async () => {
-                try {
-                    let chatBox = await getChatBox(userId?.toString() || "");
-                    let sortedKeys = sortChatBox(chatBox as ChatBoxGroup); // Add type assertion here
-                    setChatBox(chatBox ? chatBox : null)
+        const fetchData = async () => {
+            try {
+                setChatBox(data ? data : null)
+                if (chatBox) {
+                    let sortedKeys = await sortChatBox(chatBox as ChatBoxGroup)
+                    console.log('sortedKeys', sortedKeys);
                     setSortedKeys(sortedKeys)
-                } catch (error) {
-                    console.log(error)
                 }
+            } catch (error) {
+                console.log(error)
             }
-            fetchData()
         }
-    }, [chatBox, userId])
+        fetchData().then().catch()
+    }, [userId, data, chatBox])
 
   return (
     <aside className={`h-screen`}>
@@ -120,7 +124,7 @@ const SidebarPrompt = () => {
                     </HoverCardContent>
                 </HoverCard>
             }
-            {isOpen && <HoverCard openDelay={300}>
+            {isOpen && <HoverCard openDelay={100}>
                 <HoverCardTrigger asChild>
                     <Link href={"/prompt"}>
                         <Button variant={"ghost"} className='w-full flex justify-between mb-5 relative'>
@@ -146,10 +150,12 @@ const SidebarPrompt = () => {
                                 <>
                                     <label className='text-muted-foreground text-xs font-semibold'>{ key }</label>
                                     { chatBox[key].map((item, i) => (
-                                        <Button key={i} variant={"ghost"} className={`flex justify-between items-center w-full relative group ${item.id.toString() === pathname?.split('/')[2] && 'bg-white hover:bg-white'}`}>
-                                            { item.name.length > 20 ? item.name.slice(0,20) : item.name }
-                                            <ThreeDotSidebar/>
-                                        </Button>
+                                        <Link href={"/prompt/" + item.id}>
+                                            <Button key={i} variant={"ghost"} className={`flex justify-between items-center w-full relative group my-1 ${item.id.toString() === pathname?.split('/')[2] && 'bg-white hover:bg-white'}`}>
+                                                    { item.name.length > 20 ? item.name.slice(0,20) : item.name }
+                                                <ThreeDotSidebar/>
+                                            </Button>
+                                        </Link>
                                     )) }
                                 </>
                             )}
