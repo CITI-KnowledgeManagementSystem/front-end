@@ -13,13 +13,19 @@ import ActionsOption from './action-options'
 import FilterTable from './filter-table'
 import { TableContentProps } from '@/types'
 import { useAuth } from "@clerk/nextjs"
+import { useSearchParams } from 'next/navigation'
 
 const DocTable = () => {
     const [tableContents, setTableContents] = useState<TableContentProps[]>([])
     const [selectedItems, setSelectedItems] = useState<TableContentProps[]>([])
+    const [totalItems, setTotalItems] = useState<number>()
     const [error, setError] = useState<string>("")
     const [isLoading, setIsLoading] = useState<boolean>(false)
     const { userId } = useAuth()
+    const searchParams = useSearchParams()
+    const paginationIndex = Number(searchParams.get('page')) || 0
+    const rowsPerPage = Number(searchParams.get('n')) || 10
+    
 
     const selectAllContents = () => {
         if (selectedItems.length === tableContents.length) {
@@ -40,23 +46,22 @@ const DocTable = () => {
             setSelectedItems(newSelectedItems)
         }
     }
+    
 
 
     useEffect(() => {
         setIsLoading(true)
-        fetch(`/api/documents?id=${userId}`).then(async (res) => {
+        fetch(`/api/documents?id=${userId}&skip=${paginationIndex*rowsPerPage}&take=${rowsPerPage}`).then(async (res) => {
             if (!res.ok) {
                 setError("An error has occured when fetching the data")
             }
             const newData = await res.json()
-
-            console.log(newData);
             
-            
-            setTableContents(newData.data)
+            setTableContents(newData.data.list)
+            setTotalItems(newData.data.docCounts)
             setIsLoading(false)
         })
-    }, [])
+    }, [paginationIndex, rowsPerPage])
 
 
     if (isLoading) {
@@ -120,7 +125,7 @@ const DocTable = () => {
                 </TableBody>
             </Table>
         </div>
-        <PaginationTable selectedItems={selectedItems} tableContents={tableContents}/>
+        <PaginationTable selectedItems={selectedItems} tableContents={tableContents} rowsPerPage={rowsPerPage} paginationIndex={paginationIndex} totalItems={totalItems || 1}/>
         <p className="text-red-700 w-full text-center py-4 text-sm">{ error }</p>
     </>
   )
