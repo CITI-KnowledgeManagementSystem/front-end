@@ -19,12 +19,11 @@ const PromptPage = ({ user }: Props) => {
     const [data, setData] = useState<MessageProps[]>([])
     const [prompt, setPrompt] = useState<string>("")
     const [isLoading, setIsLoading] = useState<boolean>(false)
-
     
+
     useEffect(() => {
         const getMessages = async () => {
-            const messages = await getChatMessages(slug)
-            console.log(messages)
+            const messages = slug ? await getChatMessages(slug[0]) : []
             setData(messages)
         }
         getMessages()

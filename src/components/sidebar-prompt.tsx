@@ -72,18 +72,14 @@ const SidebarPrompt = () => {
     const [sortedKeys, setSortedKeys] = useState<string[]>([])
     const { userId } = useAuth()
     const pathname = usePathname()
-    const [response2, setResponse2] = useState<Response | null>(null)
-    const { data, error } = useSWR('/api/chatbox?user_id=' + userId?.toString(), fetcher);
-    // console.log(data);
+    const { data, error } = useSWR('/api/chatbox?user_id=' + userId?.toString(), fetcher)
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // let chatBox = await fetch('/api/chatbox?user_id=' + userId);
-                // let chatBoxData = await chatBox.json();
                 setChatBox(data ? data : null)
                 if (chatBox) {
-                    let sortedKeys = await sortChatBox(chatBox as ChatBoxGroup); // Add type assertion here
+                    let sortedKeys = await sortChatBox(chatBox as ChatBoxGroup)
                     console.log('sortedKeys', sortedKeys);
                     setSortedKeys(sortedKeys)
                 }
@@ -91,7 +87,7 @@ const SidebarPrompt = () => {
                 console.log(error)
             }
         }
-        fetchData()
+        fetchData().then().catch()
     }, [userId, data, chatBox])
 
   return (
@@ -146,7 +142,6 @@ const SidebarPrompt = () => {
             </HoverCard>}
 
             {isOpen && <div className='flex-1 overflow-y-auto mb-3'>
-
             {
                 chatBox && sortedKeys.map((key) => {
                     return (
@@ -155,12 +150,12 @@ const SidebarPrompt = () => {
                                 <>
                                     <label className='text-muted-foreground text-xs font-semibold'>{ key }</label>
                                     { chatBox[key].map((item, i) => (
-                                        <Button key={i} variant={"ghost"} className={`flex justify-between items-center w-full relative group ${item.id.toString() === pathname?.split('/')[2] && 'bg-white hover:bg-white'}`}>
-                                            <Link href={"/prompt/" + item.id}>
-                                                { item.name.length > 20 ? item.name.slice(0,20) : item.name }
-                                            </Link>
-                                            <ThreeDotSidebar/>
-                                        </Button>
+                                        <Link href={"/prompt/" + item.id}>
+                                            <Button key={i} variant={"ghost"} className={`flex justify-between items-center w-full relative group my-1 ${item.id.toString() === pathname?.split('/')[2] && 'bg-white hover:bg-white'}`}>
+                                                    { item.name.length > 20 ? item.name.slice(0,20) : item.name }
+                                                <ThreeDotSidebar/>
+                                            </Button>
+                                        </Link>
                                     )) }
                                 </>
                             )}
@@ -169,7 +164,6 @@ const SidebarPrompt = () => {
                 })
             }
             </div>}
-
             {isOpen && <UserProfile/>}
         </nav>
     </aside>
