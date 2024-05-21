@@ -7,7 +7,12 @@ import { MdDriveFileRenameOutline } from "react-icons/md";
 import { Button } from './ui/button'
 import { Separator } from './ui/separator'
 
-const ThreeDotSidebar = () => {
+interface ChildProps {
+    id: number;
+    updateRename: (newValue: number) => void;
+}
+
+const ThreeDotSidebar: React.FC<ChildProps> = ({ id, updateRename }) => {
     const [isOpen, setIsOpen] = useState<boolean>(false)
     const preventPropagation = (e: React.MouseEvent<HTMLElement>) => {
         e.preventDefault()
@@ -30,10 +35,10 @@ const ThreeDotSidebar = () => {
         </PopoverTrigger>
         <PopoverContent className='w-32 p-0' align='end'>
             <div className="">
-                <Button variant={"ghost"} className='px-4 w-full rounded-none justify-between' size={"sm"}>Rename <MdDriveFileRenameOutline/></Button>
+                <Button variant={"ghost"} className='px-4 w-full rounded-none justify-between' size={"sm"} onClick={() => updateRename(id)}>Rename<MdDriveFileRenameOutline/></Button>
                 <Button variant={"ghost"} className='px-4 w-full rounded-none justify-between' size={"sm"}>Archive <FiArchive/></Button>
                 <Separator/>
-                <Button variant={"ghost"} className='px-4 w-full rounded-none justify-between text-red-500' size={"sm"}>Delete <FiDelete/></Button>
+                <Button variant={"ghost"} className='px-4 w-full rounded-none justify-between text-red-500' size={"sm"}>Delete<FiDelete/></Button>
             </div>
         </PopoverContent>
     </Popover>
