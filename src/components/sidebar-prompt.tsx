@@ -70,8 +70,6 @@ const SidebarPrompt = () => {
     const [data, setData] = useState<ChatBoxGroup | null>(null)
     const { userId } = useAuth()
     const pathname = usePathname()
-    // var { data, error } = useSWR('/api/chatbox?user_id=' + userId?.toString(), fetcher);
-    // console.log(data);
 
     const updateRename = (newValue: any) => {
         setIsRename(newValue);
@@ -107,7 +105,6 @@ const SidebarPrompt = () => {
             setSortedKeys(sortedKeys)
         });
     }, [])
-    
     return (
         <aside className={`h-screen`}>
             <nav className={`h-full ${isOpen ? 'w-72 p-4' : 'w-0 py-4'} flex flex-col bg-slate-200 border-r shadow-sm relative duration-300 ease-in-out`}>
@@ -184,7 +181,8 @@ const SidebarPrompt = () => {
                                                                     try {
                                                                         updateChatBox(item.id, e.target.value)
                                                                         setChatBox({ ...chatBox, [key]: chatBox[key].map((chat) => chat.id === item.id ? { ...chat, name: e.target.value } : chat) })
-                                                                        item.name = e.target.value
+                                                                        // item.name = e.target.value
+                                                                        console.log(chatBox)
                                                                     }
                                                                     catch (error) {
                                                                         console.error('Error:', error);

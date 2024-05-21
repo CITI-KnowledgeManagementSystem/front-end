@@ -1,5 +1,5 @@
 "use client"
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { MessageProps } from '@/types'
@@ -19,7 +19,7 @@ const PromptPage = ({ user }: Props) => {
     const [data, setData] = useState<MessageProps[]>([])
     const [prompt, setPrompt] = useState<string>("")
     const [isLoading, setIsLoading] = useState<boolean>(false)
-    
+    const bottomRef = useRef<HTMLDivElement>(null);    
 
     useEffect(() => {
         const getMessages = async () => {
@@ -27,7 +27,17 @@ const PromptPage = ({ user }: Props) => {
             setData(messages)
         }
         getMessages()
+        if (bottomRef.current) {
+            bottomRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
     }, [])
+
+    useEffect(() => {
+        if (bottomRef.current) {
+            console.log('sini')
+            bottomRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [data])
 
 
     const handleSendPrompt = (e:React.FormEvent<HTMLFormElement>) => {
@@ -83,6 +93,7 @@ const PromptPage = ({ user }: Props) => {
                     Processing...
                 </div>}
             </div>
+            <div ref={bottomRef} />
         </div>
         <div className="flex justify-center items-center">
             <form action="submit" onSubmit={handleSendPrompt} onKeyDown={handleKeyPressDown} className='flex w-full max-w-[900px] items-center gap-x-4'>
