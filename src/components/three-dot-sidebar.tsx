@@ -14,12 +14,17 @@ interface ChildProps {
 
 const ThreeDotSidebar: React.FC<ChildProps> = ({ id, updateRename }) => {
     const [isOpen, setIsOpen] = useState<boolean>(false)
+    const preventPropagation = (e: React.MouseEvent<HTMLElement>) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsOpen(!isOpen)
+    }
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
-        <PopoverTrigger className='relative'>
+        <PopoverTrigger>
             <HoverCard openDelay={300}>
                 <HoverCardTrigger asChild>
-                    <button className={`rounded-md hover:bg-slate-400 p-1 group-hover:block ${isOpen ? 'block' : 'hidden'}`}>
+                    <button onClick={preventPropagation} className={`rounded-md hover:bg-slate-400 p-1 group-hover:block ${isOpen ? 'block' : 'hidden'}`}>
                         <PiDotsThreeOutlineFill/>
                     </button>
                 </HoverCardTrigger>
