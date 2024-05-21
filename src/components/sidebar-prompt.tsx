@@ -25,7 +25,7 @@ interface ChatBoxGroup {
     [key: string]: T[];
 }
 
-async function sortChatBox(chatBox: ChatBoxGroup) {
+function sortChatBox(chatBox: ChatBoxGroup) {
     const sortingOrder = {
         'Today': 0,
         'Yesterday': 1,
@@ -62,20 +62,15 @@ async function sortChatBox(chatBox: ChatBoxGroup) {
     return sortedKeys;
 }
 
-const fetcher = async (url: string | URL | Request) => {
-    const res = await fetch(url);
-    let data = await res.json();
-    return data.data;
-};
-
 const SidebarPrompt = () => {
     const [isOpen, setIsOpen] = useState(false)
     const [chatBox, setChatBox] = useState<ChatBoxGroup | null>(null)
     const [sortedKeys, setSortedKeys] = useState<string[]>([])
     const [isRename, setIsRename] = useState<Number | null>(0)
+    const [data, setData] = useState<ChatBoxGroup | null>(null)
     const { userId } = useAuth()
     const pathname = usePathname()
-    var { data, error } = useSWR('/api/chatbox?user_id=' + userId?.toString(), fetcher);
+    // var { data, error } = useSWR('/api/chatbox?user_id=' + userId?.toString(), fetcher);
     // console.log(data);
 
     const updateRename = (newValue: any) => {
@@ -99,23 +94,20 @@ const SidebarPrompt = () => {
         return void 0;
     }
 
+    const getChatBox = async () => {
+        const response = await fetch('http://localhost:3000/api/chatbox?user_id=' + userId?.toString());
+        const data = await response.json();
+        return data;
+    }
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                let sortedKeys = await sortChatBox(chatBox as ChatBoxGroup);
-                console.log(chatBox)
-                if (chatBox) {
-                    setSortedKeys(sortedKeys)
-                }
-            } catch (error) {
-                console.log(error)
-            }
-        }
-        fetchData()
-        setChatBox(data ? data : null)
-    }, [chatBox, data])
-
+        getChatBox().then((data) => {
+            setChatBox(data.data as ChatBoxGroup)
+            let sortedKeys = sortChatBox(data.data as ChatBoxGroup);
+            setSortedKeys(sortedKeys)
+        });
+    }, [])
+    
     return (
         <aside className={`h-screen`}>
             <nav className={`h-full ${isOpen ? 'w-72 p-4' : 'w-0 py-4'} flex flex-col bg-slate-200 border-r shadow-sm relative duration-300 ease-in-out`}>
@@ -193,7 +185,6 @@ const SidebarPrompt = () => {
                                                                         updateChatBox(item.id, e.target.value)
                                                                         setChatBox({ ...chatBox, [key]: chatBox[key].map((chat) => chat.id === item.id ? { ...chat, name: e.target.value } : chat) })
                                                                         item.name = e.target.value
-                                                                        console.log(chatBox)
                                                                     }
                                                                     catch (error) {
                                                                         console.error('Error:', error);
