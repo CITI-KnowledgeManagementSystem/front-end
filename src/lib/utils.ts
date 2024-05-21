@@ -10,17 +10,45 @@ export function parseDate(date:string) {
   return new Date(date)
 }
 
+export function generateDashboardDocumentsLink(type:string, userId:string, paginationIndex:number, rowsPerPage:number, searchTerm:string | null=null, tags:string[] | null=null):string {
+
+  const tagsStr = tags ? tags.map(item => {
+    return `&tag=${item}`
+  }).join('') : ''  
+
+  const searchStr = searchTerm ? `&searchTerm=${searchTerm}` : ''
+  
+  if (type === 'client') {
+    const link = `?page=${paginationIndex}&n=${rowsPerPage}${tagsStr}${searchStr}`
+    return link
+  }
+
+  return `/api/documents?id=${userId}&skip=${paginationIndex}&take=${rowsPerPage}${tagsStr}${searchStr}`
+}
+
 export const answerQuestions = async (prompt:string) => {
-  const response = await fetch('http://140.118.101.189:5000/answer_questions', {
+
+  const body = {
+    "model": "gpt-4", 
+    "messages": [
+        {   "role": "user",     
+            "content": prompt, 
+            "temperature": 0.0
+        }
+    ] 
+  }
+
+  const response = await fetch('http://140.118.101.189:8080/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ questions: [prompt] }),
+    body: JSON.stringify(body),
   });
 
   const data = await response.json();
-  return data;
+  
+  return data.choices[0].message.content;
 };
 
 export const getChatMessages = async (id: string) => {

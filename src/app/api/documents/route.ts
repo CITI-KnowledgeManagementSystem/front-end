@@ -6,6 +6,9 @@ export async function GET(request: NextRequest) {
     const id = request.nextUrl.searchParams.get("id");
     const skip = request.nextUrl.searchParams.get("skip");
     const take = request.nextUrl.searchParams.get("take");
+    const searchTerm = request.nextUrl.searchParams.get("searchTerm")
+    const tags = request.nextUrl.searchParams.getAll("tag")
+    
 
     if (!id) {
         return NextResponse.json(
@@ -14,8 +17,8 @@ export async function GET(request: NextRequest) {
         );
     }
 
-    const list = await getListOfDocumentsByUserId(id, Number(skip), Number(take));
-    const docCounts = await getTotalCountByUserId(id)
+    const list = await getListOfDocumentsByUserId(id, searchTerm, tags, Number(skip), Number(take));
+    const docCounts = await getTotalCountByUserId(id, searchTerm, tags)
     return NextResponse.json(
     {
         message: "List of documents",
@@ -31,7 +34,7 @@ export async function GET(request: NextRequest) {
 
 }
 
-async function getListOfDocumentsByUserId(userId: string, skip: number, take: number) {
+async function getListOfDocumentsByUserId(userId: string, searchTerm:string | null, tags:string[], skip: number, take: number, ) {
     if (globalThis.prisma == null) {
         globalThis.prisma = new PrismaClient();
     }
@@ -44,12 +47,35 @@ async function getListOfDocumentsByUserId(userId: string, skip: number, take: nu
     }
     
     try {
+        var filterObject: {[k: string]: any} = {
+            userId: userId
+        }
+
+        // if searchTerm exists
+        if (searchTerm) {
+            filterObject.title = {
+                startsWith: searchTerm,
+                mode: 'insensitive'
+            }
+        }
+        
+         
+        // if tags exist
+        if (tags.length !== 0) {
+            const titleEndsWithConditions = tags.map(tag => ({
+                original_name: {
+                  endsWith: tag
+                }
+              }));
+            filterObject.OR = titleEndsWithConditions
+        }
+        
+
+        // querying
         const list = await prisma.document.findMany({
             skip: skip,
             take: take,
-            where: {
-                userId: userId,
-            },
+            where: filterObject,
             select: {
                 id: true,
                 title: true,
@@ -99,11 +125,33 @@ async function getListOfDocumentsByUserId(userId: string, skip: number, take: nu
     }
 }
 
-async function getTotalCountByUserId(userId:string) {
-    const aggr = await prisma.document.aggregate({
-        where: { userId: userId },
-        _count: { id: true }
+async function getTotalCountByUserId(userId:string, searchTerm:string | null, tags: string[]) {
+    var filterObject: {[k: string]: any} = {
+        userId: userId
+    }
+
+    // if searchTerm exists
+    if (searchTerm) {
+        filterObject.title = {
+            startsWith: searchTerm,
+            mode: 'insensitive'
+        }
+    }
+    
+     
+    // if tags exist
+    if (tags.length !== 0) {
+        const titleEndsWithConditions = tags.map(tag => ({
+            original_name: {
+              endsWith: tag
+            }
+          }));
+        filterObject.OR = titleEndsWithConditions
+    }
+
+    const count = await prisma.document.count({
+        where: filterObject,
     })
 
-    return aggr._count.id
+    return count
 }

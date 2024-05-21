@@ -9,22 +9,31 @@ import { Progress } from '../ui/progress'
 import CommandOption from './command-option'
 import UploadCard from './upload-card'
 import { OptionProps } from '@/types'
+import { useSearchParams, useRouter } from 'next/navigation';
 
 // APIS
 import { accumulatedSizeOfDocuments } from '@/lib/document-queries'
 import { useAuth } from '@clerk/nextjs';
+import { generateDashboardDocumentsLink } from '@/lib/utils';
 
 const dummyTags = [
     { value: 'pdf' }, { value: 'txt' }, { value: 'md' },
 ]
 
 const FilterTable = () => {
+  const { userId } = useAuth()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
   const [open, setOpen] = useState(false)
   const [tags, setTags] = useState<OptionProps[]>([])
   const [storageSize, setStorageSize] = useState<number>(0)
   const [limitStorageSize, setLimitStorageSize] = useState<number>(25)
-  const [searchTerm, setSearchTerm] = useState<string>("")
-  const { userId } = useAuth()
+  const [searchTerm, setSearchTerm] = useState<string>(searchParams.get('searchTerm') || "")
+
+
+  const paginationIndex = Number(searchParams.get('page')) || 0
+  const rowsPerPage = Number(searchParams.get('n')) || 10
 
   const chooseTag = (newTag:OptionProps) => {
     const tagIndex = tags.indexOf(newTag)
@@ -44,6 +53,12 @@ const FilterTable = () => {
     setSearchTerm(newSearchTerm)
   }
 
+  const onSearchEnter = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      router.push(generateDashboardDocumentsLink('client', '', paginationIndex, rowsPerPage, searchTerm, tags.map(item => item.value)))
+    }
+  }
+
   const clearTags = () => {
     setTags([])
   }
@@ -56,7 +71,7 @@ const FilterTable = () => {
   return (
     <div className="flex items-center mb-5 justify-between">
         <div className='flex items-center'>
-          <Input value={searchTerm} onChange={onSearchChange} placeholder='Search a title or a topic...' className='h-8 md:w-64'/>
+          <Input onKeyDown={onSearchEnter} value={searchTerm} onChange={onSearchChange} placeholder='Search a title or a topic...' className='h-8 md:w-64'/>
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild className='border border-dashed'>
               <Button variant="ghost" role='combobox' className='h-8 text-xs mx-3 shadow border border-dashed'>

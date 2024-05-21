@@ -5,17 +5,20 @@ import { TableContentProps } from '@/types'
 import { rowsPerPageValues } from '@/constants'
 import { BsChevronExpand, BsChevronLeft, BsChevronRight } from "react-icons/bs"
 import { useRouter } from 'next/navigation'
+import { generateDashboardDocumentsLink } from '@/lib/utils'
 
 type Props = {
     selectedItems: TableContentProps[],
     tableContents: TableContentProps[],
     rowsPerPage: number,
     paginationIndex: number,
+    searchTerm: string | null,
+    tags: string[],
     totalItems: number
 
 }
 
-const PaginationTable = ({ selectedItems, tableContents, rowsPerPage, paginationIndex, totalItems }: Props) => {
+const PaginationTable = ({ selectedItems, tableContents, rowsPerPage, paginationIndex, searchTerm, tags, totalItems }: Props) => {
     const router = useRouter()
   return (
     <div className="Pagination flex items-center justify-between mt-5">
@@ -26,7 +29,7 @@ const PaginationTable = ({ selectedItems, tableContents, rowsPerPage, pagination
                 <DropdownMenu>
                     <DropdownMenuContent className='outline-none'>
                         { rowsPerPageValues.map(val => (
-                            <DropdownMenuItem key={val} onClick={() => router.push(`?page=${0}&n=${val}`)}>{ val }</DropdownMenuItem>
+                            <DropdownMenuItem key={val} onClick={() => router.push(generateDashboardDocumentsLink('client', "", paginationIndex*val, val, ))}>{ val }</DropdownMenuItem>
                         ))}
                     </DropdownMenuContent>
                     <DropdownMenuTrigger asChild className='outline-none w-fit ml-3'>

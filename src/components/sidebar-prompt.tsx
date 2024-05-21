@@ -153,7 +153,7 @@ const SidebarPrompt = () => {
                                         <Link href={"/prompt/" + item.id}>
                                             <Button key={i} variant={"ghost"} className={`flex justify-between items-center w-full relative group my-1 ${item.id.toString() === pathname?.split('/')[2] && 'bg-white hover:bg-white'}`}>
                                                     { item.name.length > 20 ? item.name.slice(0,20) : item.name }
-                                                <ThreeDotSidebar/>
+                                                <ThreeDotSidebar chatBoxId={ item.id }/>
                                             </Button>
                                         </Link>
                                     )) }
