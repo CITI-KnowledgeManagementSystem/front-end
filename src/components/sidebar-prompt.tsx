@@ -1,5 +1,5 @@
 "use client"
-import React, { useEffect } from 'react'
+import React, { use, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
@@ -12,6 +12,7 @@ import ThreeDotSidebar from './three-dot-sidebar'
 import { useAuth } from '@clerk/nextjs';
 import { usePathname } from 'next/navigation'
 import { Input } from "@/components/ui/input"
+import useStore from '@/lib/useStore'
 
 interface T {
     id: number;
@@ -60,6 +61,7 @@ function sortChatBox(chatBox: ChatBoxGroup) {
     return sortedKeys;
 }
 
+
 const SidebarPrompt = () => {
     const [isOpen, setIsOpen] = useState(false)
     const [chatBox, setChatBox] = useState<ChatBoxGroup | null>(null)
@@ -67,6 +69,8 @@ const SidebarPrompt = () => {
     const [isRename, setIsRename] = useState<Number | null>(0)
     const { userId } = useAuth()
     const pathname = usePathname()
+
+    const setFunction = useStore((state) => state.setFunction)
 
     const updateRename = (newValue: any) => {
         setIsRename(newValue);
@@ -89,19 +93,21 @@ const SidebarPrompt = () => {
         return void 0;
     }
     
-    useEffect(() => {
-        const getChatBox = async () => {
-            const response = await fetch('http://localhost:3000/api/chatbox?user_id=' + userId?.toString());
-            const data = await response.json();
-            return data;
-        }
+    const getChatBox = async () => {
+        const response = await fetch('http://localhost:3000/api/chatbox?user_id=' + userId?.toString());
+        const data = await response.json();
+        setChatBox(data.data as ChatBoxGroup)
+        let sortedKeys = sortChatBox(data.data as ChatBoxGroup);
+        setSortedKeys(sortedKeys)
+    }
 
-        getChatBox().then((data) => {
-            setChatBox(data.data as ChatBoxGroup)
-            let sortedKeys = sortChatBox(data.data as ChatBoxGroup);
-            setSortedKeys(sortedKeys)
-        });
-    }, [setChatBox])
+    useEffect(() => {
+        setFunction(getChatBox)
+    }, [setFunction])
+
+    useEffect(() => {
+        getChatBox()
+    }, [])
 
     return (
         <aside className={`h-screen`}>
