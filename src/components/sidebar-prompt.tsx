@@ -204,7 +204,6 @@ const SidebarPrompt = () => {
                         })
                     }
                 </div>}
-
                 {isOpen && <UserProfile />}
             </nav>
         </aside>

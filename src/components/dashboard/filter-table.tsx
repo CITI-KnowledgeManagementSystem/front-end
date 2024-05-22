@@ -1,34 +1,38 @@
 import React, { useEffect, useState } from 'react'
 import { BsTags } from "react-icons/bs"
-import { MdOutlineClear } from "react-icons/md";
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover'
 import { Input } from '../ui/input'
 import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
 import { Progress } from '../ui/progress'
 import CommandOption from './command-option'
 import UploadCard from './upload-card'
-import { OptionProps } from '@/types'
+import { useSearchParams, useRouter } from 'next/navigation';
 
 // APIS
 import { accumulatedSizeOfDocuments } from '@/lib/document-queries'
 import { useAuth } from '@clerk/nextjs';
+import { generateDashboardDocumentsLink } from '@/lib/utils';
 
-const dummyTags = [
-    { value: 'pdf' }, { value: 'txt' }, { value: 'md' },
-]
+const dummyTags = ['pdf', 'txt', 'md']
 
 const FilterTable = () => {
+  const { userId } = useAuth()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
   const [open, setOpen] = useState(false)
-  const [tags, setTags] = useState<OptionProps[]>([])
+  const [tags, setTags] = useState<string[]>(searchParams.getAll("tag"))
   const [storageSize, setStorageSize] = useState<number>(0)
   const [limitStorageSize, setLimitStorageSize] = useState<number>(25)
-  const [searchTerm, setSearchTerm] = useState<string>("")
-  const { userId } = useAuth()
+  const [searchTerm, setSearchTerm] = useState<string>(searchParams.get('searchTerm') || "")
 
-  const chooseTag = (newTag:OptionProps) => {
+
+  const paginationIndex = Number(searchParams.get('page')) || 0
+  const rowsPerPage = Number(searchParams.get('n')) || 10
+
+  const chooseTag = (newTag:string) => {
     const tagIndex = tags.indexOf(newTag)
-    let newTags:OptionProps[]
+    let newTags:string[]
 
     if (tagIndex === -1) {
       newTags = [...tags, newTag]
@@ -38,14 +42,27 @@ const FilterTable = () => {
       setTags(newTags)
     }
   }
+  
 
   const onSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newSearchTerm = event.target.value
     setSearchTerm(newSearchTerm)
   }
 
+  const onSearchEnter = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      router.push(generateDashboardDocumentsLink('client', '', paginationIndex, rowsPerPage, searchTerm, tags))
+    }
+  }
+
   const clearTags = () => {
+    setOpen(!open)
     setTags([])
+    router.push(generateDashboardDocumentsLink('client', "", paginationIndex*rowsPerPage, rowsPerPage, searchTerm, []))
+  }
+
+  const handleApplyTags = () => {
+    router.push(generateDashboardDocumentsLink('client', "", paginationIndex*rowsPerPage, rowsPerPage, searchTerm, tags))
   }
 
   useEffect(() => {
@@ -56,21 +73,15 @@ const FilterTable = () => {
   return (
     <div className="flex items-center mb-5 justify-between">
         <div className='flex items-center'>
-          <Input value={searchTerm} onChange={onSearchChange} placeholder='Search a title or a topic...' className='h-8 md:w-64'/>
+          <Input onKeyDown={onSearchEnter} value={searchTerm} onChange={onSearchChange} placeholder='Search a title or a topic...' className='h-8 md:w-64'/>
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild className='border border-dashed'>
               <Button variant="ghost" role='combobox' className='h-8 text-xs mx-3 shadow border border-dashed'>
                 <BsTags size={12} className='mr-2'/>Tags
-                {tags.length !== 0 && <div className="flex items-center overflow-auto border-l ml-3 pl-2">
-                    { tags.length < 3 ? tags.map((tag) => (
-                        <Badge variant={"secondary"} className='mx-1 rounded font-light' key={tag.value}>{ tag.value }</Badge>
-                    )) : <Badge variant={"secondary"} className='mx-1 rounded font-light'>{ tags.length } tags selected</Badge>}
-                </div>}
               </Button>
             </PopoverTrigger>
-            { tags.length !== 0 && <Button onClick={clearTags} size={"sm"} variant={"ghost"} className='h-8 text-xs items-center mr-3'>Clear <MdOutlineClear size={12} className='ml-2'/></Button> }
             <PopoverContent className="w-[200px] p-0" align='start'>
-              <CommandOption placeholder='Search tags...' options={dummyTags} selectedOptions={tags} onClickItems={chooseTag} type='checkbox'/>
+              <CommandOption placeholder='Search tags...' options={dummyTags} selectedOptions={tags} onClickItems={chooseTag} type='checkbox' clearTags={clearTags} applyTags={handleApplyTags}/>
             </PopoverContent>
          </Popover>
          <UploadCard/>
