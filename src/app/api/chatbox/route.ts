@@ -95,6 +95,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const userId = formData.get("userId");
     const name = formData.get("name");
+    var id = '0';
 
     if (!userId || !name) {
         return NextResponse.json(
@@ -103,15 +104,18 @@ export async function POST(request: NextRequest) {
         )
     }
 
-    createRecord(userId.toString(), name as string);
+    const response = await createRecord(userId.toString(), name as string)
+    id = await response.toString();
     return NextResponse.json(
         {
             message: 'Record created successfully',
+            id: await id
         },
         {
             status: 200
         }
     )
+
 }
 
 export async function PUT(request: NextRequest) {
@@ -201,6 +205,7 @@ async function createRecord(userId: string, name: string) {
                 createdAt: new Date()
             }
         });
+        return record.id;
     } catch (error) {
         console.error("Error creating record", error);
         return NextResponse.json(

@@ -11,9 +11,7 @@ import UserProfile from './user-profile'
 import ThreeDotSidebar from './three-dot-sidebar'
 import { useAuth } from '@clerk/nextjs';
 import { usePathname } from 'next/navigation'
-import useSWR from 'swr'
 import { Input } from "@/components/ui/input"
-import { set } from 'react-hook-form'
 
 interface T {
     id: number;
@@ -103,8 +101,8 @@ const SidebarPrompt = () => {
             let sortedKeys = sortChatBox(data.data as ChatBoxGroup);
             setSortedKeys(sortedKeys)
         });
-    }, [])
-    
+    })
+
     return (
         <aside className={`h-screen`}>
             <nav className={`h-full ${isOpen ? 'w-72 p-4' : 'w-0 py-4'} flex flex-col bg-slate-200 border-r shadow-sm relative duration-300 ease-in-out`}>

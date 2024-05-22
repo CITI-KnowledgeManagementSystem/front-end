@@ -23,6 +23,7 @@ export interface TableContentProps {
 
 
 export interface UserProfileProps {
+    id: string,
     username: string,
     email: string,
     first_name: string,

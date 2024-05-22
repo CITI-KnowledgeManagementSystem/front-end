@@ -14,7 +14,14 @@ const Page = async () => {
     
     const user = await getUserInfo(userId || "")
     
-  return <PromptPage user={user}/>
+  return (
+    // <Router>
+    //   <Routes>
+    //     <Route path="/" element={<PromptPage user={user}/>} />
+    //   </Routes>
+    // </Router>
+    <PromptPage user={user}/>
+  )
 }
 
 export default Page
