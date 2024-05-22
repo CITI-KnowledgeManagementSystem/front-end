@@ -107,7 +107,7 @@ const PromptPage = ({ user }: Props) => {
                 body: formData
             })
             const chatBoxId = await chatBox.json()
-            router.push(`/prompt/${chatBoxId.ids}`)
+            router.push(`/prompt/${chatBoxId.id}`)
             handleSaveResponse(request, response, chatBoxId.id)
         } catch (error) {
             console.error('Error:', error)

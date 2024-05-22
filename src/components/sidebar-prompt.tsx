@@ -65,7 +65,6 @@ const SidebarPrompt = () => {
     const [chatBox, setChatBox] = useState<ChatBoxGroup | null>(null)
     const [sortedKeys, setSortedKeys] = useState<string[]>([])
     const [isRename, setIsRename] = useState<Number | null>(0)
-    const [data, setData] = useState<ChatBoxGroup | null>(null)
     const { userId } = useAuth()
     const pathname = usePathname()
 
@@ -102,7 +101,7 @@ const SidebarPrompt = () => {
             let sortedKeys = sortChatBox(data.data as ChatBoxGroup);
             setSortedKeys(sortedKeys)
         });
-    }, [chatBox])
+    })
 
     return (
         <aside className={`h-screen`}>
