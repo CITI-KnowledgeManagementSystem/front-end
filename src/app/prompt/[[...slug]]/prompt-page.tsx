@@ -10,20 +10,23 @@ import { useParams } from 'next/navigation'
 import { getChatMessages } from '@/lib/utils'
 import { Router } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import useStore from '@/lib/useStore'
 
 
 type Props = {
     user: UserProfileProps | null
 }
 
+
 const PromptPage = ({ user }: Props) => {
     const router = useRouter()
     const { slug } = useParams()
-    const [chatBoxId, setChatBoxId] = useState<string>("")
     const [data, setData] = useState<MessageProps[]>([])
     const [prompt, setPrompt] = useState<string>("")
     const [isLoading, setIsLoading] = useState<boolean>(false)
-    const bottomRef = useRef<HTMLDivElement>(null);    
+    const bottomRef = useRef<HTMLDivElement>(null);  
+    
+    const triggerFunction = useStore(state => state.triggerFunction)
 
     useEffect(() => {
         const getMessages = async () => {
@@ -100,7 +103,6 @@ const PromptPage = ({ user }: Props) => {
         formData.append('name', 'New Chat Box')
         formData.append('userId', user?.id || '')
         
-        
         try {
             const chatBox = await fetch('http://localhost:3000/api/chatbox', {
                 method: 'POST',
@@ -108,6 +110,7 @@ const PromptPage = ({ user }: Props) => {
             })
             const chatBoxId = await chatBox.json()
             router.push(`/prompt/${chatBoxId.id}`)
+            triggerFunction()
             handleSaveResponse(request, response, chatBoxId.id)
         } catch (error) {
             console.error('Error:', error)
