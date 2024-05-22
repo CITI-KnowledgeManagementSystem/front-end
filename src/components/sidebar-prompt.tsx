@@ -67,11 +67,8 @@ const SidebarPrompt = () => {
     const [chatBox, setChatBox] = useState<ChatBoxGroup | null>(null)
     const [sortedKeys, setSortedKeys] = useState<string[]>([])
     const [isRename, setIsRename] = useState<Number | null>(0)
-    const [data, setData] = useState<ChatBoxGroup | null>(null)
     const { userId } = useAuth()
     const pathname = usePathname()
-    // var { data, error } = useSWR('/api/chatbox?user_id=' + userId?.toString(), fetcher);
-    // console.log(data);
 
     const updateRename = (newValue: any) => {
         setIsRename(newValue);
@@ -169,33 +166,30 @@ const SidebarPrompt = () => {
                                         <>
                                             <label className='text-muted-foreground text-xs font-semibold'>{key}</label>
                                             {chatBox[key].map((item, i) => (
-                                                <Button key={i} variant={"ghost"} className={`flex justify-between items-center w-full relative group ${item.id.toString() === pathname?.split('/')[2] && 'bg-white hover:bg-white'}`}>
-                                                    {isRename !== item.id ?
-                                                        <Link href={"/prompt/" + item.id}>
-                                                            {item.name.length > 20 ? item.name.slice(0, 20) : item.name}
-                                                        </Link>
-                                                        :
-                                                        
-                                                        <Input type='text' defaultValue={item.name} 
-                                                        // onChange={(e) => setChatBox({ ...chatBox, [key]: chatBox[key].map((chat) => chat.id === item.id ? { ...chat, name: e.target.value } : chat) })} 
-                                                        // onEnterPress={() => updateChatBox(item.id, item.name)}
-                                                            onKeyDown={(e) => {
-                                                                if (e.key === 'Enter') {
-                                                                    try {
-                                                                        updateChatBox(item.id, e.target.value)
-                                                                        setChatBox({ ...chatBox, [key]: chatBox[key].map((chat) => chat.id === item.id ? { ...chat, name: e.target.value } : chat) })
-                                                                        item.name = e.target.value
+                                                <Link href={"/prompt/" + item.id}>
+                                                    <Button key={i} variant={"ghost"} className={`flex justify-between items-center w-full relative group ${item.id.toString() === pathname?.split('/')[2] && 'bg-white hover:bg-white'}`}>
+                                                        {isRename !== item.id ?
+                                                         item.name.length > 20 ? item.name.slice(0, 20) : item.name
+                                                                :
+                                                                <Input type='text' defaultValue={item.name} 
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter') {
+                                                                        try {
+                                                                            updateChatBox(item.id, e.target.value)
+                                                                            setChatBox({ ...chatBox, [key]: chatBox[key].map((chat) => chat.id === item.id ? { ...chat, name: e.target.value } : chat) })
+                                                                            item.name = e.target.value
+                                                                        }
+                                                                        catch (error) {
+                                                                            console.error('Error:', error);
+                                                                        }
+                                                                        setIsRename(null)
                                                                     }
-                                                                    catch (error) {
-                                                                        console.error('Error:', error);
-                                                                    }
-                                                                    setIsRename(null)
-                                                                }
-                                                            }}
-                                                        />
-                                                    }
-                                                    <ThreeDotSidebar updateRename={updateRename} id={item.id} />
-                                                </Button>
+                                                                }}
+                                                                />
+                                                            }
+                                                        <ThreeDotSidebar updateRename={updateRename} id={item.id} />
+                                                    </Button>
+                                                </Link>
                                             ))}
                                         </>
                                     )}
