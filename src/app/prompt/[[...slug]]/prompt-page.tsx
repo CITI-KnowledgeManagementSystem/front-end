@@ -8,6 +8,8 @@ import { answerQuestions } from '@/lib/utils'
 import { UserProfileProps } from '@/types'
 import { useParams } from 'next/navigation'
 import { getChatMessages } from '@/lib/utils'
+import { Router } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 
 type Props = {
@@ -15,7 +17,9 @@ type Props = {
 }
 
 const PromptPage = ({ user }: Props) => {
+    const router = useRouter()
     const { slug } = useParams()
+    const [chatBoxId, setChatBoxId] = useState<string>("")
     const [data, setData] = useState<MessageProps[]>([])
     const [prompt, setPrompt] = useState<string>("")
     const [isLoading, setIsLoading] = useState<boolean>(false)
@@ -27,14 +31,10 @@ const PromptPage = ({ user }: Props) => {
             setData(messages)
         }
         getMessages()
-        if (bottomRef.current) {
-            bottomRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
     }, [])
 
     useEffect(() => {
         if (bottomRef.current) {
-            console.log('sini')
             bottomRef.current.scrollIntoView({ behavior: 'smooth' });
         }
     }, [data])
@@ -51,6 +51,12 @@ const PromptPage = ({ user }: Props) => {
         setIsLoading(true)
         handleGetResponse().then(res => {
             setData([...newData, res])
+            if (slug === undefined) {
+                handleChatBox(prompt, res.message)
+            }
+            else {
+                handleSaveResponse(prompt, res.message, slug[0])
+            }
             setIsLoading(false)
         })
         setPrompt("")
@@ -64,12 +70,50 @@ const PromptPage = ({ user }: Props) => {
 
     const handleGetResponse = async () => {
         const data = await answerQuestions(prompt)
+        // const data = 'the response is this'
         const newResponse = {
             type: "response",
             message: data
         }
         return newResponse      
     }
+
+    const handleSaveResponse = async (request: string, response: string, chatBoxId: string) => {
+        const formData = new FormData()
+        formData.append('request', request)
+        formData.append('userId', user?.id || '')
+        formData.append('response', response)
+        formData.append('chatBoxId', chatBoxId)
+
+        try {
+            const response = await fetch('http://localhost:3000/api/message', {
+                method: 'POST',
+                body: formData
+            })
+        } catch (error) {
+            console.error('Error:', error)
+        }
+    }
+
+    const handleChatBox = async (request: string, response: string) => {
+        const formData = new FormData()
+        formData.append('name', 'New Chat Box')
+        formData.append('userId', user?.id || '')
+        
+        
+        try {
+            const chatBox = await fetch('http://localhost:3000/api/chatbox', {
+                method: 'POST',
+                body: formData
+            })
+            const chatBoxId = await chatBox.json()
+            router.push(`/prompt/${chatBoxId.ids}`)
+            handleSaveResponse(request, response, chatBoxId.id)
+        } catch (error) {
+            console.error('Error:', error)
+        }
+    }
+        
 
   return (
     <div className='flex flex-col w-full p-5 h-screen'>

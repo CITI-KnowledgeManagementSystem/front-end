@@ -11,9 +11,7 @@ import UserProfile from './user-profile'
 import ThreeDotSidebar from './three-dot-sidebar'
 import { useAuth } from '@clerk/nextjs';
 import { usePathname } from 'next/navigation'
-import useSWR from 'swr'
 import { Input } from "@/components/ui/input"
-import { set } from 'react-hook-form'
 
 interface T {
     id: number;
@@ -104,7 +102,8 @@ const SidebarPrompt = () => {
             let sortedKeys = sortChatBox(data.data as ChatBoxGroup);
             setSortedKeys(sortedKeys)
         });
-    }, [])
+    }, [chatBox])
+
     return (
         <aside className={`h-screen`}>
             <nav className={`h-full ${isOpen ? 'w-72 p-4' : 'w-0 py-4'} flex flex-col bg-slate-200 border-r shadow-sm relative duration-300 ease-in-out`}>
@@ -173,15 +172,13 @@ const SidebarPrompt = () => {
                                                         </Link>
                                                         :
                                                         
-                                                        <Input type='text' defaultValue={item.name} 
-                                                        // onChange={(e) => setChatBox({ ...chatBox, [key]: chatBox[key].map((chat) => chat.id === item.id ? { ...chat, name: e.target.value } : chat) })} 
-                                                        // onEnterPress={() => updateChatBox(item.id, item.name)}
+                                                        <Input type='text' defaultValue={item.name}
                                                             onKeyDown={(e) => {
                                                                 if (e.key === 'Enter') {
                                                                     try {
-                                                                        updateChatBox(item.id, e.target.value)
-                                                                        setChatBox({ ...chatBox, [key]: chatBox[key].map((chat) => chat.id === item.id ? { ...chat, name: e.target.value } : chat) })
-                                                                        // item.name = e.target.value
+                                                                        const target = e.target as HTMLInputElement;
+                                                                        updateChatBox(item.id, target.value)
+                                                                        setChatBox({ ...chatBox, [key]: chatBox[key].map((chat) => chat.id === item.id ? { ...chat, name: target.value } : chat) })
                                                                         console.log(chatBox)
                                                                     }
                                                                     catch (error) {
