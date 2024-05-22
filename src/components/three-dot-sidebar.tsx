@@ -5,7 +5,9 @@ import { Popover, PopoverTrigger, PopoverContent } from './ui/popover'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@radix-ui/react-hover-card';
 import { MdDriveFileRenameOutline } from "react-icons/md";
 import { Button } from './ui/button'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
 import { Separator } from './ui/separator'
+
 
 interface ChildProps {
     id: number;
@@ -14,11 +16,31 @@ interface ChildProps {
 
 const ThreeDotSidebar: React.FC<ChildProps> = ({ id, updateRename }) => {
     const [isOpen, setIsOpen] = useState<boolean>(false)
+
+    // FUNCTIONS
     const preventPropagation = (e: React.MouseEvent<HTMLElement>) => {
         e.preventDefault()
-        e.stopPropagation()
         setIsOpen(!isOpen)
     }
+
+    const deleteChatBox = async () => {
+        fetch(`/api/chatbox?id=${id}`, { method: 'DELETE' }).then(res => {
+            // add toast error
+            if (!res.ok) {
+                console.log("Error occured");
+                return
+            }
+            console.log("Successfully delete the chatbox");
+            
+        })
+        setIsOpen(!isOpen)
+    }
+
+    const renameChatBox = (e: React.MouseEvent<HTMLElement>) => {
+        preventPropagation(e)
+        updateRename(id)
+    }
+
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger>
@@ -35,14 +57,56 @@ const ThreeDotSidebar: React.FC<ChildProps> = ({ id, updateRename }) => {
         </PopoverTrigger>
         <PopoverContent className='w-32 p-0' align='end'>
             <div className="">
-                <Button variant={"ghost"} className='px-4 w-full rounded-none justify-between' size={"sm"} onClick={() => updateRename(id)}>Rename<MdDriveFileRenameOutline/></Button>
-                <Button variant={"ghost"} className='px-4 w-full rounded-none justify-between' size={"sm"}>Archive <FiArchive/></Button>
+                <Button onClick={renameChatBox} variant={"ghost"} className='px-4 w-full rounded-none justify-between' size={"sm"}>Rename <MdDriveFileRenameOutline/></Button>
+                <Button onClick={preventPropagation} variant={"ghost"} className='px-4 w-full rounded-none justify-between' size={"sm"}>Archive <FiArchive/></Button>
                 <Separator/>
-                <Button variant={"ghost"} className='px-4 w-full rounded-none justify-between text-red-500' size={"sm"}>Delete<FiDelete/></Button>
+                <DeleteAlert deleteFunction={deleteChatBox}/>
             </div>
         </PopoverContent>
     </Popover>
   )
+}
+
+interface AlertProps {
+    deleteFunction: () => Promise<void>
+}
+
+const DeleteAlert = ({ deleteFunction } : AlertProps) => {
+    const [isOpen, setIsOpen] = useState<boolean>(false)
+
+    const handleDelete: React.MouseEventHandler<HTMLButtonElement> = async (event) => {
+        event.stopPropagation()
+        event.preventDefault();
+        await deleteFunction()
+    };
+
+    const handleClickOpen = (e:React.MouseEvent<HTMLElement>) => {
+        setIsOpen(!isOpen)
+        e.preventDefault()
+        e.stopPropagation()
+    }
+
+    return (
+        <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
+            <AlertDialogTrigger asChild>
+                <Button onClick={handleClickOpen} variant={"ghost"} className='px-4 w-full rounded-none justify-between text-red-500' size={"sm"}>
+                    Delete <FiDelete/>
+                </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action will permanently delete the selected chat.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction className='bg-red-700' onClick={handleDelete}>Continue</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    )
 }
 
 export default ThreeDotSidebar

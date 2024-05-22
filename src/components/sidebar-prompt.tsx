@@ -164,32 +164,30 @@ const SidebarPrompt = () => {
                                         <>
                                             <label className='text-muted-foreground text-xs font-semibold'>{key}</label>
                                             {chatBox[key].map((item, i) => (
-                                                <Button key={i} variant={"ghost"} className={`flex justify-between items-center w-full relative group ${item.id.toString() === pathname?.split('/')[2] && 'bg-white hover:bg-white'}`}>
-                                                    {isRename !== item.id ?
-                                                        <Link href={"/prompt/" + item.id}>
-                                                            {item.name.length > 20 ? item.name.slice(0, 20) : item.name}
-                                                        </Link>
-                                                        :
-                                                        
-                                                        <Input type='text' defaultValue={item.name}
-                                                            onKeyDown={(e) => {
-                                                                if (e.key === 'Enter') {
-                                                                    try {
-                                                                        const target = e.target as HTMLInputElement;
-                                                                        updateChatBox(item.id, target.value)
-                                                                        setChatBox({ ...chatBox, [key]: chatBox[key].map((chat) => chat.id === item.id ? { ...chat, name: target.value } : chat) })
-                                                                        console.log(chatBox)
+                                                <Link href={"/prompt/" + item.id}>
+                                                    <Button key={i} variant={"ghost"} className={`flex justify-between items-center w-full relative group ${item.id.toString() === pathname?.split('/')[2] && 'bg-white hover:bg-white'}`}>
+                                                        {isRename !== item.id ?
+                                                         item.name.length > 20 ? item.name.slice(0, 20) : item.name
+                                                                :
+                                                                <Input type='text' defaultValue={item.name} 
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter') {
+                                                                        try {
+                                                                            updateChatBox(item.id, e.target.value)
+                                                                            setChatBox({ ...chatBox, [key]: chatBox[key].map((chat) => chat.id === item.id ? { ...chat, name: e.target.value } : chat) })
+                                                                            item.name = e.target.value
+                                                                        }
+                                                                        catch (error) {
+                                                                            console.error('Error:', error);
+                                                                        }
+                                                                        setIsRename(null)
                                                                     }
-                                                                    catch (error) {
-                                                                        console.error('Error:', error);
-                                                                    }
-                                                                    setIsRename(null)
-                                                                }
-                                                            }}
-                                                        />
-                                                    }
-                                                    <ThreeDotSidebar updateRename={updateRename} id={item.id} />
-                                                </Button>
+                                                                }}
+                                                                />
+                                                            }
+                                                        <ThreeDotSidebar updateRename={updateRename} id={item.id} />
+                                                    </Button>
+                                                </Link>
                                             ))}
                                         </>
                                     )}
@@ -198,7 +196,6 @@ const SidebarPrompt = () => {
                         })
                     }
                 </div>}
-
                 {isOpen && <UserProfile />}
             </nav>
         </aside>

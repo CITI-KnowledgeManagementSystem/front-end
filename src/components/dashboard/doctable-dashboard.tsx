@@ -1,5 +1,5 @@
 "use client"
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import PaginationTable from './pagination-table'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table'
 import { Checkbox } from '../ui/checkbox'
@@ -14,6 +14,7 @@ import FilterTable from './filter-table'
 import { TableContentProps } from '@/types'
 import { useAuth } from "@clerk/nextjs"
 import { useSearchParams } from 'next/navigation'
+import { generateDashboardDocumentsLink } from '@/lib/utils'
 
 const DocTable = () => {
     const [tableContents, setTableContents] = useState<TableContentProps[]>([])
@@ -23,6 +24,9 @@ const DocTable = () => {
     const [isLoading, setIsLoading] = useState<boolean>(false)
     const { userId } = useAuth()
     const searchParams = useSearchParams()
+
+    const searchTerm = searchParams.get('searchTerm')
+    const tags = useMemo(() => searchParams.getAll('tag'), [searchParams])
     const paginationIndex = Number(searchParams.get('page')) || 0
     const rowsPerPage = Number(searchParams.get('n')) || 10
     
@@ -48,10 +52,9 @@ const DocTable = () => {
     }
     
 
-
     useEffect(() => {
         setIsLoading(true)
-        fetch(`/api/documents?id=${userId}&skip=${paginationIndex*rowsPerPage}&take=${rowsPerPage}`).then(async (res) => {
+        fetch(generateDashboardDocumentsLink('be', userId || "", paginationIndex * rowsPerPage, rowsPerPage, searchTerm, tags)).then(async (res) => {
             if (!res.ok) {
                 setError("An error has occured when fetching the data")
             }
@@ -61,7 +64,7 @@ const DocTable = () => {
             setTotalItems(newData.data.docCounts)
             setIsLoading(false)
         })
-    }, [paginationIndex, rowsPerPage])
+    }, [paginationIndex, rowsPerPage, searchTerm, tags])
 
 
     if (isLoading) {
@@ -125,7 +128,7 @@ const DocTable = () => {
                 </TableBody>
             </Table>
         </div>
-        <PaginationTable selectedItems={selectedItems} tableContents={tableContents} rowsPerPage={rowsPerPage} paginationIndex={paginationIndex} totalItems={totalItems || 1}/>
+        <PaginationTable selectedItems={selectedItems} tableContents={tableContents} rowsPerPage={rowsPerPage} searchTerm={searchTerm} tags={tags} paginationIndex={paginationIndex} totalItems={totalItems || 1}/>
         <p className="text-red-700 w-full text-center py-4 text-sm">{ error }</p>
     </>
   )

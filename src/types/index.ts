@@ -21,10 +21,6 @@ export interface TableContentProps {
     topic: string
 }
 
-export interface OptionProps {
-    value: string,
-    isChoosen?: boolean
-}
 
 export interface UserProfileProps {
     id: string,

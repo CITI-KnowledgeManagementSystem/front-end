@@ -5,9 +5,7 @@ import { prisma } from '@/db';
 export async function GET(request: NextRequest, context: any) {
     const { params } = context;
     const chatboxId = params.chatboxId;
-    console.log(chatboxId);
     const record = await getRecord(Number(chatboxId)) as [];
-    console.log(record)
 
     if (record === null) {
         return NextResponse.json(
@@ -19,7 +17,7 @@ export async function GET(request: NextRequest, context: any) {
             }
         );
     }
-    
+
     return NextResponse.json(
         {
             message: 'Record fetched successfully',
