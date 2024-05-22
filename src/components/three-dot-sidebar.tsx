@@ -24,7 +24,7 @@ const ThreeDotSidebar: React.FC<ChildProps> = ({ id, updateRename }) => {
     }
 
     const deleteChatBox = async () => {
-        fetch(`/api/chatbox?id=${chatBoxId}`, { method: 'DELETE' }).then(res => {
+        fetch(`/api/chatbox?id=${id}`, { method: 'DELETE' }).then(res => {
             // add toast error
             if (!res.ok) {
                 console.log("Error occured");
@@ -34,6 +34,11 @@ const ThreeDotSidebar: React.FC<ChildProps> = ({ id, updateRename }) => {
             
         })
         setIsOpen(!isOpen)
+    }
+
+    const renameChatBox = (e: React.MouseEvent<HTMLElement>) => {
+        preventPropagation(e)
+        updateRename(id)
     }
 
   return (
@@ -52,9 +57,7 @@ const ThreeDotSidebar: React.FC<ChildProps> = ({ id, updateRename }) => {
         </PopoverTrigger>
         <PopoverContent className='w-32 p-0' align='end'>
             <div className="">
-                <Button onClick={(e: React.MouseEvent<HTMLElement>) => {
-                  updateRename(id); preventPropagation(e: React.MouseEvent<HTMLElement>);
-                }} variant={"ghost"} className='px-4 w-full rounded-none justify-between' size={"sm"}>Rename <MdDriveFileRenameOutline/></Button>
+                <Button onClick={renameChatBox} variant={"ghost"} className='px-4 w-full rounded-none justify-between' size={"sm"}>Rename <MdDriveFileRenameOutline/></Button>
                 <Button onClick={preventPropagation} variant={"ghost"} className='px-4 w-full rounded-none justify-between' size={"sm"}>Archive <FiArchive/></Button>
                 <Separator/>
                 <DeleteAlert deleteFunction={deleteChatBox}/>
