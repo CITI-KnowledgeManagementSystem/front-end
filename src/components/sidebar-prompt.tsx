@@ -9,9 +9,11 @@ import { GoPlus } from "react-icons/go"
 import { HoverCard, HoverCardContent, HoverCardTrigger } from './ui/hover-card'
 import UserProfile from './user-profile'
 import ThreeDotSidebar from './three-dot-sidebar'
-import { useAuth } from '@clerk/nextjs'; 
+import { useAuth } from '@clerk/nextjs';
 import { usePathname } from 'next/navigation'
 import useSWR from 'swr'
+import { Input } from "@/components/ui/input"
+import { set } from 'react-hook-form'
 
 interface T {
     id: number;
@@ -23,7 +25,7 @@ interface ChatBoxGroup {
     [key: string]: T[];
 }
 
-async function sortChatBox(chatBox: ChatBoxGroup) {
+function sortChatBox(chatBox: ChatBoxGroup) {
     const sortingOrder = {
         'Today': 0,
         'Yesterday': 1,
@@ -60,114 +62,152 @@ async function sortChatBox(chatBox: ChatBoxGroup) {
     return sortedKeys;
 }
 
-const fetcher = async (url: string | URL | Request) => {
-    const res = await fetch(url);
-    let data = await res.json();
-    return data.data;
-};
-
 const SidebarPrompt = () => {
     const [isOpen, setIsOpen] = useState(false)
-    const [chatBox, setChatBox] = useState< ChatBoxGroup | null>(null)
+    const [chatBox, setChatBox] = useState<ChatBoxGroup | null>(null)
     const [sortedKeys, setSortedKeys] = useState<string[]>([])
+    const [isRename, setIsRename] = useState<Number | null>(0)
+    const [data, setData] = useState<ChatBoxGroup | null>(null)
     const { userId } = useAuth()
     const pathname = usePathname()
-    const { data, error } = useSWR('/api/chatbox?user_id=' + userId?.toString(), fetcher)
+    // var { data, error } = useSWR('/api/chatbox?user_id=' + userId?.toString(), fetcher);
+    // console.log(data);
+
+    const updateRename = (newValue: any) => {
+        setIsRename(newValue);
+    }
+
+    const updateChatBox = async (id: Number, newValue: any) => {
+        const formData = new FormData();
+        formData.append('id', id.toString());
+        formData.append('name', newValue);
+        
+        try {
+            const response = await fetch('http://localhost:3000/api/chatbox', {
+                method: 'PUT',
+                body: formData,
+            });
+        }
+        catch (error) {
+            console.error('Error:', error);
+        }
+        return void 0;
+    }
+
+    const getChatBox = async () => {
+        const response = await fetch('http://localhost:3000/api/chatbox?user_id=' + userId?.toString());
+        const data = await response.json();
+        return data;
+    }
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                setChatBox(data ? data : null)
-                if (chatBox) {
-                    let sortedKeys = await sortChatBox(chatBox as ChatBoxGroup)
-                    console.log('sortedKeys', sortedKeys);
-                    setSortedKeys(sortedKeys)
+        getChatBox().then((data) => {
+            setChatBox(data.data as ChatBoxGroup)
+            let sortedKeys = sortChatBox(data.data as ChatBoxGroup);
+            setSortedKeys(sortedKeys)
+        });
+    }, [])
+    
+    return (
+        <aside className={`h-screen`}>
+            <nav className={`h-full ${isOpen ? 'w-72 p-4' : 'w-0 py-4'} flex flex-col bg-slate-200 border-r shadow-sm relative duration-300 ease-in-out`}>
+                {!isOpen && <HoverCard>
+                    <HoverCardTrigger asChild className='w-fit mx-3'>
+                        <Link href={"/prompt"}>
+                            <GoPlus size={30} className='p-1 rounded-full bg-slate-200 cursor-pointer hover:bg-slate-300' />
+                        </Link>
+                    </HoverCardTrigger>
+                    <HoverCardContent className='p-1 bg-slate-700 text-white w-fit' align='start'>
+                        <p className="text-xs">
+                            Create a new chat
+                        </p>
+                    </HoverCardContent>
+                </HoverCard>}
+                {isOpen ?
+                    <HoverCard>
+                        <HoverCardTrigger asChild className='w-fit absolute -right-10 top-1/2'>
+                            <BsArrowLeftCircle onClick={() => setIsOpen(!isOpen)} className='text-slate-400 hover:text-slate-700 cursor-pointer' size={26} />
+                        </HoverCardTrigger>
+                        <HoverCardContent className='p-1 bg-slate-700 text-white w-fit' align='start'>
+                            <p className='text-xs'>Close the sidebar</p>
+                        </HoverCardContent>
+                    </HoverCard>
+                    :
+                    <HoverCard>
+                        <HoverCardTrigger asChild className='w-fit absolute -right-10 top-1/2'>
+                            <BsArrowRightCircle onClick={() => setIsOpen(!isOpen)} className='text-slate-400 hover:text-slate-700 cursor-pointer' size={26} />
+                        </HoverCardTrigger>
+                        <HoverCardContent className='p-1 bg-slate-700 text-white w-fit' align='start'>
+                            <p className='text-xs'>Open the sidebar</p>
+                        </HoverCardContent>
+                    </HoverCard>
                 }
-            } catch (error) {
-                console.log(error)
-            }
-        }
-        fetchData().then().catch()
-    }, [userId, data, chatBox])
-
-  return (
-    <aside className={`h-screen`}>
-        <nav className={`h-full ${isOpen ? 'w-72 p-4' : 'w-0 py-4'} flex flex-col bg-slate-200 border-r shadow-sm relative duration-300 ease-in-out`}>
-            {!isOpen && <HoverCard>
-                <HoverCardTrigger asChild className='w-fit mx-3'>
-                    <Link href={"/prompt"}>
-                        <GoPlus size={30} className='p-1 rounded-full bg-slate-200 cursor-pointer hover:bg-slate-300'/>
-                    </Link>
-                </HoverCardTrigger>
-                <HoverCardContent className='p-1 bg-slate-700 text-white w-fit' align='start'>
-                    <p className="text-xs">
-                        Create a new chat
-                    </p>
-                </HoverCardContent>
-            </HoverCard>}
-            { isOpen ? 
-                <HoverCard>
-                    <HoverCardTrigger asChild className='w-fit absolute -right-10 top-1/2'>
-                        <BsArrowLeftCircle onClick={() => setIsOpen(!isOpen)} className='text-slate-400 hover:text-slate-700 cursor-pointer' size={26}/>
+                {isOpen && <HoverCard openDelay={100}>
+                    <HoverCardTrigger asChild>
+                        <Link href={"/prompt"}>
+                            <Button variant={"ghost"} className='w-full flex justify-between mb-5 relative'>
+                                <div className="flex items-center gap-x-2">
+                                    <Image src={"/taiwan-tech.png"} alt='logo image' width={20} height={20} />
+                                    <h2 className='font-semibold'>New Chat</h2>
+                                </div>
+                                <BsPencil />
+                            </Button>
+                        </Link>
                     </HoverCardTrigger>
-                    <HoverCardContent className='p-1 bg-slate-700 text-white w-fit' align='start'>
-                        <p className='text-xs'>Close the sidebar</p>
+                    <HoverCardContent className='w-fit text-xs p-2 bg-slate-700 text-white'>
+                        <p>Create a new chat</p>
                     </HoverCardContent>
-                </HoverCard>
-                :
-                <HoverCard>
-                    <HoverCardTrigger asChild className='w-fit absolute -right-10 top-1/2'>
-                        <BsArrowRightCircle onClick={() => setIsOpen(!isOpen)} className='text-slate-400 hover:text-slate-700 cursor-pointer' size={26}/>
-                    </HoverCardTrigger>
-                    <HoverCardContent className='p-1 bg-slate-700 text-white w-fit' align='start'>
-                        <p className='text-xs'>Open the sidebar</p>
-                    </HoverCardContent>
-                </HoverCard>
-            }
-            {isOpen && <HoverCard openDelay={100}>
-                <HoverCardTrigger asChild>
-                    <Link href={"/prompt"}>
-                        <Button variant={"ghost"} className='w-full flex justify-between mb-5 relative'>
-                            <div className="flex items-center gap-x-2">
-                                <Image src={"/taiwan-tech.png"} alt='logo image' width={20} height={20} />
-                                <h2 className='font-semibold'>New Chat</h2>
-                            </div>
-                            <BsPencil/>
-                        </Button>
-                    </Link>
-                </HoverCardTrigger>
-                <HoverCardContent className='w-fit text-xs p-2 bg-slate-700 text-white'>
-                    <p>Create a new chat</p>
-                </HoverCardContent>
-            </HoverCard>}
+                </HoverCard>}
 
-            {isOpen && <div className='flex-1 overflow-y-auto mb-3'>
-            {
-                chatBox && sortedKeys.map((key) => {
-                    return (
-                        <div className="w-full my-2" key={key}>
-                            { chatBox[key].length === 0 ? null : (
-                                <>
-                                    <label className='text-muted-foreground text-xs font-semibold'>{ key }</label>
-                                    { chatBox[key].map((item, i) => (
-                                        <Link href={"/prompt/" + item.id}>
-                                            <Button key={i} variant={"ghost"} className={`flex justify-between items-center w-full relative group my-1 ${item.id.toString() === pathname?.split('/')[2] && 'bg-white hover:bg-white'}`}>
-                                                    { item.name.length > 20 ? item.name.slice(0,20) : item.name }
-                                                <ThreeDotSidebar chatBoxId={ item.id }/>
-                                            </Button>
-                                        </Link>
-                                    )) }
-                                </>
-                            )}
-                        </div>
-                    )
-                })
-            }
-            </div>}
-            {isOpen && <UserProfile/>}
-        </nav>
-    </aside>
-  )
+                {isOpen && <div className='flex-1 overflow-y-auto mb-3'>
+
+                    {
+                        chatBox && sortedKeys.map((key) => {
+                            return (
+                                <div className="w-full my-2" key={key}>
+                                    {chatBox[key].length === 0 ? null : (
+                                        <>
+                                            <label className='text-muted-foreground text-xs font-semibold'>{key}</label>
+                                            {chatBox[key].map((item, i) => (
+                                                <Button key={i} variant={"ghost"} className={`flex justify-between items-center w-full relative group ${item.id.toString() === pathname?.split('/')[2] && 'bg-white hover:bg-white'}`}>
+                                                    {isRename !== item.id ?
+                                                        <Link href={"/prompt/" + item.id}>
+                                                            {item.name.length > 20 ? item.name.slice(0, 20) : item.name}
+                                                        </Link>
+                                                        :
+                                                        
+                                                        <Input type='text' defaultValue={item.name} 
+                                                        // onChange={(e) => setChatBox({ ...chatBox, [key]: chatBox[key].map((chat) => chat.id === item.id ? { ...chat, name: e.target.value } : chat) })} 
+                                                        // onEnterPress={() => updateChatBox(item.id, item.name)}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter') {
+                                                                    try {
+                                                                        updateChatBox(item.id, e.target.value)
+                                                                        setChatBox({ ...chatBox, [key]: chatBox[key].map((chat) => chat.id === item.id ? { ...chat, name: e.target.value } : chat) })
+                                                                        item.name = e.target.value
+                                                                    }
+                                                                    catch (error) {
+                                                                        console.error('Error:', error);
+                                                                    }
+                                                                    setIsRename(null)
+                                                                }
+                                                            }}
+                                                        />
+                                                    }
+                                                    <ThreeDotSidebar updateRename={updateRename} id={item.id} />
+                                                </Button>
+                                            ))}
+                                        </>
+                                    )}
+                                </div>
+                            )
+                        })
+                    }
+                </div>}
+                {isOpen && <UserProfile />}
+            </nav>
+        </aside>
+    )
 }
 
 export default SidebarPrompt

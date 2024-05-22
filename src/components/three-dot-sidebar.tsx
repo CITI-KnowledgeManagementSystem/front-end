@@ -9,11 +9,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Separator } from './ui/separator'
 
 
-interface Props {
-    chatBoxId: number
+interface ChildProps {
+    id: number;
+    updateRename: (newValue: number) => void;
 }
 
-const ThreeDotSidebar = ({ chatBoxId } : Props) => {
+const ThreeDotSidebar: React.FC<ChildProps> = ({ id, updateRename }) => {
     const [isOpen, setIsOpen] = useState<boolean>(false)
 
     // FUNCTIONS
@@ -51,7 +52,9 @@ const ThreeDotSidebar = ({ chatBoxId } : Props) => {
         </PopoverTrigger>
         <PopoverContent className='w-32 p-0' align='end'>
             <div className="">
-                <Button onClick={preventPropagation} variant={"ghost"} className='px-4 w-full rounded-none justify-between' size={"sm"}>Rename <MdDriveFileRenameOutline/></Button>
+                <Button onClick={(e: React.MouseEvent<HTMLElement>) => {
+                  updateRename(id); preventPropagation(e: React.MouseEvent<HTMLElement>);
+                }} variant={"ghost"} className='px-4 w-full rounded-none justify-between' size={"sm"}>Rename <MdDriveFileRenameOutline/></Button>
                 <Button onClick={preventPropagation} variant={"ghost"} className='px-4 w-full rounded-none justify-between' size={"sm"}>Archive <FiArchive/></Button>
                 <Separator/>
                 <DeleteAlert deleteFunction={deleteChatBox}/>
