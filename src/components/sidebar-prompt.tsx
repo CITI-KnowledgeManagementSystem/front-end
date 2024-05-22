@@ -88,20 +88,20 @@ const SidebarPrompt = () => {
         }
         return void 0;
     }
-
-    const getChatBox = async () => {
-        const response = await fetch('http://localhost:3000/api/chatbox?user_id=' + userId?.toString());
-        const data = await response.json();
-        return data;
-    }
-
+    
     useEffect(() => {
+        const getChatBox = async () => {
+            const response = await fetch('http://localhost:3000/api/chatbox?user_id=' + userId?.toString());
+            const data = await response.json();
+            return data;
+        }
+
         getChatBox().then((data) => {
             setChatBox(data.data as ChatBoxGroup)
             let sortedKeys = sortChatBox(data.data as ChatBoxGroup);
             setSortedKeys(sortedKeys)
         });
-    })
+    }, [setChatBox])
 
     return (
         <aside className={`h-screen`}>
@@ -173,9 +173,9 @@ const SidebarPrompt = () => {
                                                                 onKeyDown={(e) => {
                                                                     if (e.key === 'Enter') {
                                                                         try {
-                                                                            updateChatBox(item.id, e.target.value)
-                                                                            setChatBox({ ...chatBox, [key]: chatBox[key].map((chat) => chat.id === item.id ? { ...chat, name: e.target.value } : chat) })
-                                                                            item.name = e.target.value
+                                                                            updateChatBox(item.id, (e.target as HTMLInputElement).value)
+                                                                            setChatBox({ ...chatBox, [key]: chatBox[key].map((chat) => chat.id === item.id ? { ...chat, name: (e.target as HTMLInputElement).value } : chat) })
+                                                                            item.name = (e.target as HTMLInputElement).value
                                                                         }
                                                                         catch (error) {
                                                                             console.error('Error:', error);
