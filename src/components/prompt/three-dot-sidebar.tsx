@@ -1,31 +1,30 @@
 import React, { useState } from 'react'
 import { PiDotsThreeOutlineFill } from "react-icons/pi"
 import { FiDelete,FiArchive } from "react-icons/fi";
-import { Popover, PopoverTrigger, PopoverContent } from './ui/popover'
+import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@radix-ui/react-hover-card';
 import { MdDriveFileRenameOutline } from "react-icons/md";
-import { Button } from './ui/button'
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
-import { Separator } from './ui/separator'
+import { Button } from '../ui/button'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
+import { Separator } from '../ui/separator'
 
 
 interface ChildProps {
-    id: number;
-    updateRename: (newValue: number) => void;
+    id: string;
+    enableRename: () => void
 }
 
-const ThreeDotSidebar: React.FC<ChildProps> = ({ id, updateRename }) => {
+const ThreeDotSidebar: React.FC<ChildProps> = ({ id, enableRename }) => {
     const [isOpen, setIsOpen] = useState<boolean>(false)
 
     // FUNCTIONS
     const preventPropagation = (e: React.MouseEvent<HTMLElement>) => {
-        e.preventDefault()
+        e.stopPropagation()
         setIsOpen(!isOpen)
     }
 
     const deleteChatBox = async () => {
         fetch(`/api/chatbox?id=${id}`, { method: 'DELETE' }).then(res => {
-            // add toast error
             if (!res.ok) {
                 console.log("Error occured");
                 return
@@ -38,7 +37,7 @@ const ThreeDotSidebar: React.FC<ChildProps> = ({ id, updateRename }) => {
 
     const renameChatBox = (e: React.MouseEvent<HTMLElement>) => {
         preventPropagation(e)
-        updateRename(id)
+        enableRename()
     }
 
   return (
