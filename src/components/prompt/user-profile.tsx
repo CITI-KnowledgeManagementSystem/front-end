@@ -1,18 +1,20 @@
 import React, { useEffect, useState } from 'react'
 import { getUserInfo } from '@/lib/user-queries'
 import { useAuth } from "@clerk/nextjs";
-import { Popover, PopoverTrigger, PopoverContent } from './ui/popover'
+import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover'
 import Link from "next/link"
 import { UserProfileProps } from '@/types'
-import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar'
-import { Button } from './ui/button'
-import { Separator } from './ui/separator'
+import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar'
+import { Button } from '../ui/button'
+import { Separator } from '../ui/separator'
 import { FaUserEdit } from "react-icons/fa"
 import { MdDashboard } from "react-icons/md"
 import { IoIosLogOut } from "react-icons/io"
+import { useRouter } from 'next/navigation';
 
 const UserProfile =  () => {
     const { userId } = useAuth() 
+    const router = useRouter()
     const [user, setUser] = useState<UserProfileProps | null>()
     const [isLoading, setIsLoading] = useState(false)
 
@@ -48,12 +50,10 @@ const UserProfile =  () => {
         </PopoverTrigger>
         <PopoverContent className='w-full p-1' align='center'>
             <div className="w-48">
-                <Link href={"/dashboard/my-documents"} shallow>
-                    <Button className='w-full justify-start' variant={"ghost"} size={"sm"}>
-                        <MdDashboard className='mr-3' size={16}/>
-                        Go to your dashboard
-                    </Button>
-                </Link>
+                <Button onClick={() => router.push("/dashboard/my-documents")} className='w-full justify-start' variant={"ghost"} size={"sm"}>
+                    <MdDashboard className='mr-3' size={16}/>
+                    Go to your dashboard
+                </Button>
                 <Button className='w-full justify-start' variant={"ghost"} size={"sm"}>
                     <FaUserEdit className='mr-3' size={16}/>
                     Profile Settings

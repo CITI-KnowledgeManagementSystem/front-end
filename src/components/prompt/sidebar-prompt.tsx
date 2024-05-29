@@ -1,18 +1,16 @@
 "use client"
-import React, { use, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
-import { Button } from './ui/button'
+import { Button } from '../ui/button'
 import { BsArrowLeftCircle, BsArrowRightCircle, BsPencil } from "react-icons/bs"
 import { GoPlus } from "react-icons/go"
-import { HoverCard, HoverCardContent, HoverCardTrigger } from './ui/hover-card'
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '../ui/hover-card'
 import UserProfile from './user-profile'
-import ThreeDotSidebar from './three-dot-sidebar'
-import { useAuth } from '@clerk/nextjs';
-import { usePathname } from 'next/navigation'
-import { Input } from "@/components/ui/input"
+import { useAuth } from '@clerk/nextjs'
 import useStore from '@/lib/useStore'
+import ChatName from './chat-name'
 
 interface T {
     id: number;
@@ -66,33 +64,10 @@ const SidebarPrompt = () => {
     const [isOpen, setIsOpen] = useState(false)
     const [chatBox, setChatBox] = useState<ChatBoxGroup | null>(null)
     const [sortedKeys, setSortedKeys] = useState<string[]>([])
-    const [isRename, setIsRename] = useState<Number | null>(0)
     const { userId } = useAuth()
-    const pathname = usePathname()
 
     const setFunction = useStore((state) => state.setFunction)
 
-    const updateRename = (newValue: any) => {
-        setIsRename(newValue);
-    }
-
-    const updateChatBox = async (id: Number, newValue: any) => {
-        const formData = new FormData();
-        formData.append('id', id.toString());
-        formData.append('name', newValue);
-        
-        try {
-            const response = await fetch('http://localhost:3000/api/chatbox', {
-                method: 'PUT',
-                body: formData,
-            });
-        }
-        catch (error) {
-            console.error('Error:', error);
-        }
-        return void 0;
-    }
-    
     const getChatBox = async () => {
         const response = await fetch('http://localhost:3000/api/chatbox?user_id=' + userId?.toString());
         const data = await response.json();
@@ -161,7 +136,6 @@ const SidebarPrompt = () => {
                 </HoverCard>}
 
                 {isOpen && <div className='flex-1 overflow-y-auto mb-3'>
-
                     {
                         chatBox && sortedKeys.map((key) => {
                             return (
@@ -170,30 +144,7 @@ const SidebarPrompt = () => {
                                         <>
                                             <label className='text-muted-foreground text-xs font-semibold'>{key}</label>
                                             {chatBox[key].map((item, i) => (
-                                                <Link href={"/prompt/" + item.id}>
-                                                    <Button key={i} variant={"ghost"} className={`flex justify-between items-center w-full relative group ${item.id.toString() === pathname?.split('/')[2] && 'bg-white hover:bg-white'}`}>
-                                                        {isRename !== item.id ?
-                                                         item.name.length > 20 ? item.name.slice(0, 20) : item.name
-                                                                :
-                                                                <Input type='text' defaultValue={item.name} 
-                                                                onKeyDown={(e) => {
-                                                                    if (e.key === 'Enter') {
-                                                                        try {
-                                                                            updateChatBox(item.id, (e.target as HTMLInputElement).value)
-                                                                            setChatBox({ ...chatBox, [key]: chatBox[key].map((chat) => chat.id === item.id ? { ...chat, name: (e.target as HTMLInputElement).value } : chat) })
-                                                                            item.name = (e.target as HTMLInputElement).value
-                                                                        }
-                                                                        catch (error) {
-                                                                            console.error('Error:', error);
-                                                                        }
-                                                                        setIsRename(null)
-                                                                    }
-                                                                }}
-                                                                />
-                                                            }
-                                                        <ThreeDotSidebar updateRename={updateRename} id={item.id} />
-                                                    </Button>
-                                                </Link>
+                                                <ChatName id={ item.id.toString() } name={ item.name } key={i}/>
                                             ))}
                                         </>
                                     )}
