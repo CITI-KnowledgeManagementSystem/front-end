@@ -19,9 +19,9 @@ const ActionsOption = ({ documentId, tableContents, setTableContents }:Props) =>
     const [isAlertOpen, setIsAlertOpen] = useState<boolean>(false)
 
     const deleteDocument = () => {
-    //   deleteDocumentById(documentId).then().catch()
-    //   const newContents = tableContents.filter(item => item.id !== documentId)
-    //   setTableContents(newContents)
+      fetch(`http://localhost:3000/api/document/?id=${documentId}`, { method: 'DELETE' }).then().catch()
+      const newContents = tableContents.filter(item => item.id !== documentId)
+      setTableContents(newContents)
     }
 
   return (
