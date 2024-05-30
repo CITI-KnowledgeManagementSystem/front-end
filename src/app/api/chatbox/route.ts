@@ -252,12 +252,9 @@ async function deleteRecord(id: number) {
         globalThis.prisma = new PrismaClient();
     }
     try {
-        const record = await prisma.chatBox.update({
+        const record = await prisma.chatBox.delete({
             where: {
                 id: id
-            },
-            data: {
-                deletedAt: new Date()
             }
         });
     } catch (error) {

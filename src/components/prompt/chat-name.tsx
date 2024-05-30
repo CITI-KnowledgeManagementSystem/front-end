@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -46,6 +46,7 @@ const ChatName = ({ id, name } : Props) => {
     }
 
     useClickOutside(targetRef, () => setIsRenaming(false))
+    useEffect(() => setChatName(name), [name])
 
   return (
     <>

@@ -26,19 +26,15 @@ export function generateDashboardDocumentsLink(type:string, userId:string, pagin
   return `/api/documents?id=${userId}&skip=${paginationIndex}&take=${rowsPerPage}${tagsStr}${searchStr}`
 }
 
-export const answerQuestions = async (prompt:string) => {
+export const answerQuestions = async (prompt:string, history:any) => {
 
   const body = {
-    "model": "gpt-4", 
-    "messages": [
-        {   "role": "user",     
-            "content": prompt, 
-            "temperature": 0.0
-        }
-    ] 
+    "collection_name": "private",
+    "question": prompt,
+    "conversation_history": history
   }
 
-  const response = await fetch('http://140.118.101.189:8080/v1/chat/completions', {
+  const response = await fetch('http://140.118.101.211:5000/llm/chat_with_llm', {
     method: 'POST',
     headers: {
       "Content-Type": "application/json",
@@ -48,7 +44,7 @@ export const answerQuestions = async (prompt:string) => {
 
   const data = await response.json();
   
-  return data.choices[0].message.content;
+  return data.payload;
 };
 
 export const getChatMessages = async (id: string) => {

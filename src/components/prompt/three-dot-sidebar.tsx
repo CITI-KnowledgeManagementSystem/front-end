@@ -7,6 +7,8 @@ import { MdDriveFileRenameOutline } from "react-icons/md";
 import { Button } from '../ui/button'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
 import { Separator } from '../ui/separator'
+import { useRouter } from 'next/navigation'
+import useStore from '@/lib/useStore'
 
 
 interface ChildProps {
@@ -16,6 +18,9 @@ interface ChildProps {
 
 const ThreeDotSidebar: React.FC<ChildProps> = ({ id, enableRename }) => {
     const [isOpen, setIsOpen] = useState<boolean>(false)
+    const router = useRouter()
+
+    const triggerFunction = useStore(state => state.triggerFunction)
 
     // FUNCTIONS
     const preventPropagation = (e: React.MouseEvent<HTMLElement>) => {
@@ -29,8 +34,9 @@ const ThreeDotSidebar: React.FC<ChildProps> = ({ id, enableRename }) => {
                 console.log("Error occured");
                 return
             }
-            console.log("Successfully delete the chatbox");
             
+            triggerFunction()
+            router.push("/prompt")
         })
         setIsOpen(!isOpen)
     }
@@ -39,6 +45,8 @@ const ThreeDotSidebar: React.FC<ChildProps> = ({ id, enableRename }) => {
         preventPropagation(e)
         enableRename()
     }
+
+
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -75,13 +83,11 @@ const DeleteAlert = ({ deleteFunction } : AlertProps) => {
 
     const handleDelete: React.MouseEventHandler<HTMLButtonElement> = async (event) => {
         event.stopPropagation()
-        event.preventDefault();
         await deleteFunction()
     };
 
     const handleClickOpen = (e:React.MouseEvent<HTMLElement>) => {
         setIsOpen(!isOpen)
-        e.preventDefault()
         e.stopPropagation()
     }
 

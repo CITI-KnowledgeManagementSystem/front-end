@@ -11,6 +11,7 @@ import UserProfile from './user-profile'
 import { useAuth } from '@clerk/nextjs'
 import useStore from '@/lib/useStore'
 import ChatName from './chat-name'
+import { useParams } from 'next/navigation'
 
 interface T {
     id: number;
@@ -61,7 +62,7 @@ function sortChatBox(chatBox: ChatBoxGroup) {
 
 
 const SidebarPrompt = () => {
-    const [isOpen, setIsOpen] = useState(false)
+    const [isOpen, setIsOpen] = useState(true)
     const [chatBox, setChatBox] = useState<ChatBoxGroup | null>(null)
     const [sortedKeys, setSortedKeys] = useState<string[]>([])
     const { userId } = useAuth()
@@ -72,7 +73,7 @@ const SidebarPrompt = () => {
         const response = await fetch('http://localhost:3000/api/chatbox?user_id=' + userId?.toString());
         const data = await response.json();
         setChatBox(data.data as ChatBoxGroup)
-        let sortedKeys = sortChatBox(data.data as ChatBoxGroup);
+        let sortedKeys = sortChatBox(data.data as ChatBoxGroup)
         setSortedKeys(sortedKeys)
     }
 
@@ -140,14 +141,10 @@ const SidebarPrompt = () => {
                         chatBox && sortedKeys.map((key) => {
                             return (
                                 <div className="w-full my-2" key={key}>
-                                    {chatBox[key].length === 0 ? null : (
-                                        <>
-                                            <label className='text-muted-foreground text-xs font-semibold'>{key}</label>
-                                            {chatBox[key].map((item, i) => (
-                                                <ChatName id={ item.id.toString() } name={ item.name } key={i}/>
-                                            ))}
-                                        </>
-                                    )}
+                                    <label className='text-muted-foreground text-xs font-semibold'>{key}</label>
+                                    {chatBox[key].map((item, i) => (
+                                        <ChatName id={ item.id.toString() } name={ item.name } key={i}/>
+                                    ))}
                                 </div>
                             )
                         })
