@@ -10,6 +10,7 @@ export async function accumulatedSizeOfDocuments(id : string) {
             },
             where: {
                 userId: id,
+                deletedAt:null
             },
         });
 

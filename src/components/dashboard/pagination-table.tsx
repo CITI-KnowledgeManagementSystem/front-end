@@ -37,17 +37,17 @@ const PaginationTable = ({ selectedItems, tableContents, rowsPerPage, pagination
                     </DropdownMenuTrigger>
                 </DropdownMenu>
             </div>
-            <p className="font-medium text-sm mr-7">Page { paginationIndex } of { Math.ceil((totalItems/rowsPerPage) - 1) }</p>
-            <Button onClick={() => router.push(`?page=0&n=${rowsPerPage}`)} variant={"outline"} disabled={paginationIndex === 0} size={"sm"} className='mx-1 px-2 shadow'>
+            <p className="font-medium text-sm mr-7">Page { paginationIndex } of { Math.ceil(totalItems/rowsPerPage) - 1}</p>
+            <Button onClick={() => router.push(generateDashboardDocumentsLink('client', "", 0, rowsPerPage, searchTerm, tags))} variant={"outline"} disabled={paginationIndex === 0} size={"sm"} className='mx-1 px-2 shadow'>
                 <BsChevronLeft size={16}/>
             </Button>
-            <Button onClick={() => router.push(`?page=${paginationIndex - 1}&n=${rowsPerPage}`)} variant={"outline"} disabled={paginationIndex === 0} size={"sm"} className='mx-1 px-2 shadow'>
+            <Button onClick={() => router.push(generateDashboardDocumentsLink('client', "", paginationIndex-1, rowsPerPage, searchTerm, tags))} variant={"outline"} disabled={paginationIndex === 0} size={"sm"} className='mx-1 px-2 shadow'>
                 <BsChevronLeft size={16}/>
             </Button>
-            <Button onClick={() => router.push(`?page=${paginationIndex + 1}&n=${rowsPerPage}`)} variant={"outline"} disabled={Math.ceil(totalItems / rowsPerPage) === paginationIndex + 1} size={"sm"} className='mx-1 px-2 shadow'>
+            <Button onClick={() => router.push(generateDashboardDocumentsLink('client', "", paginationIndex+1, rowsPerPage, searchTerm, tags))} variant={"outline"} disabled={ paginationIndex*rowsPerPage + rowsPerPage >= totalItems } size={"sm"} className='mx-1 px-2 shadow'>
                 <BsChevronRight size={16}/>
             </Button>
-            <Button onClick={() => router.push(`?page=${Math.ceil((totalItems/rowsPerPage) - 1)}&n=${rowsPerPage}`)} variant={"outline"} disabled={Math.ceil(totalItems / rowsPerPage) === paginationIndex + 1} size={"sm"} className='mx-1 px-2 shadow'>
+            <Button onClick={() => router.push(generateDashboardDocumentsLink('client', "", Math.floor(totalItems/rowsPerPage) - 1, rowsPerPage, searchTerm, tags))} variant={"outline"} disabled={ paginationIndex*rowsPerPage + rowsPerPage >= totalItems } size={"sm"} className='mx-1 px-2 shadow'>
                 <BsChevronRight size={16}/>
             </Button>
         </div>

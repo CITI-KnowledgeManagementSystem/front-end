@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from "next/server";
-import { access, writeFile } from "fs/promises";
+import { writeFile } from "fs/promises";
 import fs from "fs";
 import path from "path";
 import { prisma } from "@/db";
@@ -163,7 +163,7 @@ export async function DELETE(request: NextRequest) {
         console.error("Error deleting file", err);
     }
 
-    deleteRecord(Number(id));
+    await deleteRecord(Number(id));
 
     return NextResponse.json(
         { message: "File deleted successfully" },

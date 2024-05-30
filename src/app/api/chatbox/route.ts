@@ -168,7 +168,8 @@ async function getRecord(id: string) {
     try {
         const record = await prisma.chatBox.findMany({
             where: {
-                userId: id
+                userId: id,
+                deletedAt: null
             },
             select: {
                 id: true,
@@ -252,9 +253,12 @@ async function deleteRecord(id: number) {
         globalThis.prisma = new PrismaClient();
     }
     try {
-        const record = await prisma.chatBox.delete({
+        const record = await prisma.chatBox.update({
             where: {
                 id: id
+            },
+            data: {
+                deletedAt: new Date()
             }
         });
     } catch (error) {

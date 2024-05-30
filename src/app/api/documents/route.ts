@@ -48,7 +48,8 @@ async function getListOfDocumentsByUserId(userId: string, searchTerm:string | nu
     
     try {
         var filterObject: {[k: string]: any} = {
-            userId: userId
+            userId: userId,
+            deletedAt: null
         }
 
         // if searchTerm exists
@@ -127,7 +128,8 @@ async function getListOfDocumentsByUserId(userId: string, searchTerm:string | nu
 
 async function getTotalCountByUserId(userId:string, searchTerm:string | null, tags: string[]) {
     var filterObject: {[k: string]: any} = {
-        userId: userId
+        userId: userId,
+        deletedAt: null
     }
 
     // if searchTerm exists
