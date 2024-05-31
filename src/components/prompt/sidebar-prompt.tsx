@@ -89,7 +89,7 @@ const SidebarPrompt = () => {
         <aside className={`h-screen`}>
             <nav className={`h-full ${isOpen ? 'w-72 p-4' : 'w-0 py-4'} flex flex-col bg-slate-200 border-r shadow-sm relative duration-300 ease-in-out`}>
                 {!isOpen && <HoverCard>
-                    <HoverCardTrigger asChild className='w-fit mx-3'>
+                    <HoverCardTrigger asChild className='w-fit mx-3 z-40'>
                         <Link href={"/prompt"}>
                             <GoPlus size={30} className='p-1 rounded-full bg-slate-200 cursor-pointer hover:bg-slate-300' />
                         </Link>
@@ -102,7 +102,7 @@ const SidebarPrompt = () => {
                 </HoverCard>}
                 {isOpen ?
                     <HoverCard>
-                        <HoverCardTrigger asChild className='w-fit absolute -right-10 top-1/2'>
+                        <HoverCardTrigger asChild className='w-fit absolute -right-10 top-1/2 z-40'>
                             <BsArrowLeftCircle onClick={() => setIsOpen(!isOpen)} className='text-slate-400 hover:text-slate-700 cursor-pointer' size={26} />
                         </HoverCardTrigger>
                         <HoverCardContent className='p-1 bg-slate-700 text-white w-fit' align='start'>
@@ -111,7 +111,7 @@ const SidebarPrompt = () => {
                     </HoverCard>
                     :
                     <HoverCard>
-                        <HoverCardTrigger asChild className='w-fit absolute -right-10 top-1/2'>
+                        <HoverCardTrigger asChild className='w-fit absolute -right-10 top-1/2 z-40'>
                             <BsArrowRightCircle onClick={() => setIsOpen(!isOpen)} className='text-slate-400 hover:text-slate-700 cursor-pointer' size={26} />
                         </HoverCardTrigger>
                         <HoverCardContent className='p-1 bg-slate-700 text-white w-fit' align='start'>

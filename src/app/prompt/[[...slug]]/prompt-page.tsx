@@ -4,6 +4,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { MessageProps } from '@/types'
 import ChatBox from '@/components/prompt/chat-box'
+import ModelOptions from '@/components/prompt/model-options'
 import { answerQuestions } from '@/lib/utils'
 import { UserProfileProps } from '@/types'
 import { useParams } from 'next/navigation'
@@ -22,6 +23,7 @@ const PromptPage = ({ user }: Props) => {
     const { slug } = useParams()
     const [data, setData] = useState<MessageProps[]>([])
     const [prompt, setPrompt] = useState<string>("")
+    const [selectedModel, setSelectedModel] = useState<string>("Mistral 7B")
     const [isLoading, setIsLoading] = useState<boolean>(false)
     const bottomRef = useRef<HTMLDivElement>(null);  
     
@@ -120,8 +122,11 @@ const PromptPage = ({ user }: Props) => {
     
 
   return (
-    <div className='flex flex-col w-full p-5 h-screen'>
-        <div className="w-full flex-1 overflow-y-auto mb-5 py-5 px-[100px]">
+    <div className='flex flex-col w-full py-5 h-full relative px-[100px] relative'>
+        <div className="flex absolute z-10 right-12">
+            <ModelOptions selectedModel={selectedModel} setSelectedModel={setSelectedModel}/>
+        </div>
+        <div className="w-full flex-1 overflow-y-auto mb-5 py-5">
             {data.length === 0 && <div className="flex flex-col justify-center h-full max-w-[900px] m-auto">
                 <div className="bg-gradient-to-r from-blue-500 to-teal-300 bg-clip-text text-transparent animate-slide-in delay-300">
                     <h1 className='text-6xl font-medium py-3'>Welcome, {user &&  user.username }</h1>
@@ -130,7 +135,7 @@ const PromptPage = ({ user }: Props) => {
             </div>}
             <div className="flex flex-col m-auto max-w-[900px] pt-10">
                 { data.map((item, i) => (
-                    <ChatBox variant={item.type} message={item.message} key={i}/>
+                    <ChatBox variant={item.type} message={item.message} key={i} username={user?.username}/>
                 )) }
                 { isLoading && 
                 <div className="flex w-full text-blue-700 items-center text-sm justify-start">

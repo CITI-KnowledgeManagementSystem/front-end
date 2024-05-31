@@ -3,7 +3,7 @@ import SidebarPrompt from '@/components/prompt/sidebar-prompt'
 
 const PromptLayout = ({ children }:{ children:React.ReactNode }) => {
   return (
-    <div className='flex h-full w-full justify-center items-center'>
+    <div className='flex h-screen w-full justify-center items-center'>
         <SidebarPrompt/>
         { children }
     </div>
