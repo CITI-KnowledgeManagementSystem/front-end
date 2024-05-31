@@ -8,36 +8,26 @@ import ModelOptions from '@/components/prompt/model-options'
 import { answerQuestions } from '@/lib/utils'
 import { UserProfileProps } from '@/types'
 import { useParams } from 'next/navigation'
-import { getChatMessages } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 import useStore from '@/lib/useStore'
 
-
 type Props = {
-    user: UserProfileProps | null
+    user: UserProfileProps | null,
+    conversations: MessageProps[]
 }
 
 
-const PromptPage = ({ user }: Props) => {
+const PromptPage = ({ user, conversations }: Props) => {
     const router = useRouter()
     const { slug } = useParams()
-    const [data, setData] = useState<MessageProps[]>([])
+    const [data, setData] = useState<MessageProps[]>(conversations)
     const [prompt, setPrompt] = useState<string>("")
     const [selectedModel, setSelectedModel] = useState<string>("Mistral 7B")
     const [isLoading, setIsLoading] = useState<boolean>(false)
-    const bottomRef = useRef<HTMLDivElement>(null);  
+    const bottomRef = useRef<HTMLDivElement>(null);
+    const isPageRendered = useRef(false)  
     
-    const triggerFunction = useStore(state => state.triggerFunction)
-
-    useEffect(() => {
-        if (slug) {
-            const chatId = slug[0]
-            getChatMessages(chatId).then(res => {
-                if (res.length === 0) router.push("/prompt")
-                setData(res)
-            })
-        }
-    }, [])
+    const triggerFunction = useStore(state => state.triggerFunction)    
 
     useEffect(() => {
         if (bottomRef.current) {
