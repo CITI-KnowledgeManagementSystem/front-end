@@ -4,10 +4,11 @@ import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar'
 
 interface Props {
     variant: string,
-    message: string
+    message: string,
+    username: string | undefined
 }
 
-const ChatBox = ({ variant, message }: Props) => {
+const ChatBox = ({ variant, message, username }: Props) => {
    
     if(variant === "request"){
         return (
@@ -17,7 +18,7 @@ const ChatBox = ({ variant, message }: Props) => {
                         <AvatarImage className='object-cover' src='https://images.pexels.com/photos/771742/pexels-photo-771742.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500'/>
                         <AvatarFallback className='text-xs'>RT</AvatarFallback>
                     </Avatar>
-                    <h2 className="text-sm font-medium">User</h2>
+                    <h2 className="text-sm font-medium">{ username }</h2>
                 </div>
                 <p className='text-sm bg-blue-700 rounded-lg py-2 px-4 text-white mt-2 mb-4' style={{ whiteSpace: 'pre-line' }}>
                     { message }

@@ -31,4 +31,13 @@ export const dashboardMenu = [
     }
 ]
 
+export const llmModels = [
+    {
+        name: "Mistral 7B",
+    },
+    {
+        name: "Llama 2 70B",
+    }
+]
+
 export const rowsPerPageValues = [10, 30, 50]
