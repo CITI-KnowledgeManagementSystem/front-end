@@ -23,12 +23,11 @@ const PromptPage = ({ user, conversations }: Props) => {
   const [prompt, setPrompt] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>("Mistral 7B");
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
   const isPageRendered = useRef(false);
   const [isHydeChecked, setIsHydeChecked] = useState<boolean>(true);
   const [isRerankingChecked, setIsRerankingChecked] = useState<boolean>(true);
   const [temperature, setTemperature] = useState<number>(0);
-
+  const bottomRef = useRef<HTMLDivElement>(null);
   const triggerFunction = useStore((state) => state.triggerFunction);
 
   useEffect(() => {
@@ -121,8 +120,8 @@ const PromptPage = ({ user, conversations }: Props) => {
   };
 
   return (
-    <div className="flex flex-col w-full py-5 h-full relative px-[100px] relative">
-      <div className="flex absolute z-5 right-[150px]">
+    <div className="flex flex-col w-full py-4 h-full relative px-[100px] relative">
+      <div className="flex w-full pb-3">
         <ModelOptions
           selectedModel={selectedModel}
           setSelectedModel={setSelectedModel}
@@ -147,7 +146,7 @@ const PromptPage = ({ user, conversations }: Props) => {
             </h1>
           </div>
         )}
-        <div className="flex flex-col m-auto max-w-[900px] pt-10">
+        <div className="flex flex-col m-auto max-w-[900px]">
           {data.map((item, i) => (
             <ChatBox
               variant={item.type}
