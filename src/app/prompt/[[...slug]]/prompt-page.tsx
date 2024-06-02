@@ -24,8 +24,7 @@ const PromptPage = ({ user, conversations }: Props) => {
     const [prompt, setPrompt] = useState<string>("")
     const [selectedModel, setSelectedModel] = useState<string>("Mistral 7B")
     const [isLoading, setIsLoading] = useState<boolean>(false)
-    const bottomRef = useRef<HTMLDivElement>(null);
-    const isPageRendered = useRef(false)  
+    const bottomRef = useRef<HTMLDivElement>(null)
     
     const triggerFunction = useStore(state => state.triggerFunction)    
 
@@ -112,8 +111,8 @@ const PromptPage = ({ user, conversations }: Props) => {
     
 
   return (
-    <div className='flex flex-col w-full py-5 h-full relative px-[100px] relative'>
-        <div className="flex absolute z-10 right-12">
+    <div className='flex flex-col w-full py-4 h-full relative px-[100px] relative'>
+        <div className="flex w-full">
             <ModelOptions selectedModel={selectedModel} setSelectedModel={setSelectedModel}/>
         </div>
         <div className="w-full flex-1 overflow-y-auto mb-5 py-5">
