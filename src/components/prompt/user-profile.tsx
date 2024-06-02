@@ -16,10 +16,9 @@ const UserProfile =  () => {
     const { userId } = useAuth() 
     const router = useRouter()
     const [user, setUser] = useState<UserProfileProps | null>()
-    const [isLoading, setIsLoading] = useState(false)
+    const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
-        setIsLoading(true)
         getUserInfo(userId || "").then(res => {
             setUser(res)
             setIsLoading(false)
@@ -29,7 +28,12 @@ const UserProfile =  () => {
 
     if (isLoading)
         return (
-            <p className="text-sm">Waiting user's info...</p>
+            <div className="animate-pulse flex space-x-4 items-center">
+                <div className="rounded-full bg-slate-400 h-10 w-10"></div>
+                <div className="flex-1 space-y-6 py-1">
+                <div className="h-10 bg-slate-400 rounded"></div>
+                </div>
+            </div>
         )
     else if (!user) {
         return (
