@@ -112,7 +112,7 @@ const PromptPage = ({ user, conversations }: Props) => {
 
   return (
     <div className='flex flex-col w-full py-4 h-full relative px-[100px] relative'>
-        <div className="flex w-full">
+        <div className="flex w-full pb-3">
             <ModelOptions selectedModel={selectedModel} setSelectedModel={setSelectedModel}/>
         </div>
         <div className="w-full flex-1 overflow-y-auto mb-5 py-5">
@@ -122,7 +122,7 @@ const PromptPage = ({ user, conversations }: Props) => {
                 </div>
                 <h1 className='text-6xl font-medium py-3 bg-gradient-to-r from-neutral-500 to-sky-700 bg-clip-text text-transparent animate-slide-in delay-300'>Ready to learn something new?</h1>
             </div>}
-            <div className="flex flex-col m-auto max-w-[900px] pt-10">
+            <div className="flex flex-col m-auto max-w-[900px]">
                 { data.map((item, i) => (
                     <ChatBox variant={item.type} message={item.message} key={i} username={user?.username}/>
                 )) }
