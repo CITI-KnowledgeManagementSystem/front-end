@@ -1,6 +1,4 @@
 import React, { useState } from "react";
-import { FaMagento } from "react-icons/fa";
-import { IoIosArrowDropdown } from "react-icons/io";
 import { Button } from "../ui/button";
 import { llmModels } from "@/constants";
 import {
@@ -14,20 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { IoSettingsOutline } from "react-icons/io5";
 import {
   Select,
   SelectContent,
@@ -74,32 +59,13 @@ const ModelOptions = ({
   const handleRerankingChecked = (checked: boolean) => {
     setIsRerankingChecked(checked);
   };
-
-  //   return (
-  //     <Popover open={isOpen} onOpenChange={setIsOpen}>
-  //         <PopoverTrigger asChild>
-  //             <Button variant={"ghost"} className='text-lg font-normal text-slate-700 bg-white'>
-  //                 <FaMagento size={18} className='mr-3'/>
-  //                 { selectedModel }
-  //                 <IoIosArrowDropdown className='ml-7' size={22}/>
-  //             </Button>
-  //         </PopoverTrigger>
-  //         <PopoverContent align='end' className='p-1 max-w-48'>
-  //             <div className="flex flex-col gap-y-1">
-  //                 { llmModels.map(item => (
-  //                     <Button variant={"ghost"} className='justify-start font-normal' key={item.name} onClick={() => handleModelItem(item.name)}>
-  //                         <FaMagento size={18} className='mr-3'/>
-  //                         { item.name }
-  //                     </Button>
-  //                 ))}
-  //             </div>
-  //         </PopoverContent>
-  //     </Popover>
-  //   )
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline">Model Options</Button>
+        <Button variant="outline">
+          <IoSettingsOutline size={18} className="mr-2" />
+          Model Options
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
