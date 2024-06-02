@@ -152,7 +152,7 @@ const PromptPage = ({ user, conversations }: Props) => {
               variant={item.type}
               message={item.message}
               key={i}
-              username={user?.username}
+              user={user}
             />
           ))}
           {isLoading && (
