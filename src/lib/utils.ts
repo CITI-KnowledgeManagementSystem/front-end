@@ -1,5 +1,6 @@
 import { MessageProps } from "@/types";
 import { type ClassValue, clsx } from "clsx";
+import { env } from "process";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -10,32 +11,50 @@ export function parseDate(date: string) {
   return new Date(date);
 }
 
-export function generateDashboardDocumentsLink(type:string, userId:string, paginationIndex:number, rowsPerPage:number, searchTerm:string | null=null, tags:string[] | null=null):string {
+export function generateDashboardDocumentsLink(
+  type: string,
+  userId: string,
+  paginationIndex: number,
+  rowsPerPage: number,
+  searchTerm: string | null = null,
+  tags: string[] | null = null
+): string {
+  const tagsStr = tags
+    ? tags
+        .map((item) => {
+          return `&tag=${item}`;
+        })
+        .join("")
+    : "";
 
-  const tagsStr = tags ? tags.map(item => {
-    return `&tag=${item}`
-  }).join('') : ''  
+  const searchStr = searchTerm ? `&searchTerm=${searchTerm}` : "";
 
-  const searchStr = searchTerm ? `&searchTerm=${searchTerm}` : ''
-  
-  if (type === 'client') {
-    const link = `?page=${paginationIndex}&n=${rowsPerPage}${tagsStr}${searchStr}`
-    return link
+  if (type === "client") {
+    const link = `?page=${paginationIndex}&n=${rowsPerPage}${tagsStr}${searchStr}`;
+    return link;
   }
 
-  return `/api/documents?id=${userId}&skip=${paginationIndex}&take=${rowsPerPage}${tagsStr}${searchStr}`
+  return `/api/documents?id=${userId}&skip=${paginationIndex}&take=${rowsPerPage}${tagsStr}${searchStr}`;
 }
 
-export const answerQuestions = async (prompt:string, history:any) => {
-
+export const answerQuestions = async (
+  prompt: string,
+  history: any,
+  hyde: boolean,
+  reranking: boolean
+) => {
   const body = {
-    "collection_name": "private",
-    "question": prompt,
-    "conversation_history": history
-  }
+    collection_name: "private",
+    question: prompt,
+    conversation_history: history,
+    hyde: hyde,
+    reranking: reranking,
+  };
 
-  const response = await fetch('http://140.118.101.211:5000/llm/chat_with_llm', {
-    method: 'POST',
+  const url = process.env.NEXT_PUBLIC_LLM_SERVER_URL;
+
+  const response = await fetch(url + "/llm/chat_with_llm", {
+    method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
@@ -43,7 +62,7 @@ export const answerQuestions = async (prompt:string, history:any) => {
   });
 
   const data = await response.json();
-  
+
   return data.payload;
 };
 
