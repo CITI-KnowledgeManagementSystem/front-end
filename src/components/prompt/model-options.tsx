@@ -79,7 +79,7 @@ const ModelOptions = ({
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label className="text-right">Model Name</Label>
-            <Select>
+            <Select value={selectedModel} onValueChange={handleModelItem}>
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Mistral 7B" />
               </SelectTrigger>
@@ -88,7 +88,7 @@ const ModelOptions = ({
                   <SelectItem
                     value={item.name}
                     key={item.name}
-                    onClick={() => handleModelItem(item.name)}
+                    // onClick={() => handleModelItem(item.name)}
                   >
                     {item.name}
                   </SelectItem>
@@ -125,6 +125,9 @@ const ModelOptions = ({
               value={temperature}
               onChange={(e) => setTemperature(Number(e.target.value))}
               className="col-span-3"
+              min="0"
+              max="1"
+              step="0.01"
             />
           </div>
         </div>
