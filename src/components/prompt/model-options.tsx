@@ -119,6 +119,9 @@ const ModelOptions = ({
               value={temperature}
               onChange={(e) => setTemperature(Number(e.target.value))}
               className="col-span-3"
+              min="0"
+              max="1"
+              step="0.01"
             />
           </div>
         </div>

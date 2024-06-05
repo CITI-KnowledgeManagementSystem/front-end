@@ -41,7 +41,11 @@ const ChatBox = ({ variant, message, user }: Props) => {
     <div className="w-full my-1">
       <div className="flex items-center gap-x-2">
         <Avatar className="w-6 h-6 rounded-full overflow-hidden">
-          <AvatarImage className="object-cover" src="./taiwan-tech.png" />
+          <AvatarImage
+            className="object-cover"
+            src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAClklEQVR4Ab2XAWRbQRiAn5iJKGYgpqJmZmYYoqKmqmBmhmAivBiGmgqGmZqaYSYoGAaCYaaoidkdiqmpmYEZIqqeGYqZioqo8PpdHb2+vty7PEkfX+7J3d3/vbs/d3le6qsmZ2AdgPtzu2piioCvoAfhMb7o6e+mJhk4Q4Aq/IEwDl1XVW3HHFwWGfSbDpKIbltMG0xR0Pd5aHq+HMQEOuD7DtMfcH+mXvdpQl6PVYCMi8ALWNHT3o4J/AsewEWjzxXavjTywkC0dZs6rIF1nau6oxaQwemnEi3IWuRnYT8iERgCISwP63wduhaBwCXLaVNJEOjD7eiTe6zZpmpgEai7/lqgbRFQbJ/OB1/eVxVWAV/e8lwvX7yLEXgSSdKyKbCVIABieoRf0usYgaVIPm2Zax8mCUBpBIH3SQJ6Fq6pimeOAg3H4Flma89FAOpUiJaTgC+6ythxHwkdBdZVxa6LgGYHblh20McwGEHgNxWibxHYiN+CxRrlHcjDDJRBQhjD5+EC4r83pFMLLtHAI1hZP3k4IgFU6J+hzJmJaXBIAD7iB9jTU5qBLKxANzGwLw8oV3VQ+grbEb6vZuBvwoA/KedPDh2eJP50HMAHmNZti5B0hO+ohl8dzneQHykLevASfDfa/IA5Q7IJWtLKF7UEDfd1jU6vfKTQ65xlrOfmMiXDEc7NYroEEw9B9VekTdSS6nzBkiQJiAW9HGEKOsczxxW/HbuxCHMp5ZfNXSwHwTkKdCAbPcPv6sydtMAhzNsPkskKPE36S96YoMAqOL0XLHm+7I1RoAs1GOkF5SYSm2MQ+ER+XfVSXb5UIguwAX13AdHVZ8Ys5djeDy8zcIXyLWxz/48nUwIEEbuUEt7APci5DnsEpqVT/8wdlEMAAAAASUVORK5CYII="
+            // size="20"
+          />
           <AvatarFallback className="text-xs">TW</AvatarFallback>
         </Avatar>
         <h2 className="text-sm font-medium">Agent</h2>

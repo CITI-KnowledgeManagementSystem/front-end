@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { getUserInfo, updateUser } from "@/lib/user-queries";
 // import Image from "next/image";
 import { useToast } from "@/components/ui/use-toast";
-import { Skeleton } from "@/components/ui/skeleton"
+import { Skeleton } from "@/components/ui/skeleton";
 
 import {
   Form,
@@ -23,13 +23,13 @@ import { useAuth } from "@clerk/nextjs";
 import { z } from "zod";
 
 interface User {
-  id: string,
-  username: string,
-  email: string,
-  first_name: string,
-  last_name: string,
-  img_url: string,
-};
+  id: string;
+  username: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  img_url: string;
+}
 
 const formSchema = z.object({
   username: z.string(),
@@ -40,29 +40,29 @@ const formSchema = z.object({
 });
 
 const ProfilePage = () => {
-
   const { userId } = useAuth();
   const [user, setUser] = useState<User | null>();
   const [isLoading, setIsLoading] = useState(true);
   const [formReady, setFormReady] = useState(false);
-  const [imageURL, setImageURL] = useState<string>(user?.img_url.toString() || "");
+  const [imageURL, setImageURL] = useState<string>(
+    user?.img_url.toString() || ""
+  );
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      username: '',
-      email: '',
-      first_name: '',
-      last_name: '',
-      img_url: '',
+      username: "",
+      email: "",
+      first_name: "",
+      last_name: "",
+      img_url: "",
     },
   });
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log(userId);
         const userData = await getUserInfo(userId?.toString() || "");
         setUser(userData);
       } catch (error) {
@@ -71,7 +71,6 @@ const ProfilePage = () => {
         setIsLoading(false);
         setFormReady(true);
       }
-
     };
     fetchData();
   }, [userId]);
@@ -100,9 +99,15 @@ const ProfilePage = () => {
   }
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    console.log(values);
     try {
-      updateUser(userId?.toString() || "", values.email, values.username, values.first_name, values.last_name, values.img_url);
+      updateUser(
+        userId?.toString() || "",
+        values.email,
+        values.username,
+        values.first_name,
+        values.last_name,
+        values.img_url
+      );
     } catch (err) {
       console.log(err);
       toast({
@@ -117,7 +122,7 @@ const ProfilePage = () => {
     // window.location.reload();
     const newImageURL = values.img_url;
     setImageURL(newImageURL);
-  }
+  };
 
   return (
     <div className="flex flex-col p-10 border border-red-700">
@@ -200,9 +205,7 @@ const ProfilePage = () => {
                 <FormItem>
                   <FormLabel>Image Profile URL</FormLabel>
                   <Input placeholder="Duke" {...field} />
-                  <FormMessage>
-                    {formState.errors.img_url?.message}
-                  </FormMessage>
+                  <FormMessage>{formState.errors.img_url?.message}</FormMessage>
                 </FormItem>
               )}
             />
