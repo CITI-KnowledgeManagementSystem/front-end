@@ -102,6 +102,7 @@ const DocTable = () => {
                                 <BsChevronExpand className='ml-2' size={12}/>
                             </Button>
                         </TableHead>
+                        <TableHead>Shared</TableHead>
                         <TableHead></TableHead>
                     </TableRow>
                 </TableHeader>
@@ -117,6 +118,9 @@ const DocTable = () => {
                             <TableCell>{ item.topic }</TableCell>
                             <TableCell>{ item.file_size_formatted }</TableCell>
                             <TableCell>{ item.createdAt }</TableCell>
+                            <TableCell>
+                                <Badge variant={"outline"} className='border-red-200 bg-red-100 font-medium'>Not Shared</Badge>
+                            </TableCell>
                             <TableCell><ActionsOption documentId={item.id} tableContents={tableContents} setTableContents={setTableContents}/></TableCell>
                         </TableRow>
                     )) }

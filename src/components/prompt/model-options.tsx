@@ -19,6 +19,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 
@@ -43,14 +44,6 @@ const ModelOptions = ({
   temperature,
   setTemperature,
 }: Props) => {
-  const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [open, setOpen] = React.useState(false);
-  const [value, setValue] = React.useState("");
-
-  const handleModelItem = (value: string) => {
-    setSelectedModel(value);
-    console.log("Selected Model: ", value);
-  };
 
   const handleHydeChange = (checked: boolean) => {
     setIsHydeChecked(checked);
@@ -79,20 +72,21 @@ const ModelOptions = ({
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label className="text-right">Model Name</Label>
-            <Select value={selectedModel} onValueChange={handleModelItem}>
+            <Select onValueChange={(val) => setSelectedModel(val)}>
               <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Mistral 7B" />
+                <SelectValue placeholder={ selectedModel } />
               </SelectTrigger>
               <SelectContent>
-                {llmModels.map((item) => (
-                  <SelectItem
-                    value={item.name}
-                    key={item.name}
-                    // onClick={() => handleModelItem(item.name)}
-                  >
-                    {item.name}
-                  </SelectItem>
-                ))}
+                <SelectGroup>
+                  {llmModels.map((item) => (
+                    <SelectItem
+                      value={item.name}
+                      key={item.name}
+                    >
+                      {item.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
               </SelectContent>
             </Select>
           </div>

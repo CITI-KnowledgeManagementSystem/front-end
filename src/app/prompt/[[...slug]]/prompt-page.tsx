@@ -23,7 +23,6 @@ const PromptPage = ({ user, conversations }: Props) => {
   const [prompt, setPrompt] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>("Mistral 7B");
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const isPageRendered = useRef(false);
   const [isHydeChecked, setIsHydeChecked] = useState<boolean>(true);
   const [isRerankingChecked, setIsRerankingChecked] = useState<boolean>(true);
   const [temperature, setTemperature] = useState<number>(0);
