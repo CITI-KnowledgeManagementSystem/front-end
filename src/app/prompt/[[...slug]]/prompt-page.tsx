@@ -90,7 +90,7 @@ const PromptPage = ({ user, conversations }: Props) => {
     formData.append("chatBoxId", chatBoxId);
 
     try {
-      await fetch("http://localhost:3000/api/message", {
+      await fetch(`${process.env.NEXT_PUBLIC_SERVER_API}/message`, {
         method: "POST",
         body: formData,
       });
@@ -105,7 +105,7 @@ const PromptPage = ({ user, conversations }: Props) => {
     formData.append("userId", user?.id || "");
 
     try {
-      const chatBox = await fetch("http://localhost:3000/api/chatbox", {
+      const chatBox = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API}/chatbox`, {
         method: "POST",
         body: formData,
       });

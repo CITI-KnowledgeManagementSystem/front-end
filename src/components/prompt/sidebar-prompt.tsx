@@ -78,7 +78,7 @@ const SidebarPrompt = () => {
 
   const getChatBox = async () => {
     const response = await fetch(
-      "http://localhost:3000/api/chatbox?user_id=" + userId?.toString()
+      `${process.env.NEXT_PUBLIC_SERVER_API}/chatbox?user_id=`+ userId?.toString()
     );
     const data = await response.json();
     setChatBox(data.data as ChatBoxGroup);

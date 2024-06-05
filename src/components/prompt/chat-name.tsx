@@ -32,7 +32,7 @@ const ChatName = ({ id, name } : Props) => {
         formData.append('name', inputName);
         
         try {
-            const response = await fetch('http://localhost:3000/api/chatbox', {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API}/chatbox`, {
                 method: 'PUT',
                 body: formData,
             });

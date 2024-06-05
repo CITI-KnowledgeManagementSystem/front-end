@@ -67,7 +67,7 @@ export const answerQuestions = async (
 };
 
 export const getChatMessages = async (id: string) => {
-  const response = await fetch("http://localhost:3000/api/chatbox/" + id, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API}/chatbox/` + id, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
