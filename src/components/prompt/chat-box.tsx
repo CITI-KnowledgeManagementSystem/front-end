@@ -44,7 +44,7 @@ const ChatBox = ({ variant, message, user }: Props) => {
           <AvatarImage className="object-cover" src="./taiwan-tech.png" />
           <AvatarFallback className="text-xs">TW</AvatarFallback>
         </Avatar>
-        <h2 className="text-sm font-medium">Ai Llama 2</h2>
+        <h2 className="text-sm font-medium">Agent</h2>
       </div>
       <Markdown
         remarkPlugins={[remarkGfm]}
@@ -69,7 +69,7 @@ const ChatBox = ({ variant, message, user }: Props) => {
             );
           },
         }}
-        className={"text-sm mb-4"}
+        className={"text-sm mb-4 mt-2"}
       >
         {message}
       </Markdown>
