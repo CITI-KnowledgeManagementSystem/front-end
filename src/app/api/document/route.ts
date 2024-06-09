@@ -1,13 +1,9 @@
 import { NextResponse, NextRequest } from "next/server";
-import { writeFile } from "fs/promises";
 import fs from "fs";
 import path from "path";
 import { prisma, sftpClient } from "@/db";
 import { PrismaClient } from "@prisma/client";
-import { Form } from "react-hook-form";
-import { global } from "styled-jsx/css";
 import Client from "ssh2-sftp-client";
-import test from "node:test";
 
 export async function POST(req: Response) {
   const formData = await req.formData();
@@ -58,12 +54,17 @@ export async function POST(req: Response) {
 
     await connect();
 
-    const exists = await sftpClient.exists(`/share/LKC/Private/${user_id}`);
+    const exists = await sftpClient.exists(
+      `${process.env.NEXT_PUBLIC_QNAP_PRIVATE_STORAGE}/${user_id}`
+    );
     console.log(exists);
 
     if (!exists) {
       try {
-        await sftpClient.mkdir(`/share/LKC/Private/${user_id}`, true);
+        await sftpClient.mkdir(
+          `${process.env.NEXT_PUBLIC_QNAP_PRIVATE_STORAGE}/${user_id}`,
+          true
+        );
       } catch (err) {
         await disconnect();
         console.error("Error creating directory", err);
@@ -76,7 +77,10 @@ export async function POST(req: Response) {
 
     try {
       await sftpClient
-        .put(buffer, `/share/LKC/Private/${user_id}/${docs_id}.${format}`)
+        .put(
+          buffer,
+          `${process.env.NEXT_PUBLIC_QNAP_PRIVATE_STORAGE}/${user_id}/${docs_id}.${format}`
+        )
         .then(() => {
           console.log("File uploaded successfully");
         });
@@ -175,7 +179,9 @@ export async function DELETE(request: NextRequest) {
 
   try {
     await connect();
-    await sftpClient.delete(`/share/LKC/Private/${userId}/${id}.${extension}`);
+    await sftpClient.delete(
+      `${process.env.NEXT_PUBLIC_QNAP_PRIVATE_STORAGE}/${userId}/${id}.${extension}`
+    );
   } catch (error) {
     console.error("Error deleting file", error);
     await disconnect();
