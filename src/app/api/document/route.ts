@@ -2,7 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import { writeFile } from "fs/promises";
 import fs from "fs";
 import path from "path";
-import { prisma, sftp_client } from "@/db";
+import { prisma, sftpClient } from "@/db";
 import { PrismaClient } from "@prisma/client";
 import { Form } from "react-hook-form";
 import { global } from "styled-jsx/css";
@@ -51,42 +51,44 @@ export async function POST(req: Response) {
     const parts = filename.split(".");
     var format = "";
     if (parts.length === 1) {
-      // If there's no '.' in the filename or it starts with a dot
-      format = ""; // No file format found or empty file format
+      format = "";
     } else {
-      // The last part is the extension
       format = parts[parts.length - 1].toLowerCase();
     }
 
-    // await writeFile(
-    //     path.join(process.cwd(), "storage/" + docs_id + "." + format),
-    //     buffer
-    // );
+    await connect();
 
-    testConnection();
+    const exists = await sftpClient.exists(`/share/LKC/Private/${user_id}`);
+    console.log(exists);
 
-    // await connect();
+    if (!exists) {
+      try {
+        await sftpClient.mkdir(`/share/LKC/Private/${user_id}`, true);
+      } catch (err) {
+        await disconnect();
+        console.error("Error creating directory", err);
+        return NextResponse.json(
+          { message: "Error creating directory" },
+          { status: 400 }
+        );
+      }
+    }
 
-    // const exists = await sftp_client.exists(`/LKC/private/${user_id}`);
-
-    // if (!exists) {
-    //   await sftp_client.mkdir(`/LKC/private/${user_id}`, true);
-    // }
-
-    // await sftp_client
-    //   .put(buffer, `/LKC/private/${user_id}/${filename}.${format}`)
-    //   .then(() => {
-    //     console.log("File uploaded successfully");
-    //   })
-    //   .then(() => {
-    //     disconnect();
-    //   })
-    //   .catch(() => {
-    //     return NextResponse.json(
-    //       { message: "Error uploading file" },
-    //       { status: 400 }
-    //     );
-    //   });
+    try {
+      await sftpClient
+        .put(buffer, `/share/LKC/Private/${user_id}/${docs_id}.${format}`)
+        .then(() => {
+          console.log("File uploaded successfully");
+        });
+    } catch (err) {
+      console.error("Error uploading file", err);
+      return NextResponse.json(
+        { message: "Error uploading file" },
+        { status: 400 }
+      );
+    } finally {
+      await disconnect();
+    }
 
     return NextResponse.json(
       { message: "File uploaded successfully" },
@@ -157,10 +159,8 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   const id = request.nextUrl.searchParams.get("id");
-  const extension = findFileWithExtension(
-    path.join(process.cwd(), "storage"),
-    id as string
-  );
+  const extension = await findFileWithExtension(id as string);
+  const userId = request.nextUrl.searchParams.get("user_id");
 
   if (!id) {
     return NextResponse.json(
@@ -169,14 +169,22 @@ export async function DELETE(request: NextRequest) {
     );
   }
 
-  // if (!extension) {
-  //   return NextResponse.json({ message: "File not found" }, { status: 404 });
-  // }
+  if (!extension) {
+    return NextResponse.json({ message: "File not found" }, { status: 404 });
+  }
 
   try {
-    fs.unlinkSync(path.join(process.cwd(), "storage/", id + extension));
-  } catch (err) {
-    console.error("Error deleting file", err);
+    await connect();
+    await sftpClient.delete(`/share/LKC/Private/${userId}/${id}.${extension}`);
+  } catch (error) {
+    console.error("Error deleting file", error);
+    await disconnect();
+    return NextResponse.json(
+      { message: "Error deleting file" },
+      { status: 500 }
+    );
+  } finally {
+    await disconnect();
   }
 
   await deleteRecord(Number(id));
@@ -234,19 +242,25 @@ function searchFilesByName(directory: string, fileName: string): string[] {
   return files;
 }
 
-function findFileWithExtension(
-  directory: string,
+async function findFileWithExtension(
   filenameWithoutExtension: string
-): string | null {
-  const files = fs.readdirSync(directory);
-  for (const file of files) {
-    const ext = path.extname(file); // Get the extension of the current file
-    const nameWithoutExt = path.basename(file, ext); // Get the name of the file without extension
-    if (nameWithoutExt === filenameWithoutExtension) {
-      return ext; // Return the extension if the filename matches
+): Promise<string | null> {
+  try {
+    const fileName = await prisma.document.findUnique({
+      where: { id: Number(filenameWithoutExtension) },
+    });
+    const parts = fileName?.original_name.split(".") || [];
+    var format = "";
+    if (parts.length === 1) {
+      format = "";
+    } else {
+      format = parts[parts.length - 1].toLowerCase();
     }
+    return format;
+  } catch (error) {
+    console.error("Error finding document", error);
   }
-  return null; // Return null if the file is not found
+  return null;
 }
 
 async function deleteRecord(id: number) {
@@ -290,12 +304,12 @@ async function updateRecord(id: number, title: string, topic: string) {
 }
 
 async function connect() {
-  if (globalThis.sftp_client == null) {
-    globalThis.sftp_client = new Client();
+  if (globalThis.sftpClient == null) {
+    globalThis.sftpClient = new Client();
   }
 
   try {
-    await sftp_client.connect({
+    await sftpClient.connect({
       host: process.env.NEXT_PUBLIC_QNAP_SFTP_URL,
       port: process.env.NEXT_PUBLIC_QNAP_SFTP_PORT,
       username: process.env.NEXT_PUBLIC_QNAP_USERNAME,
@@ -312,30 +326,12 @@ async function connect() {
 
 async function disconnect() {
   try {
-    await sftp_client.end();
+    await sftpClient.end();
   } catch (error) {
     console.log("Error disconnecting to sftp", error);
     return NextResponse.json(
       { message: "Error disconnecting to sftp" },
       { status: 500 }
     );
-  }
-}
-
-async function testConnection() {
-  const config = {
-    host: process.env.NEXT_PUBLIC_QNAP_SFTP_URL,
-    port: process.env.NEXT_PUBLIC_QNAP_SFTP_PORT,
-    username: process.env.NEXT_PUBLIC_QNAP_USERNAME,
-    password: process.env.NEXT_PUBLIC_QNAP_PASSWORD,
-  };
-
-  try {
-    await sftp_client.connect(config);
-    console.log("Connected to SFTP server");
-  } catch (error) {
-    console.error("Error connecting to SFTP:", error);
-  } finally {
-    await sftp_client.end();
   }
 }

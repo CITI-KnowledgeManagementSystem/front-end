@@ -4,13 +4,13 @@ import Client from "ssh2-sftp-client";
 
 declare global {
   var prisma: PrismaClient | undefined;
-  var sftp_client: any;
+  var sftpClient: any;
 }
 
 export const prisma = globalThis.prisma || new PrismaClient();
-export const sftp_client = globalThis.sftp_client || new Client();
+export const sftpClient = globalThis.sftpClient || new Client();
 
 if (process.env.NODE_ENV !== "production") {
   globalThis.prisma = prisma;
-  globalThis.sftp_client = sftp_client;
+  globalThis.sftpClient = sftpClient;
 }
