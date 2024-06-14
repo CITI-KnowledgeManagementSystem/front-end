@@ -94,6 +94,29 @@ export async function POST(req: Response) {
       await disconnect();
     }
 
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_LLM_SERVER_URL}/document/insert`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: user_id,
+          collection_name: "private",
+          document_id: `${docs_id}`,
+          tag: format,
+        }),
+      }
+    );
+
+    if (!res.ok) {
+      return NextResponse.json(
+        { message: "Error inserting to LLM" },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
       { message: "File uploaded successfully" },
       { status: 200 }
@@ -191,6 +214,30 @@ export async function DELETE(request: NextRequest) {
     );
   } finally {
     await disconnect();
+  }
+
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_LLM_SERVER_URL}/document/delete?document_id=${id}&collection_name=private`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    if (!res.ok) {
+      return NextResponse.json(
+        { message: "Error deleting from LLM" },
+        { status: 400 }
+      );
+    }
+  } catch (error) {
+    console.error("Error deleting from LLM", error);
+    return NextResponse.json(
+      { message: "Error deleting from LLM" },
+      { status: 500 }
+    );
   }
 
   await deleteRecord(Number(id));
