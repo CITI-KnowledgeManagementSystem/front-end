@@ -21,6 +21,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@clerk/nextjs";
 import { z } from "zod";
+import { useSession } from "@clerk/clerk-react";
 
 interface User {
   id: string;
@@ -85,6 +86,17 @@ const ProfilePage = () => {
       setImageURL(user.img_url);
     }
   }, [user, formReady, form]);
+
+  const { isLoaded, session, isSignedIn } = useSession();
+
+  if (!isLoaded) {
+    // Add logic to handle loading state
+    return null;
+  }
+  if (!isSignedIn) {
+    // Add logic to handle not signed in state
+    return null;
+  }
 
   if (isLoading) {
     return (
