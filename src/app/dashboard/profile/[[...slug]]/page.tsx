@@ -8,7 +8,6 @@ import { getUserInfo, updateUser } from "@/lib/user-queries";
 // import Image from "next/image";
 import { useToast } from "@/components/ui/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-
 import {
   Form,
   FormControl,
@@ -21,7 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@clerk/nextjs";
 import { z } from "zod";
-import { useSession } from "@clerk/clerk-react";
+import SessionDialog from "@/components/session_dialog";
 
 interface User {
   id: string;
@@ -87,17 +86,6 @@ const ProfilePage = () => {
     }
   }, [user, formReady, form]);
 
-  const { isLoaded, session, isSignedIn } = useSession();
-
-  if (!isLoaded) {
-    // Add logic to handle loading state
-    return null;
-  }
-  if (!isSignedIn) {
-    // Add logic to handle not signed in state
-    return null;
-  }
-
   if (isLoading) {
     return (
       <div className="flex h-full items-center space-x-4 justify-center">
@@ -138,6 +126,7 @@ const ProfilePage = () => {
 
   return (
     <div className="flex flex-col p-10 border border-red-700">
+      <SessionDialog />
       <div className="pb-7">
         <h1 className="text-3xl font-bold text-blue-700">Profile Setting</h1>
         <p>This is the profile page</p>

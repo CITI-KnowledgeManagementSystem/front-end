@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { use, useEffect, useRef, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { MessageProps } from "@/types";
@@ -10,7 +10,7 @@ import { UserProfileProps } from "@/types";
 import { useParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import useStore from "@/lib/useStore";
-import { useSession } from "@clerk/clerk-react";
+import SessionDialog from "@/components/session_dialog";
 
 type Props = {
   user: UserProfileProps | null;
@@ -35,17 +35,6 @@ const PromptPage = ({ user, conversations }: Props) => {
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [data]);
-
-  const { isLoaded, session, isSignedIn } = useSession();
-
-  if (!isLoaded) {
-    // Add logic to handle loading state
-    return null;
-  }
-  if (!isSignedIn) {
-    // Add logic to handle not signed in state
-    return null;
-  }
 
   const handleSendPrompt = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -135,6 +124,7 @@ const PromptPage = ({ user, conversations }: Props) => {
 
   return (
     <div className="flex flex-col w-full py-4 h-full relative px-[100px] relative">
+      <SessionDialog />
       <div className="flex w-full pb-3">
         <ModelOptions
           selectedModel={selectedModel}
