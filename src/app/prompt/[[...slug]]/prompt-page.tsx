@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { use, useEffect, useRef, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { MessageProps } from "@/types";
@@ -10,6 +10,7 @@ import { UserProfileProps } from "@/types";
 import { useParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import useStore from "@/lib/useStore";
+import SessionDialog from "@/components/session_dialog";
 
 type Props = {
   user: UserProfileProps | null;
@@ -105,10 +106,13 @@ const PromptPage = ({ user, conversations }: Props) => {
     formData.append("userId", user?.id || "");
 
     try {
-      const chatBox = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API}/chatbox`, {
-        method: "POST",
-        body: formData,
-      });
+      const chatBox = await fetch(
+        `${process.env.NEXT_PUBLIC_SERVER_API}/chatbox`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
       const chatBoxId = await chatBox.json();
       router.push(`/prompt/${chatBoxId.id}`);
       triggerFunction();
@@ -120,6 +124,7 @@ const PromptPage = ({ user, conversations }: Props) => {
 
   return (
     <div className="flex flex-col w-full py-4 h-full relative px-[100px] relative">
+      <SessionDialog />
       <div className="flex w-full pb-3">
         <ModelOptions
           selectedModel={selectedModel}

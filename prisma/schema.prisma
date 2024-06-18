@@ -8,63 +8,63 @@ generator client {
 }
 
 model User {
-  id    String    @id
-  email String @unique
-  username  String
+  id         String     @id
+  email      String
+  username   String
   first_name String
-  last_name String
-  img_url String
+  last_name  String
+  img_url    String
   Documents  Document[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime? @updatedAt
-  deletedAt DateTime?
-  ChatBoxes ChatBox[]
-  Messages Message[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime?  @updatedAt
+  deletedAt  DateTime?
+  ChatBoxes  ChatBox[]
+  Messages   Message[]
 }
 
 model Document {
-  id             Int    @id @default(autoincrement())
-  title          String
-  original_name  String
-  topic          String
-  userId         String?
-  file_size      Int
-  user           User?  @relation(fields: [userId], references: [id])
-  vdb            vdb[]
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime? @updatedAt
-  deletedAt      DateTime?
+  id            Int       @id @default(autoincrement())
+  title         String
+  original_name String
+  topic         String
+  userId        String?
+  file_size     Int
+  user          User?     @relation(fields: [userId], references: [id])
+  vdb           vdb[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime? @updatedAt
+  deletedAt     DateTime?
 }
 
 model vdb {
-  id    Int @id @default(autoincrement())
-  docId Int?
-  documents   Document? @relation(fields: [docId], references: [id])
-  createdAt DateTime @default(now())
+  id        Int       @id @default(autoincrement())
+  docId     Int?
+  documents Document? @relation(fields: [docId], references: [id])
+  createdAt DateTime  @default(now())
   updatedAt DateTime? @updatedAt
   deletedAt DateTime?
 }
 
 model ChatBox {
-  id        Int    @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   userId    String?
-  user      User?   @relation(fields: [userId], references: [id])
+  user      User?     @relation(fields: [userId], references: [id])
   name      String
   messages  Message[]
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
   updatedAt DateTime? @updatedAt
   deletedAt DateTime?
 }
 
 model Message {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   chatBoxId Int?
   chatBox   ChatBox?  @relation(fields: [chatBoxId], references: [id])
   userId    String?
   user      User?     @relation(fields: [userId], references: [id])
   request   String
   response  String
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
   updatedAt DateTime? @updatedAt
   deletedAt DateTime?
 }
