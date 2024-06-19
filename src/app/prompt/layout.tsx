@@ -1,13 +1,15 @@
-import React from 'react'
-import SidebarPrompt from '@/components/prompt/sidebar-prompt'
+import React from "react";
+import SidebarPrompt from "@/components/prompt/sidebar-prompt";
 
-const PromptLayout = ({ children }:{ children:React.ReactNode }) => {
+const PromptLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className='flex h-screen w-full justify-center items-center'>
-        <SidebarPrompt/>
-        { children }
+    <div className="relative flex h-screen w-full justify-center items-center">
+      <div className="absolute top-0 left-0 z-10">
+        <SidebarPrompt />
+      </div>
+      <div className="relative w-full h-full z-0">{children}</div>
     </div>
-  )
-}
+  );
+};
 
-export default PromptLayout
+export default PromptLayout;

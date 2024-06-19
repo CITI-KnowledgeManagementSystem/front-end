@@ -123,7 +123,7 @@ const PromptPage = ({ user, conversations }: Props) => {
   };
 
   return (
-    <div className="flex flex-col w-full py-4 h-full relative px-[100px] relative">
+    <div className="flex flex-col w-full py-4 h-full relative px-[50px] relative">
       <SessionDialog />
       <div className="flex w-full pb-3">
         <ModelOptions
