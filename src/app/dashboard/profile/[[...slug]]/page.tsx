@@ -125,7 +125,7 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className="flex flex-col p-10 border border-red-700">
+    <div className="flex flex-col p-7">
       <SessionDialog />
       <div className="pb-7">
         <h1 className="text-3xl font-bold text-blue-700">Profile Setting</h1>
