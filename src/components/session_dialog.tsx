@@ -17,7 +17,7 @@ const SessionDialog = () => {
   const router = useRouter();
 
   useEffect(() => {
-    if (!isSignedIn) {
+    if (!isSignedIn && isSignedIn !== undefined) {
       setIsOpen(true);
     } else {
       setIsOpen(false);

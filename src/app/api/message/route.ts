@@ -4,81 +4,134 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/db";
 
 export async function GET(request: NextRequest) {
-    return NextResponse.json(
-        { message: 'File uploaded successfully' }
-    )
+  return NextResponse.json({ message: "File uploaded successfully" });
 }
 
 export async function POST(request: NextRequest) {
+  const formData = await request.formData();
+  const request_chat = formData.get("request");
+  const userId = formData.get("userId");
+  const chatBoxId = formData.get("chatBoxId");
+  const response = formData.get("response");
 
-    const formData = await request.formData();
-    const request_chat = formData.get("request");
-    const userId = formData.get("userId");
-    const chatBoxId = formData.get("chatBoxId");
-    const response = formData.get("response");
-
-    if (!request_chat || !userId || !chatBoxId) {
-        return NextResponse.json(
-            { message: 'Please fill in all fields' },
-            { status: 400 }
-        )
-    }
-
-    // const response = await getRecordLLM(request_chat as string) as string[];
-
-    createRecord(request_chat as string, response as string, userId.toString(), Number(chatBoxId));
-
+  if (!request_chat || !userId || !chatBoxId) {
     return NextResponse.json(
-        {
-            message: 'Message has been successfully saved',
-        },
-        {
-            status: 200
-        }
-    )
+      { message: "Please fill in all fields" },
+      { status: 400 }
+    );
+  }
+  // const response = await getRecordLLM(request_chat as string) as string[];
+
+  createRecord(
+    request_chat as string,
+    response as string,
+    userId.toString(),
+    Number(chatBoxId)
+  );
+
+  return NextResponse.json(
+    {
+      message: "Message has been successfully saved",
+    },
+    {
+      status: 200,
+    }
+  );
 }
 
-async function createRecord(request: string, response: string, userId: string, chatBoxId: number) {
-    if (globalThis.prisma == null) {
-        globalThis.prisma = new PrismaClient();
-    }
-    
-    try {
-        await prisma.message.create({
-            data: {
-                request,
-                response,
-                userId,
-                chatBoxId,
-                createdAt: new Date(),
-            }
-        });
-    } catch (err) {
-        console.error('Error creating record', err);
-    }
+export async function PUT(request: NextRequest) {
+  const formData = await request.formData();
+  const id = formData.get("id");
+  const liked = formData.get("liked");
+  const disliked = formData.get("disliked");
+  const rating = formData.get("rating");
+
+  updateRecord(Number(id), liked, disliked, rating);
+  return NextResponse.json({ message: "File uploaded successfully" });
+}
+
+async function createRecord(
+  request: string,
+  response: string,
+  userId: string,
+  chatBoxId: number
+) {
+  if (globalThis.prisma == null) {
+    globalThis.prisma = new PrismaClient();
+  }
+
+  try {
+    await prisma.message.create({
+      data: {
+        request,
+        response,
+        userId,
+        chatBoxId,
+        createdAt: new Date(),
+      },
+    });
+  } catch (err) {
+    console.error("Error creating record", err);
+  }
 }
 
 async function getRecordLLM(questions: string): Promise<unknown> {
-    try {
-        const response = await fetch('http://140.118.101.189:5000/answer_questions', {
-            method: 'POST',
-            headers: {
-                "Content-Type": 'application/json'
-            },
-            body: JSON.stringify({ questions: [questions] })
-        });
-        const data = await response.json();
-        return data;
+  try {
+    const response = await fetch(
+      "http://140.118.101.189:5000/answer_questions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ questions: [questions] }),
+      }
+    );
+    const data = await response.json();
+    return data;
+  } catch (err) {
+    console.error("Error fetching record", err);
+    return NextResponse.json(
+      {
+        message: "Error fetching record",
+      },
+      {
+        status: 500,
+      }
+    );
+  }
+}
 
-    } catch (err) {
-        console.error('Error fetching record', err);
-        return NextResponse.json(
-            {
-                message: 'Error fetching record',
-            },
-            {
-                status: 500
-            }
-        )
-    }
+async function updateRecord(
+  id: number,
+  liked: FormDataEntryValue | null,
+  disliked: FormDataEntryValue | null,
+  rating: FormDataEntryValue | null
+) {
+  if (globalThis.prisma == null) {
+    globalThis.prisma = new PrismaClient();
+  }
+  const liked_bool = liked === "true";
+  const disliked_bool = disliked === "true";
+  const rating_int = Number(rating);
+  try {
+    await prisma.message.update({
+      where: { id },
+      data: {
+        liked: liked_bool,
+        disliked: disliked_bool,
+        rating: rating_int,
+      },
+    });
+  } catch (err) {
+    console.error("Error updating record", err);
+    return NextResponse.json(
+      {
+        message: "Error updating record",
+      },
+      {
+        status: 500,
+      }
+    );
+  }
 }

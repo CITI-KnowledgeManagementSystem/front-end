@@ -58,6 +58,39 @@ const PromptPage = ({ user, conversations }: Props) => {
     setPrompt("");
   };
 
+  const handleRating = (value: number, i: number) => {
+    const newData = [...data];
+    newData[i].rating = value;
+    console.log(newData[i].rating);
+    setData(newData);
+  };
+
+  const handleLike = (i: number) => {
+    const newData = [...data];
+    if (newData[i].liked === false) {
+      newData[i].liked = true;
+      newData[i].disliked = false;
+      newData[i].rating = 1;
+    } else {
+      newData[i].liked = false;
+      newData[i].rating = 0;
+    }
+    setData(newData);
+  };
+
+  const handleDislike = (i: number) => {
+    const newData = [...data];
+    if (newData[i].disliked === false) {
+      newData[i].disliked = true;
+      newData[i].liked = false;
+      newData[i].rating = 1;
+    } else {
+      newData[i].disliked = false;
+      newData[i].rating = 0;
+    }
+    setData(newData);
+  };
+
   const handleKeyPressDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       handleSendPrompt(e);
@@ -141,11 +174,11 @@ const PromptPage = ({ user, conversations }: Props) => {
         {data.length === 0 && (
           <div className="flex flex-col justify-center h-full max-w-[900px] m-auto">
             <div className="bg-gradient-to-r from-blue-500 to-teal-300 bg-clip-text text-transparent animate-slide-in delay-300">
-              <h1 className="text-6xl font-medium py-3">
+              <h1 className="md:text-6xl lg:text-7xl font-medium py-3">
                 Welcome, {user && user.username}
               </h1>
             </div>
-            <h1 className="text-6xl font-medium py-3 bg-gradient-to-r from-neutral-500 to-sky-700 bg-clip-text text-transparent animate-slide-in delay-300">
+            <h1 className="md:text-6xl lg:text-7xl font-medium py-3 bg-gradient-to-r from-neutral-500 to-sky-700 bg-clip-text text-transparent animate-slide-in delay-300">
               Ready to learn something new?
             </h1>
           </div>
@@ -157,6 +190,13 @@ const PromptPage = ({ user, conversations }: Props) => {
               message={item.message}
               key={i}
               user={user}
+              liked={item.liked}
+              disliked={item.disliked}
+              rating={item.rating}
+              message_id={item.message_id}
+              handleLike={() => handleLike(i)}
+              handleDislike={() => handleDislike(i)}
+              handleRating={(value) => handleRating(value, i)}
             />
           ))}
           {isLoading && (
