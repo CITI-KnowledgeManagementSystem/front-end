@@ -90,7 +90,7 @@ const SidebarDashboard = () => {
                       />
                     )}
                     {isOpen && (
-                      <p className="transition-opacity duration-1000">
+                      <p className="transition-opacity duration-500 animate-slide-in">
                         {item.name}
                       </p>
                     )}

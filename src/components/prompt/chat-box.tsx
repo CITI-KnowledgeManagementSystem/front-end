@@ -6,14 +6,43 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { dracula } from "react-syntax-highlighter/dist/cjs/styles/prism";
 import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
 import { UserProfileProps } from "@/types";
+import { BiLike, BiDislike, BiSolidDislike, BiSolidLike } from "react-icons/bi";
+import { Button } from "../ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Props {
   variant: string;
   message: string;
   user: UserProfileProps | null;
+  liked?: boolean;
+  disliked?: boolean;
+  rating?: any;
+  message_id: string | undefined;
+  handleLike: () => void;
+  handleDislike: () => void;
+  handleRating: (value: number, i: number) => void;
+  key: number;
 }
 
-const ChatBox = ({ variant, message, user }: Props) => {
+const ChatBox = ({
+  variant,
+  message,
+  user,
+  liked,
+  disliked,
+  key,
+  rating,
+  message_id,
+  handleLike,
+  handleDislike,
+  handleRating,
+}: Props) => {
   if (variant === "request") {
     return (
       <div className="w-full">
@@ -73,10 +102,49 @@ const ChatBox = ({ variant, message, user }: Props) => {
             );
           },
         }}
-        className={"text-sm mb-4 mt-2"}
+        className={"text-sm p-1 mt-2"}
       >
         {message}
       </Markdown>
+      <div className="mb-5 flex">
+        <Button
+          variant="ghost"
+          onClick={() => handleLike()}
+          className="mr-[5px] px-[5px] py-[5px]"
+        >
+          {liked ? (
+            <BiSolidLike className="text-blue-700 cursor-pointer" size={15} />
+          ) : (
+            <BiLike className="text-blue-700 cursor-pointer" size={15} />
+          )}
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={() => handleDislike()}
+          className="mr-[5px] px-[5px] py-[5px]"
+        >
+          {disliked ? (
+            <BiSolidDislike
+              className="text-blue-700 cursor-pointer"
+              size={15}
+            />
+          ) : (
+            <BiDislike className="text-blue-700 cursor-pointer" size={15} />
+          )}
+        </Button>
+        <Select onValueChange={(value) => handleRating(value as any, key)}>
+          <SelectTrigger className="mx-[5px] w-[60px]">
+            <SelectValue placeholder={rating} />
+          </SelectTrigger>
+          <SelectContent>
+            {[1, 2, 3, 4, 5].map((i) => (
+              <SelectItem key={i} value={i.toString()}>
+                {i}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
     </div>
   );
 };

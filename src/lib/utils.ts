@@ -67,17 +67,21 @@ export const answerQuestions = async (
 };
 
 export const getChatMessages = async (id: string) => {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API}/chatbox/` + id, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_SERVER_API}/chatbox/` + id,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
   return sortMessageProps(await response.json());
 };
 
 function sortMessageProps(response: any) {
   const data = response.data;
+  console.log("data", data);
   const messages = [] as MessageProps[];
 
   if (!data) {
@@ -91,7 +95,11 @@ function sortMessageProps(response: any) {
     });
     messages.push({
       type: "response",
+      message_id: data[i].message_id,
       message: data[i].response,
+      liked: data[i].liked,
+      disliked: data[i].disliked,
+      rating: data[i].rating,
     });
   }
   return messages;
