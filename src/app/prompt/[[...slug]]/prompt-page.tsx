@@ -21,6 +21,7 @@ type Props = {
 const PromptPage = ({ user, conversations }: Props) => {
   const router = useRouter();
   const { slug } = useParams();
+  const [responseTime, setResponseTime] = useState<number>(0);
   const [data, setData] = useState<MessageProps[]>(conversations);
   const [prompt, setPrompt] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>("Mistral 7B");
@@ -131,6 +132,7 @@ const PromptPage = ({ user, conversations }: Props) => {
   };
 
   const handleGetResponse = async () => {
+    const start = performance.now();
     const res = await answerQuestions(
       prompt,
       data,
@@ -138,6 +140,8 @@ const PromptPage = ({ user, conversations }: Props) => {
       isRerankingChecked
       //   temperature
     );
+    const end = performance.now();
+    setResponseTime(Math.round(end - start));
     const newResponse = {
       type: "response",
       message: res,
@@ -155,6 +159,7 @@ const PromptPage = ({ user, conversations }: Props) => {
     formData.append("userId", user?.id || "");
     formData.append("response", response);
     formData.append("chatBoxId", chatBoxId);
+    formData.append("responseTime", responseTime.toString());
 
     try {
       await fetch(`${process.env.NEXT_PUBLIC_SERVER_API}/message`, {
