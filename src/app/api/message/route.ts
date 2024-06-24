@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
   }
   // const response = await getRecordLLM(requestChat as string) as string[];
 
-  createRecord(
+  const id = createRecord(
     requestChat as string,
     response as string,
     userId.toString(),
@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json(
     {
       message: "Message has been successfully saved",
+      id: id,
     },
     {
       status: 200,
@@ -65,7 +66,7 @@ async function createRecord(
   }
 
   try {
-    await prisma.message.create({
+    const message = await prisma.message.create({
       data: {
         request,
         response,
@@ -75,6 +76,7 @@ async function createRecord(
         response_time: responseTime,
       },
     });
+    return message.id;
   } catch (err) {
     console.error("Error creating record", err);
   }
