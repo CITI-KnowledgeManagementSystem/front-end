@@ -9,24 +9,27 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
-  const request_chat = formData.get("request");
+  const requestChat = formData.get("request");
   const userId = formData.get("userId");
   const chatBoxId = formData.get("chatBoxId");
   const response = formData.get("response");
+  const responseTime = formData.get("responseTime");
+  console.log("responseTime: ", responseTime);
 
-  if (!request_chat || !userId || !chatBoxId) {
+  if (!requestChat || !userId || !chatBoxId) {
     return NextResponse.json(
       { message: "Please fill in all fields" },
       { status: 400 }
     );
   }
-  // const response = await getRecordLLM(request_chat as string) as string[];
+  // const response = await getRecordLLM(requestChat as string) as string[];
 
   createRecord(
-    request_chat as string,
+    requestChat as string,
     response as string,
     userId.toString(),
-    Number(chatBoxId)
+    Number(chatBoxId),
+    Number(responseTime)
   );
 
   return NextResponse.json(
@@ -54,7 +57,8 @@ async function createRecord(
   request: string,
   response: string,
   userId: string,
-  chatBoxId: number
+  chatBoxId: number,
+  responseTime: number
 ) {
   if (globalThis.prisma == null) {
     globalThis.prisma = new PrismaClient();
@@ -68,6 +72,7 @@ async function createRecord(
         userId,
         chatBoxId,
         createdAt: new Date(),
+        response_time: responseTime,
       },
     });
   } catch (err) {
