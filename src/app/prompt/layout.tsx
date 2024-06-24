@@ -1,5 +1,6 @@
 import React from "react";
 import SidebarPrompt from "@/components/prompt/sidebar-prompt";
+import { Toaster } from "@/components/ui/toaster";
 
 const PromptLayout = ({ children }: { children: React.ReactNode }) => {
   return (

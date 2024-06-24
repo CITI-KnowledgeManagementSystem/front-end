@@ -22,7 +22,6 @@ const SessionDialog = () => {
     } else {
       setIsOpen(false);
     }
-    console.log("isSignedIn", isSignedIn);
   }, [isSignedIn]);
 
   return (

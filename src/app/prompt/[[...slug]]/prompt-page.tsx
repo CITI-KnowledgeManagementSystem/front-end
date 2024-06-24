@@ -11,6 +11,7 @@ import { useParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import useStore from "@/lib/useStore";
 import SessionDialog from "@/components/session_dialog";
+import { toast } from "sonner";
 
 type Props = {
   user: UserProfileProps | null;
@@ -61,7 +62,6 @@ const PromptPage = ({ user, conversations }: Props) => {
   const handleRating = (value: number, i: number) => {
     const newData = [...data];
     newData[i].rating = value;
-    console.log(newData[i].rating);
     setData(newData);
   };
 
@@ -70,10 +70,8 @@ const PromptPage = ({ user, conversations }: Props) => {
     if (newData[i].liked === false) {
       newData[i].liked = true;
       newData[i].disliked = false;
-      newData[i].rating = 1;
     } else {
       newData[i].liked = false;
-      newData[i].rating = 0;
     }
     setData(newData);
   };
@@ -83,12 +81,47 @@ const PromptPage = ({ user, conversations }: Props) => {
     if (newData[i].disliked === false) {
       newData[i].disliked = true;
       newData[i].liked = false;
-      newData[i].rating = 1;
     } else {
       newData[i].disliked = false;
-      newData[i].rating = 0;
     }
     setData(newData);
+  };
+
+  const handleUpdateMisc = async (i: number) => {
+    const newData = [...data];
+    const formData = new FormData();
+    formData.append("id", newData[i].message_id || "");
+    formData.append("liked", newData[i].liked?.toString() || "");
+    formData.append("disliked", newData[i].disliked?.toString() || "");
+    formData.append("rating", newData[i].rating?.toString() || "");
+
+    const upload = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_SERVER_API}/message`,
+          {
+            method: "PUT",
+            body: formData,
+          }
+        );
+        const data = await res.json();
+        return "Updated successfully";
+      } catch (error) {
+        throw new Error();
+      }
+    };
+
+    const showToast = (promise: Promise<string>) => {
+      toast.promise(promise, {
+        loading: "Updating...",
+        success: (msg) => {
+          return msg;
+        },
+        error: "Error when updating",
+      });
+    };
+
+    showToast(upload());
   };
 
   const handleKeyPressDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
@@ -197,6 +230,7 @@ const PromptPage = ({ user, conversations }: Props) => {
               handleLike={() => handleLike(i)}
               handleDislike={() => handleDislike(i)}
               handleRating={(value) => handleRating(value, i)}
+              handleUpdateMisc={() => handleUpdateMisc(i)}
             />
           ))}
           {isLoading && (

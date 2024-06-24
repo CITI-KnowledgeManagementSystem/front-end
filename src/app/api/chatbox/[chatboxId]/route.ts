@@ -44,6 +44,7 @@ async function getRecord(id: number) {
         rating: true,
         liked: true,
         disliked: true,
+        id: true,
       },
       where: {
         chatBoxId: id,

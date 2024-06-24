@@ -57,7 +57,6 @@ export async function POST(req: Response) {
     const exists = await sftpClient.exists(
       `${process.env.NEXT_PUBLIC_QNAP_PRIVATE_STORAGE}/${user_id}`
     );
-    console.log(exists);
 
     if (!exists) {
       try {
@@ -122,6 +121,7 @@ export async function POST(req: Response) {
       { status: 200 }
     );
   } catch (err) {
+    console.log(err);
     return NextResponse.json({ message: err }, { status: 400 });
   }
 }
@@ -200,21 +200,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ message: "File not found" }, { status: 404 });
   }
 
-  try {
-    await connect();
-    await sftpClient.delete(
-      `${process.env.NEXT_PUBLIC_QNAP_PRIVATE_STORAGE}/${userId}/${id}.${extension}`
-    );
-  } catch (error) {
-    console.error("Error deleting file", error);
-    await disconnect();
-    return NextResponse.json(
-      { message: "Error deleting file" },
-      { status: 500 }
-    );
-  } finally {
-    await disconnect();
-  }
+  await deleteRecord(Number(id));
 
   try {
     const res = await fetch(
@@ -240,7 +226,21 @@ export async function DELETE(request: NextRequest) {
     );
   }
 
-  await deleteRecord(Number(id));
+  try {
+    await connect();
+    await sftpClient.delete(
+      `${process.env.NEXT_PUBLIC_QNAP_PRIVATE_STORAGE}/${userId}/${id}.${extension}`
+    );
+  } catch (error) {
+    console.error("Error deleting file", error);
+    await disconnect();
+    return NextResponse.json(
+      { message: "Error deleting file" },
+      { status: 500 }
+    );
+  } finally {
+    await disconnect();
+  }
 
   return NextResponse.json(
     { message: "File deleted successfully" },
@@ -369,7 +369,6 @@ async function connect() {
       password: process.env.NEXT_PUBLIC_QNAP_PASSWORD,
     });
   } catch (error) {
-    console.log("Error connecting to sftp", error);
     return NextResponse.json(
       { message: "Error connecting to sftp" },
       { status: 500 }
