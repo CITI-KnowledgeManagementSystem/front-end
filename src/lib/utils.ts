@@ -81,7 +81,6 @@ export const getChatMessages = async (id: string) => {
 
 function sortMessageProps(response: any) {
   const data = response.data;
-  console.log("data", data);
   const messages = [] as MessageProps[];
 
   if (!data) {
@@ -95,7 +94,7 @@ function sortMessageProps(response: any) {
     });
     messages.push({
       type: "response",
-      message_id: data[i].message_id,
+      message_id: data[i].id,
       message: data[i].response,
       liked: data[i].liked,
       disliked: data[i].disliked,

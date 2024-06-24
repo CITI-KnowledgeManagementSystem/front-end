@@ -27,6 +27,7 @@ interface Props {
   handleLike: () => void;
   handleDislike: () => void;
   handleRating: (value: number, i: number) => void;
+  handleUpdateMisc?: () => void;
   key: number;
 }
 
@@ -42,6 +43,7 @@ const ChatBox = ({
   handleLike,
   handleDislike,
   handleRating,
+  handleUpdateMisc,
 }: Props) => {
   if (variant === "request") {
     return (
@@ -106,11 +108,11 @@ const ChatBox = ({
       >
         {message}
       </Markdown>
-      <div className="mb-5 flex">
+      <div className="mb-5 flex ">
         <Button
           variant="ghost"
           onClick={() => handleLike()}
-          className="mr-[5px] px-[5px] py-[5px]"
+          className="mr-[5px] px-[5px] py-[5px] h-[35px]"
         >
           {liked ? (
             <BiSolidLike className="text-blue-700 cursor-pointer" size={15} />
@@ -121,7 +123,7 @@ const ChatBox = ({
         <Button
           variant="ghost"
           onClick={() => handleDislike()}
-          className="mr-[5px] px-[5px] py-[5px]"
+          className="mr-[5px] px-[5px] py-[5px] h-[35px]"
         >
           {disliked ? (
             <BiSolidDislike
@@ -133,17 +135,24 @@ const ChatBox = ({
           )}
         </Button>
         <Select onValueChange={(value) => handleRating(value as any, key)}>
-          <SelectTrigger className="mx-[5px] w-[60px]">
+          <SelectTrigger className="mx-[5px] w-[60px] h-[35px]">
             <SelectValue placeholder={rating} />
           </SelectTrigger>
           <SelectContent>
-            {[1, 2, 3, 4, 5].map((i) => (
-              <SelectItem key={i} value={i.toString()}>
-                {i}
+            {[1, 2, 3, 4, 5].map((j) => (
+              <SelectItem key={j} value={j.toString()}>
+                {j}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
+        <Button
+          variant="ghost"
+          className="mx-[5px] h-[35px]"
+          onClick={handleUpdateMisc}
+        >
+          Update
+        </Button>
       </div>
     </div>
   );

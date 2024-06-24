@@ -9,7 +9,6 @@ import { redirect } from "next/navigation";
 
 const Page = async ({ params }: { params: { slug: string } }) => {
   const { userId } = auth();
-  console.log("userId", userId);
 
   if (userId && !(await checkIfUserExistInDb(userId))) {
     const user = await currentUser();
