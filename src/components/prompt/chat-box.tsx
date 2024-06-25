@@ -111,7 +111,7 @@ const ChatBox = ({
       <div className="mb-5 flex ">
         <Button
           variant="ghost"
-          onClick={() => handleLike()}
+          onClick={handleLike}
           className="mr-[5px] px-[5px] py-[5px] h-[35px]"
         >
           {liked ? (
@@ -122,7 +122,7 @@ const ChatBox = ({
         </Button>
         <Button
           variant="ghost"
-          onClick={() => handleDislike()}
+          onClick={handleDislike}
           className="mr-[5px] px-[5px] py-[5px] h-[35px]"
         >
           {disliked ? (

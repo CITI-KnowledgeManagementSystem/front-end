@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import useStore from "@/lib/useStore";
 import SessionDialog from "@/components/session_dialog";
 import { toast } from "sonner";
+import { set } from "react-hook-form";
 
 type Props = {
   user: UserProfileProps | null;
@@ -31,14 +32,22 @@ const PromptPage = ({ user, conversations }: Props) => {
   const [temperature, setTemperature] = useState<number>(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const triggerFunction = useStore((state) => state.triggerFunction);
+  const [enableScroll, setEnableScroll] = useState<boolean>(true);
 
-  useEffect(() => {
+  const scrollDown = () => {
     if (bottomRef.current) {
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [data]);
+  };
+
+  useEffect(() => {
+    if (enableScroll) {
+      scrollDown();
+    }
+  }, [data, enableScroll]);
 
   const handleSendPrompt = (e: React.FormEvent<HTMLFormElement>) => {
+    setEnableScroll(true);
     e.preventDefault();
     const newMessage = {
       type: "request",
@@ -49,26 +58,30 @@ const PromptPage = ({ user, conversations }: Props) => {
     setIsLoading(true);
 
     handleGetResponse().then((res) => {
-      setData([...newData, res]);
       if (slug === undefined) {
-        handleChatBox(prompt, res.message);
+        handleNewChatBox(prompt, res.message);
       } else {
-        handleSaveResponse(prompt, res.message, slug[0]);
+        const id = handleSaveResponse(prompt, res.message, slug[0]);
+        res.message_id = id.toString();
       }
+      setData([...newData, res]);
+      scrollDown();
       setIsLoading(false);
     });
     setPrompt("");
   };
 
   const handleRating = (value: number, i: number) => {
+    setEnableScroll(false);
     const newData = [...data];
     newData[i].rating = value;
     setData(newData);
   };
 
   const handleLike = (i: number) => {
+    setEnableScroll(false);
     const newData = [...data];
-    if (newData[i].liked === false) {
+    if (newData[i].liked === false || newData[i].liked === null) {
       newData[i].liked = true;
       newData[i].disliked = false;
     } else {
@@ -78,8 +91,9 @@ const PromptPage = ({ user, conversations }: Props) => {
   };
 
   const handleDislike = (i: number) => {
+    setEnableScroll(false);
     const newData = [...data];
-    if (newData[i].disliked === false) {
+    if (newData[i].disliked === false || newData[i].disliked === null) {
       newData[i].disliked = true;
       newData[i].liked = false;
     } else {
@@ -89,6 +103,7 @@ const PromptPage = ({ user, conversations }: Props) => {
   };
 
   const handleUpdateMisc = async (i: number) => {
+    setEnableScroll(false);
     const newData = [...data];
     const formData = new FormData();
     formData.append("id", newData[i].message_id || "");
@@ -121,7 +136,6 @@ const PromptPage = ({ user, conversations }: Props) => {
         error: "Error when updating",
       });
     };
-
     showToast(upload());
   };
 
@@ -142,7 +156,7 @@ const PromptPage = ({ user, conversations }: Props) => {
     );
     const end = performance.now();
     setResponseTime(Math.round(end - start));
-    const newResponse = {
+    const newResponse: MessageProps = {
       type: "response",
       message: res,
     };
@@ -162,16 +176,19 @@ const PromptPage = ({ user, conversations }: Props) => {
     formData.append("responseTime", responseTime.toString());
 
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_SERVER_API}/message`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API}/message`, {
         method: "POST",
         body: formData,
       });
+      const data = await res.json();
+      const { id } = data;
+      return id;
     } catch (error) {
       console.error("Error:", error);
     }
   };
 
-  const handleChatBox = async (request: string, response: string) => {
+  const handleNewChatBox = async (request: string, response: string) => {
     const formData = new FormData();
     formData.append("name", "New Chat Box");
     formData.append("userId", user?.id || "");
