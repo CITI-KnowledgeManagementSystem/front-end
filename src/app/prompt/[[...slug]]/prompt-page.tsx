@@ -81,7 +81,12 @@ const PromptPage = ({ user, conversations }: Props) => {
   const handleLike = (i: number) => {
     setEnableScroll(false);
     const newData = [...data];
-    if (newData[i].liked === false || newData[i].liked === null) {
+    console.log(newData[i].liked);
+    if (
+      newData[i].liked === false ||
+      newData[i].liked === null ||
+      newData[i].liked === undefined
+    ) {
       newData[i].liked = true;
       newData[i].disliked = false;
     } else {
@@ -93,7 +98,12 @@ const PromptPage = ({ user, conversations }: Props) => {
   const handleDislike = (i: number) => {
     setEnableScroll(false);
     const newData = [...data];
-    if (newData[i].disliked === false || newData[i].disliked === null) {
+    console.log(newData[i].disliked);
+    if (
+      newData[i].disliked === false ||
+      newData[i].disliked === null ||
+      newData[i].disliked === undefined
+    ) {
       newData[i].disliked = true;
       newData[i].liked = false;
     } else {
