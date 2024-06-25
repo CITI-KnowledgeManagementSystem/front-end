@@ -59,14 +59,19 @@ const PromptPage = ({ user, conversations }: Props) => {
 
     handleGetResponse().then((res) => {
       if (slug === undefined) {
-        handleNewChatBox(prompt, res.message);
+        handleNewChatBox(prompt, res.message).then((id) => {
+          setData([...newData, res]);
+          scrollDown();
+          setIsLoading(false);
+        });
       } else {
-        const id = handleSaveResponse(prompt, res.message, slug[0]);
-        res.message_id = id.toString();
+        handleSaveResponse(prompt, res.message, slug[0]).then((id) => {
+          res.message_id = id.toString();
+          setData([...newData, res]);
+          scrollDown();
+          setIsLoading(false);
+        });
       }
-      setData([...newData, res]);
-      scrollDown();
-      setIsLoading(false);
     });
     setPrompt("");
   };
@@ -81,7 +86,6 @@ const PromptPage = ({ user, conversations }: Props) => {
   const handleLike = (i: number) => {
     setEnableScroll(false);
     const newData = [...data];
-    console.log(newData[i].liked);
     if (
       newData[i].liked === false ||
       newData[i].liked === null ||
@@ -98,7 +102,6 @@ const PromptPage = ({ user, conversations }: Props) => {
   const handleDislike = (i: number) => {
     setEnableScroll(false);
     const newData = [...data];
-    console.log(newData[i].disliked);
     if (
       newData[i].disliked === false ||
       newData[i].disliked === null ||
@@ -195,6 +198,7 @@ const PromptPage = ({ user, conversations }: Props) => {
       return id;
     } catch (error) {
       console.error("Error:", error);
+      return 0;
     }
   };
 
