@@ -81,7 +81,7 @@ const PromptPage = ({ user, conversations }: Props) => {
   const handleLike = (i: number) => {
     setEnableScroll(false);
     const newData = [...data];
-    if (newData[i].liked === false) {
+    if (newData[i].liked === false || newData[i].liked === null) {
       newData[i].liked = true;
       newData[i].disliked = false;
     } else {
@@ -93,7 +93,7 @@ const PromptPage = ({ user, conversations }: Props) => {
   const handleDislike = (i: number) => {
     setEnableScroll(false);
     const newData = [...data];
-    if (newData[i].disliked === false) {
+    if (newData[i].disliked === false || newData[i].disliked === null) {
       newData[i].disliked = true;
       newData[i].liked = false;
     } else {
@@ -136,7 +136,6 @@ const PromptPage = ({ user, conversations }: Props) => {
         error: "Error when updating",
       });
     };
-    setEnableScroll(true);
     showToast(upload());
   };
 
