@@ -19,7 +19,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  SelectGroup
+  SelectGroup,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 
@@ -30,7 +30,7 @@ interface Props {
   setIsHydeChecked: (value: boolean) => void;
   isRerankingChecked: boolean;
   setIsRerankingChecked: (value: boolean) => void;
-  temperature: number;
+  temperatures: number;
   setTemperature: (value: number) => void;
 }
 
@@ -41,10 +41,9 @@ const ModelOptions = ({
   setIsHydeChecked,
   isRerankingChecked,
   setIsRerankingChecked,
-  temperature,
+  temperatures,
   setTemperature,
 }: Props) => {
-
   const handleHydeChange = (checked: boolean) => {
     setIsHydeChecked(checked);
   };
@@ -74,15 +73,12 @@ const ModelOptions = ({
             <Label className="text-right">Model Name</Label>
             <Select onValueChange={(val) => setSelectedModel(val)}>
               <SelectTrigger className="col-span-3">
-                <SelectValue placeholder={ selectedModel } />
+                <SelectValue placeholder={selectedModel} />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
                   {llmModels.map((item) => (
-                    <SelectItem
-                      value={item.name}
-                      key={item.name}
-                    >
+                    <SelectItem value={item.name} key={item.name}>
                       {item.name}
                     </SelectItem>
                   ))}
@@ -116,7 +112,7 @@ const ModelOptions = ({
             <Label className="text-right">Temperature</Label>
             <Input
               type="number"
-              value={temperature}
+              value={temperatures}
               onChange={(e) => setTemperature(Number(e.target.value))}
               className="col-span-3"
               min="0"
