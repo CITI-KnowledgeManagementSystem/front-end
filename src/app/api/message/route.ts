@@ -14,7 +14,6 @@ export async function POST(request: NextRequest) {
   const chatBoxId = formData.get("chatBoxId");
   const response = formData.get("response");
   const responseTime = formData.get("responseTime");
-  console.log("responseTime: ", responseTime);
 
   if (!requestChat || !userId || !chatBoxId) {
     return NextResponse.json(
@@ -24,7 +23,7 @@ export async function POST(request: NextRequest) {
   }
   // const response = await getRecordLLM(requestChat as string) as string[];
 
-  const id = createRecord(
+  const id = await createRecord(
     requestChat as string,
     response as string,
     userId.toString(),

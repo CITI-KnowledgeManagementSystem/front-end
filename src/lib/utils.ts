@@ -43,27 +43,25 @@ export const answerQuestions = async (
   hyde: boolean,
   reranking: boolean
 ) => {
-  const body = {
-    collection_name: "private",
-    question: prompt,
-    conversation_history: history,
-    hyde: hyde,
-    reranking: reranking,
-  };
+  const formData = new FormData();
+  formData.append("question", prompt);
+  formData.append("conversation_history", history);
+  formData.append("hyde", hyde.toString());
+  formData.append("reranking", reranking.toString());
 
-  const url = process.env.NEXT_PUBLIC_LLM_SERVER_URL;
+  console.log(process.env.NEXT_PUBLIC_SERVER_API + "/prompt");
 
-  const response = await fetch(url + "/llm/chat_with_llm", {
+  const response = await fetch(process.env.NEXT_PUBLIC_SERVER_API + "/prompt", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
+    body: formData,
   });
+  if (!response.ok) return null;
 
   const data = await response.json();
 
-  return data.payload;
+  const { message } = data;
+
+  return message;
 };
 
 export const getChatMessages = async (id: string) => {

@@ -1,5 +1,5 @@
 "use client";
-import React, { use, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { MessageProps } from "@/types";
@@ -7,12 +7,11 @@ import ChatBox from "@/components/prompt/chat-box";
 import ModelOptions from "@/components/prompt/model-options";
 import { answerQuestions } from "@/lib/utils";
 import { UserProfileProps } from "@/types";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import useStore from "@/lib/useStore";
 import SessionDialog from "@/components/session_dialog";
 import { toast } from "sonner";
-import { set } from "react-hook-form";
 
 type Props = {
   user: UserProfileProps | null;
@@ -21,15 +20,28 @@ type Props = {
 
 const PromptPage = ({ user, conversations }: Props) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const hyde = searchParams.get("hyde");
+  const reranking = searchParams.get("reranking");
+  const selected_model = searchParams.get("selected_model");
+  const temperature = searchParams.get("temperature");
   const { slug } = useParams();
   const [responseTime, setResponseTime] = useState<number>(0);
   const [data, setData] = useState<MessageProps[]>(conversations);
   const [prompt, setPrompt] = useState<string>("");
-  const [selectedModel, setSelectedModel] = useState<string>("Mistral 7B");
+  const [selectedModel, setSelectedModel] = useState<string>(
+    selected_model ? selected_model.toString() : "Mistral 7B"
+  );
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isHydeChecked, setIsHydeChecked] = useState<boolean>(true);
-  const [isRerankingChecked, setIsRerankingChecked] = useState<boolean>(true);
-  const [temperature, setTemperature] = useState<number>(0);
+  const [isHydeChecked, setIsHydeChecked] = useState<boolean>(
+    hyde === null ? true : hyde === "true" ? true : false
+  );
+  const [isRerankingChecked, setIsRerankingChecked] = useState<boolean>(
+    reranking === null ? true : reranking === "true" ? true : false
+  );
+  const [temperatures, setTemperature] = useState<number>(
+    temperature ? Number(temperature) : 0
+  );
   const bottomRef = useRef<HTMLDivElement>(null);
   const triggerFunction = useStore((state) => state.triggerFunction);
   const [enableScroll, setEnableScroll] = useState<boolean>(true);
@@ -46,27 +58,37 @@ const PromptPage = ({ user, conversations }: Props) => {
     }
   }, [data, enableScroll]);
 
-  const handleSendPrompt = (e: React.FormEvent<HTMLFormElement>) => {
-    setEnableScroll(true);
+  const handleSendPrompt = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     const newMessage = {
       type: "request",
       message: prompt,
     };
+
     const newData = [...data, newMessage];
     setData(newData);
     setIsLoading(true);
+    setEnableScroll(true);
 
-    handleGetResponse().then((res) => {
-      if (slug === undefined) {
-        handleNewChatBox(prompt, res.message);
+    handleGetResponse().then(async (res) => {
+      if (!res) {
+        toast.error("Error fetching the data");
       } else {
-        const id = handleSaveResponse(prompt, res.message, slug[0]);
-        res.message_id = id.toString();
+        if (!slug) {
+          await handleNewChatBox(prompt, res.message);
+        } else {
+          const id = (await handleSaveResponse(
+            prompt,
+            res.message,
+            slug[0]
+          )) as number;
+          res.message_id = id.toString();
+        }
+        setData([...newData, res]);
       }
-      setData([...newData, res]);
-      scrollDown();
       setIsLoading(false);
+      scrollDown();
     });
     setPrompt("");
   };
@@ -81,7 +103,6 @@ const PromptPage = ({ user, conversations }: Props) => {
   const handleLike = (i: number) => {
     setEnableScroll(false);
     const newData = [...data];
-    console.log(newData[i].liked);
     if (
       newData[i].liked === false ||
       newData[i].liked === null ||
@@ -98,7 +119,6 @@ const PromptPage = ({ user, conversations }: Props) => {
   const handleDislike = (i: number) => {
     setEnableScroll(false);
     const newData = [...data];
-    console.log(newData[i].disliked);
     if (
       newData[i].disliked === false ||
       newData[i].disliked === null ||
@@ -122,19 +142,12 @@ const PromptPage = ({ user, conversations }: Props) => {
     formData.append("rating", newData[i].rating?.toString() || "");
 
     const upload = async () => {
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_API}/message`,
-          {
-            method: "PUT",
-            body: formData,
-          }
-        );
-        const data = await res.json();
-        return "Updated successfully";
-      } catch (error) {
-        throw new Error();
-      }
+      const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API}/message`, {
+        method: "PUT",
+        body: formData,
+      });
+      if (!res.ok) throw new Error();
+      return "Updated successfully";
     };
 
     const showToast = (promise: Promise<string>) => {
@@ -162,14 +175,18 @@ const PromptPage = ({ user, conversations }: Props) => {
       data,
       isHydeChecked,
       isRerankingChecked
-      //   temperature
     );
     const end = performance.now();
     setResponseTime(Math.round(end - start));
+
+    // If the response is null, return null
+    if (!res) return null;
+
     const newResponse: MessageProps = {
       type: "response",
       message: res,
     };
+
     return newResponse;
   };
 
@@ -185,17 +202,17 @@ const PromptPage = ({ user, conversations }: Props) => {
     formData.append("chatBoxId", chatBoxId);
     formData.append("responseTime", responseTime.toString());
 
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API}/message`, {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      const { id } = data;
-      return id;
-    } catch (error) {
-      console.error("Error:", error);
+    const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API}/message`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!res.ok) {
+      toast.error("Error when saving the response");
+      return null;
     }
+    const data = await res.json();
+    return data.id;
   };
 
   const handleNewChatBox = async (request: string, response: string) => {
@@ -203,20 +220,19 @@ const PromptPage = ({ user, conversations }: Props) => {
     formData.append("name", "New Chat Box");
     formData.append("userId", user?.id || "");
 
-    try {
-      const chatBox = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_API}/chatbox`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-      const chatBoxId = await chatBox.json();
-      router.push(`/prompt/${chatBoxId.id}`);
+    const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API}/chatbox`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!res.ok) toast.error("Error creating a new chat");
+    else {
+      const { id: chatId } = await res.json();
       triggerFunction();
-      handleSaveResponse(request, response, chatBoxId.id);
-    } catch (error) {
-      console.error("Error:", error);
+      await handleSaveResponse(request, response, chatId);
+      router.push(
+        `/prompt/${chatId}?selected_model=${selectedModel}&hyde=${isHydeChecked}&reranking=${isRerankingChecked}&temperature=${temperatures}`
+      );
     }
   };
 
@@ -231,7 +247,7 @@ const PromptPage = ({ user, conversations }: Props) => {
           isRerankingChecked={isRerankingChecked}
           setIsHydeChecked={setIsHydeChecked}
           setIsRerankingChecked={setIsRerankingChecked}
-          temperature={temperature}
+          temperatures={temperatures}
           setTemperature={setTemperature}
         />
       </div>
@@ -251,9 +267,10 @@ const PromptPage = ({ user, conversations }: Props) => {
         <div className="flex flex-col m-auto max-w-[900px]">
           {data.map((item, i) => (
             <ChatBox
+              key={i}
               variant={item.type}
               message={item.message}
-              key={i}
+              id={i}
               user={user}
               liked={item.liked}
               disliked={item.disliked}
