@@ -7,12 +7,13 @@ import ChatBox from "@/components/prompt/chat-box";
 import ModelOptions from "@/components/prompt/model-options";
 import { answerQuestions } from "@/lib/utils";
 import { UserProfileProps } from "@/types";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import useStore from "@/lib/useStore";
 import SessionDialog from "@/components/session_dialog";
 import { toast } from "sonner";
 import { set } from "react-hook-form";
+import { boolean } from "zod";
 
 type Props = {
   user: UserProfileProps | null;
@@ -21,15 +22,28 @@ type Props = {
 
 const PromptPage = ({ user, conversations }: Props) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const hyde = searchParams.get("hyde");
+  const reranking = searchParams.get("reranking");
+  const selected_model = searchParams.get("selected_model");
+  const temperature = searchParams.get("temperature");
   const { slug } = useParams();
   const [responseTime, setResponseTime] = useState<number>(0);
   const [data, setData] = useState<MessageProps[]>(conversations);
   const [prompt, setPrompt] = useState<string>("");
-  const [selectedModel, setSelectedModel] = useState<string>("Mistral 7B");
+  const [selectedModel, setSelectedModel] = useState<string>(
+    selected_model ? selected_model.toString() : "Mistral 7B"
+  );
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isHydeChecked, setIsHydeChecked] = useState<boolean>(true);
-  const [isRerankingChecked, setIsRerankingChecked] = useState<boolean>(true);
-  const [temperature, setTemperature] = useState<number>(0);
+  const [isHydeChecked, setIsHydeChecked] = useState<boolean>(
+    hyde === null ? true : hyde === "true" ? true : false
+  );
+  const [isRerankingChecked, setIsRerankingChecked] = useState<boolean>(
+    reranking === null ? true : reranking === "true" ? true : false
+  );
+  const [temperatures, setTemperature] = useState<number>(
+    temperature ? Number(temperature) : 0
+  );
   const bottomRef = useRef<HTMLDivElement>(null);
   const triggerFunction = useStore((state) => state.triggerFunction);
   const [enableScroll, setEnableScroll] = useState<boolean>(true);
@@ -59,14 +73,19 @@ const PromptPage = ({ user, conversations }: Props) => {
 
     handleGetResponse().then((res) => {
       if (slug === undefined) {
-        handleNewChatBox(prompt, res.message);
+        handleNewChatBox(prompt, res.message).then((id) => {
+          setData([...newData, res]);
+          scrollDown();
+          setIsLoading(false);
+        });
       } else {
-        const id = handleSaveResponse(prompt, res.message, slug[0]);
-        res.message_id = id.toString();
+        handleSaveResponse(prompt, res.message, slug[0]).then((id) => {
+          res.message_id = id.toString();
+          setData([...newData, res]);
+          scrollDown();
+          setIsLoading(false);
+        });
       }
-      setData([...newData, res]);
-      scrollDown();
-      setIsLoading(false);
     });
     setPrompt("");
   };
@@ -81,7 +100,6 @@ const PromptPage = ({ user, conversations }: Props) => {
   const handleLike = (i: number) => {
     setEnableScroll(false);
     const newData = [...data];
-    console.log(newData[i].liked);
     if (
       newData[i].liked === false ||
       newData[i].liked === null ||
@@ -98,7 +116,6 @@ const PromptPage = ({ user, conversations }: Props) => {
   const handleDislike = (i: number) => {
     setEnableScroll(false);
     const newData = [...data];
-    console.log(newData[i].disliked);
     if (
       newData[i].disliked === false ||
       newData[i].disliked === null ||
@@ -195,6 +212,7 @@ const PromptPage = ({ user, conversations }: Props) => {
       return id;
     } catch (error) {
       console.error("Error:", error);
+      return 0;
     }
   };
 
@@ -212,7 +230,9 @@ const PromptPage = ({ user, conversations }: Props) => {
         }
       );
       const chatBoxId = await chatBox.json();
-      router.push(`/prompt/${chatBoxId.id}`);
+      router.push(
+        `/prompt/${chatBoxId.id}?selected_model=${selectedModel}&hyde=${isHydeChecked}&reranking=${isRerankingChecked}&temperature=${temperatures}`
+      );
       triggerFunction();
       handleSaveResponse(request, response, chatBoxId.id);
     } catch (error) {
@@ -231,7 +251,7 @@ const PromptPage = ({ user, conversations }: Props) => {
           isRerankingChecked={isRerankingChecked}
           setIsHydeChecked={setIsHydeChecked}
           setIsRerankingChecked={setIsRerankingChecked}
-          temperature={temperature}
+          temperatures={temperatures}
           setTemperature={setTemperature}
         />
       </div>
