@@ -60,7 +60,7 @@ const PromptPage = ({ user, conversations }: Props) => {
 
   const handleSendPrompt = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     const newMessage = {
       type: "request",
       message: prompt,
@@ -72,20 +72,25 @@ const PromptPage = ({ user, conversations }: Props) => {
     setEnableScroll(true);
 
     handleGetResponse().then(async (res) => {
+      console.log(res);
       if (!res) {
-        toast.error("Error fetching the data")
+        toast.error("Error fetching the data");
       } else {
         console.log(res);
         if (!slug) {
-          await handleNewChatBox(prompt, res.message)
+          await handleNewChatBox(prompt, res.message);
         } else {
-          const id = await handleSaveResponse(prompt, res.message, slug[0]) as number
-          res.message_id = id.toString()
+          const id = (await handleSaveResponse(
+            prompt,
+            res.message,
+            slug[0]
+          )) as number;
+          res.message_id = id.toString();
         }
-        setData([...newData, res])
+        setData([...newData, res]);
       }
-      setIsLoading(false)
-      scrollDown()
+      setIsLoading(false);
+      scrollDown();
     });
     setPrompt("");
   };
@@ -139,16 +144,12 @@ const PromptPage = ({ user, conversations }: Props) => {
     formData.append("rating", newData[i].rating?.toString() || "");
 
     const upload = async () => {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_API}/message`,
-        {
-          method: "PUT",
-          body: formData,
-        }
-      );
-      if (!res.ok) throw new Error()
+      const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API}/message`, {
+        method: "PUT",
+        body: formData,
+      });
+      if (!res.ok) throw new Error();
       return "Updated successfully";
-
     };
 
     const showToast = (promise: Promise<string>) => {
@@ -181,8 +182,8 @@ const PromptPage = ({ user, conversations }: Props) => {
     setResponseTime(Math.round(end - start));
 
     // If the response is null, return null
-    if (!res) return null
-    
+    if (!res) return null;
+
     const newResponse: MessageProps = {
       type: "response",
       message: res,
@@ -209,11 +210,11 @@ const PromptPage = ({ user, conversations }: Props) => {
     });
 
     if (!res.ok) {
-      toast.error("Error when saving the response")
-      return null
+      toast.error("Error when saving the response");
+      return null;
     }
-    const data = await res.json()
-    return data.id
+    const data = await res.json();
+    return data.id;
   };
 
   const handleNewChatBox = async (request: string, response: string) => {
@@ -221,19 +222,16 @@ const PromptPage = ({ user, conversations }: Props) => {
     formData.append("name", "New Chat Box");
     formData.append("userId", user?.id || "");
 
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_SERVER_API}/chatbox`,
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
+    const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API}/chatbox`, {
+      method: "POST",
+      body: formData,
+    });
 
-    if (!res.ok) toast.error("Error creating a new chat")
+    if (!res.ok) toast.error("Error creating a new chat");
     else {
-      const { id: chatId } = await res.json()
-      triggerFunction()
-      await handleSaveResponse(request, response, chatId)
+      const { id: chatId } = await res.json();
+      triggerFunction();
+      await handleSaveResponse(request, response, chatId);
       router.push(
         `/prompt/${chatId}?selected_model=${selectedModel}&hyde=${isHydeChecked}&reranking=${isRerankingChecked}&temperature=${temperatures}`
       );
@@ -270,7 +268,8 @@ const PromptPage = ({ user, conversations }: Props) => {
         )}
         <div className="flex flex-col m-auto max-w-[900px]">
           {data.map((item, i) => (
-            <ChatBox key={i}
+            <ChatBox
+              key={i}
               variant={item.type}
               message={item.message}
               id={i}

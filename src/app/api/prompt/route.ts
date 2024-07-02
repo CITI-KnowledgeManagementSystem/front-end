@@ -1,24 +1,30 @@
+import { PrismaClient } from "@prisma/client";
+import { request } from "http";
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/db";
+import { auth } from "@clerk/nextjs/server";
 
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
-  const collectionName = formData.get("collection_name");
   const question = formData.get("question");
   const conversation_history = formData.get("history");
   const hyde = formData.get("hyde");
   const reranking = formData.get("reranking");
+  const { userId } = auth();
 
   const body = {
-    collection_name: collectionName,
+    user_id: userId,
     question: question,
     conversation_history: conversation_history,
     hyde: hyde,
     reranking: reranking,
   };
 
+  console.log(body);
+
   try {
     const response = await fetch(
-      process.env.LLM_SERVER_URL + "/llm/chat_with_llm",
+      process.env.NEXT_PUBLIC_LLM_SERVER_URL + "/llm/chat_with_llm",
       {
         method: "POST",
         headers: {

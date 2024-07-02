@@ -44,20 +44,21 @@ export const answerQuestions = async (
   reranking: boolean
 ) => {
   const formData = new FormData();
-  formData.append("collection_name", "private");
   formData.append("question", prompt);
   formData.append("conversation_history", history);
   formData.append("hyde", hyde.toString());
   formData.append("reranking", reranking.toString());
 
+  console.log(process.env.NEXT_PUBLIC_SERVER_API + "/prompt");
+
   const response = await fetch(process.env.NEXT_PUBLIC_SERVER_API + "/prompt", {
     method: "POST",
     body: formData,
   });
-
-  if (!response.ok) return null
+  if (!response.ok) return null;
 
   const data = await response.json();
+
   const { message } = data;
 
   return message;
