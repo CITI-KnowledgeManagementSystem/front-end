@@ -55,6 +55,8 @@ export const answerQuestions = async (
     body: formData,
   });
 
+  if (!response.ok) return null
+
   const data = await response.json();
   const { message } = data;
 

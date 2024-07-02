@@ -1,7 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-import { request } from "http";
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/db";
 
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
@@ -19,11 +16,9 @@ export async function POST(request: NextRequest) {
     reranking: reranking,
   };
 
-  console.log(body);
-
   try {
     const response = await fetch(
-      process.env.NEXT_PUBLIC_LLM_SERVER_URL + "/llm/chat_with_llm",
+      process.env.LLM_SERVER_URL + "/llm/chat_with_llm",
       {
         method: "POST",
         headers: {

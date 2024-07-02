@@ -28,7 +28,7 @@ interface Props {
   handleDislike: () => void;
   handleRating: (value: number, i: number) => void;
   handleUpdateMisc?: () => void;
-  key: number;
+  id: number;
 }
 
 const ChatBox = ({
@@ -37,7 +37,7 @@ const ChatBox = ({
   user,
   liked,
   disliked,
-  key,
+  id,
   rating,
   message_id,
   handleLike,
@@ -134,7 +134,7 @@ const ChatBox = ({
             <BiDislike className="text-blue-700 cursor-pointer" size={15} />
           )}
         </Button>
-        <Select onValueChange={(value) => handleRating(value as any, key)}>
+        <Select onValueChange={(value) => handleRating(value as any, id)}>
           <SelectTrigger className="mx-[5px] w-[60px] h-[35px]">
             <SelectValue placeholder={rating} />
           </SelectTrigger>

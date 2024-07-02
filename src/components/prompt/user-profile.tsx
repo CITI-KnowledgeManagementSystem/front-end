@@ -35,7 +35,7 @@ const UserProfile = () => {
       </div>
     );
   else if (!user) {
-    return <p className="text-sm text-red-700">User doesn't exist.</p>;
+    return <p className="text-sm text-red-700">User does not exist.</p>;
   }
 
   return (

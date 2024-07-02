@@ -5,7 +5,7 @@ import { prisma, sftpClient } from "@/db";
 import { PrismaClient } from "@prisma/client";
 import Client from "ssh2-sftp-client";
 
-export async function POST(req: Response) {
+export async function POST(req: NextRequest) {
   const formData = await req.formData();
 
   const file = formData.get("file");
@@ -94,7 +94,7 @@ export async function POST(req: Response) {
     }
 
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_LLM_SERVER_URL}/document/insert`,
+      `${process.env.LLM_SERVER_URL}/document/insert`,
       {
         method: "POST",
         headers: {
