@@ -125,7 +125,7 @@ const DocTable = () => {
                         </TableRow>
                     )) }
                     { tableContents.length === 0 && <TableRow>
-                        <TableCell colSpan={5}>
+                        <TableCell colSpan={7}>
                             <p className="text-muted-foreground text-sm italic flex justify-center">No documents found</p>
                         </TableCell>
                     </TableRow> }
