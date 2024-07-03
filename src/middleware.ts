@@ -1,10 +1,7 @@
 import {
   clerkMiddleware,
   createRouteMatcher,
-  clerkClient,
 } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
-import { useAuth } from "@clerk/nextjs";
 
 const isProtectedRoute = createRouteMatcher(["/dashboard/(.*)", "/prompt(.*)", "/(api|trpc)(.*)"]);
 

@@ -78,8 +78,7 @@ const SidebarPrompt = () => {
 
   const getChatBox = async () => {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SERVER_API}/chatbox?user_id=` +
-        userId?.toString()
+      `${process.env.NEXT_PUBLIC_SERVER_API}/chatbox?user_id=${userId?.toString()}`
     );
     const data = await response.json();
     setChatBox(data.data as ChatBoxGroup);
@@ -125,7 +124,6 @@ const SidebarPrompt = () => {
         {isOpen ? (
           <HoverCard>
             <HoverCardTrigger
-              asChild
               className="w-fit absolute -right-10 top-1/2 z-40"
             >
               <BsArrowLeftCircle
@@ -144,7 +142,6 @@ const SidebarPrompt = () => {
         ) : (
           <HoverCard>
             <HoverCardTrigger
-              asChild
               className="w-fit absolute -right-10 top-1/2 z-40"
             >
               <BsArrowRightCircle
@@ -175,6 +172,7 @@ const SidebarPrompt = () => {
                       alt="logo image"
                       width={20}
                       height={20}
+                      className="w-auto h-auto"
                     />
                     <h2 className="font-semibold">New Chat</h2>
                   </div>

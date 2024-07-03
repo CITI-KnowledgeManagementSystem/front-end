@@ -8,8 +8,11 @@ import { getChatMessages } from "@/lib/utils";
 import { redirect } from "next/navigation";
 
 const Page = async ({ params }: { params: { slug: string } }) => {
-  const { userId } = auth();
+  const { userId, getToken } = auth();
+  const token = await getToken()
 
+  
+  
   if (userId && !(await checkIfUserExistInDb(userId))) {
     const user = await currentUser();
     await registerUser(
@@ -31,7 +34,7 @@ const Page = async ({ params }: { params: { slug: string } }) => {
     params.slug.length !== 0 &&
     params.slug[0].indexOf(".") === -1
   ) {
-    conversations = await getChatMessages(params.slug[0]);
+    conversations = await getChatMessages(params.slug[0], token as string);
     if (conversations.length === 0) {
       return redirect("/prompt");
     }

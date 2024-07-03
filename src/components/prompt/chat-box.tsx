@@ -23,7 +23,6 @@ interface Props {
   liked?: boolean;
   disliked?: boolean;
   rating?: any;
-  message_id: string | undefined;
   handleLike: () => void;
   handleDislike: () => void;
   handleRating: (value: number, i: number) => void;
@@ -39,7 +38,6 @@ const ChatBox = ({
   disliked,
   id,
   rating,
-  message_id,
   handleLike,
   handleDislike,
   handleRating,
@@ -95,16 +93,16 @@ const ChatBox = ({
                 language={match[1]}
                 {...props}
               >
-                {String(children).replace(/\n$/, "")}
+                {String(children).replace(/\n$/, "&nbsp; \n")}
               </SyntaxHighlighter>
             ) : (
-              <code className={className} {...props}>
+              <code className={`inline-code ${className}`} {...props}>
                 {children}
               </code>
             );
           },
         }}
-        className={"text-sm p-1 mt-2"}
+        className={"text-sm p-2 mt-2 leading-7"}
       >
         {message}
       </Markdown>

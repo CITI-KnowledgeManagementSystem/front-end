@@ -21,6 +21,9 @@ const nextConfig = {
                 ]
             }
         ]
+    },
+    images: {
+        domains: ["img.clerk.com"]
     }
 };
 
