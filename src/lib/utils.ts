@@ -1,6 +1,5 @@
 import { MessageProps } from "@/types";
 import { type ClassValue, clsx } from "clsx";
-import { env } from "process";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -62,16 +61,18 @@ export const answerQuestions = async (
   return message;
 };
 
-export const getChatMessages = async (id: string) => {
+export const getChatMessages = async (id: string, token: string) => {
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_SERVER_API}/chatbox/` + id,
     {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
       },
     }
   );
+  
   return sortMessageProps(await response.json());
 };
 

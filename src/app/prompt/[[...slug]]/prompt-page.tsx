@@ -275,7 +275,6 @@ const PromptPage = ({ user, conversations }: Props) => {
               liked={item.liked}
               disliked={item.disliked}
               rating={item.rating}
-              message_id={item.message_id}
               handleLike={() => handleLike(i)}
               handleDislike={() => handleDislike(i)}
               handleRating={(value) => handleRating(value, i)}

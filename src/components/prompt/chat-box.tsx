@@ -23,7 +23,6 @@ interface Props {
   liked?: boolean;
   disliked?: boolean;
   rating?: any;
-  message_id: string | undefined;
   handleLike: () => void;
   handleDislike: () => void;
   handleRating: (value: number, i: number) => void;
@@ -39,7 +38,6 @@ const ChatBox = ({
   disliked,
   id,
   rating,
-  message_id,
   handleLike,
   handleDislike,
   handleRating,

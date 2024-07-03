@@ -51,10 +51,10 @@ const ChatName = ({ id, name } : Props) => {
   return (
     <>
         {!isRenaming ? 
-        <Button onClick={navigateToChat} variant={"ghost"} className={`my-1.5 flex justify-between items-center w-full relative group ${id === idOnPath && 'bg-white hover:bg-white'}`}>
+        <div onClick={navigateToChat} className={`my-1.5 px-3 py-2 text-sm rounded-md cursor-pointer flex justify-between items-center w-full relative group ${id === idOnPath && 'bg-white hover:bg-white'}`}>
             { chatName }
             <ThreeDotSidebar id={id} enableRename={() => setIsRenaming(true)}/>
-        </Button> :
+        </div> :
         <div className={`my-1.5 rounded-md w-full px-0.5 flex items-center gap-x-2`} ref={targetRef}>
             <Input defaultValue={chatName} className={`border-none w-full font-medium bg-white`} onChange={(e) => setInputName(e.target.value)}/>
             <Button className='bg-blue-700 py-0' size={"sm"} onClick={updateChatName}>

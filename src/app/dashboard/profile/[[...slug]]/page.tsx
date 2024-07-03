@@ -1,17 +1,14 @@
 "use client";
-import { notFound, useParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { getUserInfo, updateUser } from "@/lib/user-queries";
-// import Image from "next/image";
+import Image from "next/image";
 import { useToast } from "@/components/ui/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Form,
-  FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -119,7 +116,6 @@ const ProfilePage = () => {
       title: "Profile Updated!",
       description: "Your profile has been updated successfully",
     });
-    // window.location.reload();
     const newImageURL = values.img_url;
     setImageURL(newImageURL);
   };
@@ -132,12 +128,7 @@ const ProfilePage = () => {
         <p>This is the profile page</p>
       </div>
       <div className="p-10 border-2 rounded-lg flex-1">
-        <img
-          src={imageURL || "https://via.placeholder.com/200"}
-          alt=""
-          className="rounded-full h-[200px] w-[200px] overflow-hidden object-cover mx-auto"
-        />
-        {/* <Image src={user?.img_url || "https://via.placeholder.com/200"} alt="" width={200} height={200} className="rounded-full h-[200px] w-[200px] overflow-hidden object-cover mx-auto" /> */}
+        <Image priority src={user?.img_url || "https://via.placeholder.com/200"} alt="" width={200} height={200} className="rounded-full h-auto w-auto overflow-hidden object-cover mx-auto" />
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
