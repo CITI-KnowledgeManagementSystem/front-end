@@ -49,8 +49,6 @@ export const answerQuestions = async (
   formData.append("hyde", hyde.toString());
   formData.append("reranking", reranking.toString());
 
-  console.log(process.env.NEXT_PUBLIC_SERVER_API + "/prompt");
-
   const response = await fetch(process.env.NEXT_PUBLIC_SERVER_API + "/prompt", {
     method: "POST",
     body: formData,
