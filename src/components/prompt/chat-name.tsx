@@ -51,7 +51,7 @@ const ChatName = ({ id, name } : Props) => {
   return (
     <>
         {!isRenaming ? 
-        <div onClick={navigateToChat} className={`my-1.5 px-3 py-2 text-sm rounded-md cursor-pointer flex justify-between items-center w-full relative group ${id === idOnPath && 'bg-white hover:bg-white'}`}>
+        <div onClick={navigateToChat} className={`my-1.5 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-slate-100 flex justify-between items-center w-full relative group ${id === idOnPath && 'bg-white hover:bg-white'}`}>
             { chatName }
             <ThreeDotSidebar id={id} enableRename={() => setIsRenaming(true)}/>
         </div> :
