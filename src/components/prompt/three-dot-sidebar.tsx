@@ -38,12 +38,6 @@ const ThreeDotSidebar: React.FC<ChildProps> = ({ id, enableRename }) => {
 
   const triggerFunction = useStore((state) => state.triggerFunction);
 
-  // FUNCTIONS
-  const preventPropagation = (e: React.MouseEvent<HTMLElement>) => {
-    e.stopPropagation();
-    setIsOpen(!isOpen);
-  };
-
   const deleteChatBox = async () => {
     fetch(`/api/chatbox?id=${id}`, { method: "DELETE" }).then((res) => {
       if (!res.ok) {
@@ -58,50 +52,49 @@ const ThreeDotSidebar: React.FC<ChildProps> = ({ id, enableRename }) => {
   };
 
   const renameChatBox = (e: React.MouseEvent<HTMLElement>) => {
-    preventPropagation(e);
+    setIsOpen(!isOpen);
     enableRename();
   };
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger>
-        <HoverCard openDelay={300}>
-          <HoverCardTrigger asChild>
-            <button
-              onClick={preventPropagation}
-              className={`rounded-md hover:bg-slate-400 p-1 ${
+      <HoverCard openDelay={300}>
+        <HoverCardTrigger asChild>
+          <PopoverTrigger asChild>
+            <Button
+              onClick={() => setIsOpen(!isOpen)}
+              variant={"ghost"}
+              className={`rounded-md h-fit p-[3px] hover:bg-slate-200 ${
                 id === idOnPath ? "group-hover:block block" : "hidden"
               }`}
             >
               <PiDotsThreeOutlineFill />
-            </button>
-          </HoverCardTrigger>
-          <HoverCardContent className="z-40 w-fit text-xs py-1 px-2 bg-slate-700 text-white rounded-md mt-1">
-            <p>More</p>
-          </HoverCardContent>
-        </HoverCard>
-      </PopoverTrigger>
+            </Button>
+          </PopoverTrigger>
+        </HoverCardTrigger>
+        <HoverCardContent className="z-40 w-fit text-xs py-1 px-2 bg-slate-700 text-white rounded-md mt-1">
+          <p>More</p>
+        </HoverCardContent>
+      </HoverCard>
       <PopoverContent className="w-32 p-0" align="end">
-        <div className="">
-          <Button
-            onClick={renameChatBox}
-            variant={"ghost"}
-            className="px-4 w-full rounded-none justify-between"
-            size={"sm"}
-          >
-            Rename <MdDriveFileRenameOutline />
-          </Button>
-          <Button
-            onClick={preventPropagation}
-            variant={"ghost"}
-            className="px-4 w-full rounded-none justify-between"
-            size={"sm"}
-          >
-            Archive <FiArchive />
-          </Button>
-          <Separator />
-          <DeleteAlert deleteFunction={deleteChatBox} />
-        </div>
+        <Button
+          onClick={renameChatBox}
+          variant={"ghost"}
+          className="px-4 w-full rounded-none justify-between"
+          size={"sm"}
+        >
+          Rename <MdDriveFileRenameOutline />
+        </Button>
+        <Button
+          onClick={() => setIsOpen(!isOpen)}
+          variant={"ghost"}
+          className="px-4 w-full rounded-none justify-between"
+          size={"sm"}
+        >
+          Archive <FiArchive />
+        </Button>
+        <Separator />
+        <DeleteAlert deleteFunction={deleteChatBox} />
       </PopoverContent>
     </Popover>
   );

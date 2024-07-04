@@ -85,12 +85,12 @@ const SidebarDashboard = () => {
                   >
                     {item.icon && isOpen && (
                       <item.icon
-                        className={isOpen ? "mr-3" : "m-0"}
+                        className={`${isOpen ? "mr-3" : "m-0"} animate-fade-in`}
                         size={20}
                       />
                     )}
                     {isOpen && (
-                      <p className="transition-opacity duration-500 animate-slide-in">
+                      <p className="transition-opacity duration-500 animate-fade-in">
                         {item.name}
                       </p>
                     )}

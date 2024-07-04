@@ -1,7 +1,6 @@
 import { MessageProps } from "@/types";
 import { auth } from "@clerk/nextjs/server";
 import { type ClassValue, clsx } from "clsx";
-import { env } from "process";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -51,8 +50,6 @@ export const answerQuestions = async (
   formData.append("hyde", hyde.toString());
   formData.append("reranking", reranking.toString());
   formData.append("selected_model", selectedModel);
-
-  console.log(process.env.NEXT_PUBLIC_SERVER_API + "/prompt");
 
   const response = await fetch(process.env.NEXT_PUBLIC_SERVER_API + "/prompt", {
     method: "POST",

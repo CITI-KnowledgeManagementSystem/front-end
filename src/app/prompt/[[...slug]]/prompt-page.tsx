@@ -238,7 +238,7 @@ const PromptPage = ({ user, conversations }: Props) => {
   };
 
   return (
-    <div className="flex flex-col w-full py-4 h-full relative px-[50px] relative">
+    <div className="flex flex-col w-full py-4 h-full px-[50px] relative">
       <SessionDialog />
       <div className="flex w-full pb-3">
         <ModelOptions
@@ -276,7 +276,6 @@ const PromptPage = ({ user, conversations }: Props) => {
               liked={item.liked}
               disliked={item.disliked}
               rating={item.rating}
-              message_id={item.message_id}
               handleLike={() => handleLike(i)}
               handleDislike={() => handleDislike(i)}
               handleRating={(value) => handleRating(value, i)}

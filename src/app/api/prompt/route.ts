@@ -1,5 +1,3 @@
-import { PrismaClient } from "@prisma/client";
-import { request } from "http";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/db";
 import { useAuth } from "@clerk/nextjs";
@@ -20,6 +18,7 @@ export async function POST(request: NextRequest) {
     conversation_history: conversation_history,
     hyde: hyde,
     reranking: reranking,
+    collection_name: "private",
   };
 
   console.log(body);
