@@ -1,4 +1,5 @@
 import { MessageProps } from "@/types";
+import { auth } from "@clerk/nextjs/server";
 import { type ClassValue, clsx } from "clsx";
 import { env } from "process";
 import { twMerge } from "tailwind-merge";
@@ -41,13 +42,15 @@ export const answerQuestions = async (
   prompt: string,
   history: any,
   hyde: boolean,
-  reranking: boolean
+  reranking: boolean,
+  selectedModel: string
 ) => {
   const formData = new FormData();
   formData.append("question", prompt);
   formData.append("conversation_history", history);
   formData.append("hyde", hyde.toString());
   formData.append("reranking", reranking.toString());
+  formData.append("selected_model", selectedModel);
 
   console.log(process.env.NEXT_PUBLIC_SERVER_API + "/prompt");
 
@@ -65,16 +68,20 @@ export const answerQuestions = async (
 };
 
 export const getChatMessages = async (id: string) => {
+  const { getToken } = auth();
+  const token = await getToken();
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_SERVER_API}/chatbox/` + id,
     {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
     }
   );
-  return sortMessageProps(await response.json());
+  const data = await response.json();
+  return sortMessageProps(data);
 };
 
 function sortMessageProps(response: any) {

@@ -72,17 +72,9 @@ const PromptPage = ({ user, conversations }: Props) => {
     setEnableScroll(true);
 
     handleGetResponse().then(async (res) => {
-<<<<<<< HEAD
-      console.log(res);
       if (!res) {
         toast.error("Error fetching the data");
       } else {
-        console.log(res);
-=======
-      if (!res) {
-        toast.error("Error fetching the data");
-      } else {
->>>>>>> 28bec6c056fbc5673392d03edd459ffbd40c4ae5
         if (!slug) {
           await handleNewChatBox(prompt, res.message);
         } else {
@@ -182,7 +174,8 @@ const PromptPage = ({ user, conversations }: Props) => {
       prompt,
       data,
       isHydeChecked,
-      isRerankingChecked
+      isRerankingChecked,
+      selectedModel
     );
     const end = performance.now();
     setResponseTime(Math.round(end - start));

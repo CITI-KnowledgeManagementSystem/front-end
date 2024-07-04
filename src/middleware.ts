@@ -6,7 +6,11 @@ import {
 import { NextResponse } from "next/server";
 import { useAuth } from "@clerk/nextjs";
 
-const isProtectedRoute = createRouteMatcher(["/dashboard/(.*)", "/prompt(.*)"]);
+const isProtectedRoute = createRouteMatcher([
+  "/dashboard/(.*)",
+  "/prompt(.*)",
+  "/(api|trpc)(.*)",
+]);
 
 export default clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)) {

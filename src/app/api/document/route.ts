@@ -4,6 +4,7 @@ import path from "path";
 import { prisma, sftpClient } from "@/db";
 import { PrismaClient } from "@prisma/client";
 import Client from "ssh2-sftp-client";
+import { auth } from "@clerk/nextjs/server";
 
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
@@ -93,21 +94,22 @@ export async function POST(req: NextRequest) {
       await disconnect();
     }
 
-    const res = await fetch(
-      `${process.env.LLM_SERVER_URL}/document/insert`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          user_id: user_id,
-          collection_name: "private",
-          document_id: `${docs_id}`,
-          tag: format,
-        }),
-      }
-    );
+    const { getToken } = auth();
+    const token = await getToken();
+
+    const res = await fetch(`${process.env.LLM_SERVER_URL}/document/insert`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        user_id: user_id,
+        collection_name: "private",
+        document_id: `${docs_id}`,
+        tag: format,
+      }),
+    });
 
     if (!res.ok) {
       return NextResponse.json(
@@ -202,6 +204,9 @@ export async function DELETE(request: NextRequest) {
 
   await deleteRecord(Number(id));
 
+  const { getToken } = auth();
+  const token = await getToken();
+
   try {
     const res = await fetch(
       `${process.env.LLM_SERVER_URL}/document/delete?document_id=${id}&collection_name=private`,
@@ -209,6 +214,7 @@ export async function DELETE(request: NextRequest) {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
       }
     );
