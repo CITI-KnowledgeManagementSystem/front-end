@@ -78,7 +78,9 @@ const SidebarPrompt = () => {
 
   const getChatBox = async () => {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SERVER_API}/chatbox?user_id=${userId?.toString()}`
+      `${
+        process.env.NEXT_PUBLIC_SERVER_API
+      }/chatbox?user_id=${userId?.toString()}`
     );
     const data = await response.json();
     setChatBox(data.data as ChatBoxGroup);
@@ -123,9 +125,7 @@ const SidebarPrompt = () => {
         )}
         {isOpen ? (
           <HoverCard>
-            <HoverCardTrigger
-              className="w-fit absolute -right-10 top-1/2 z-40"
-            >
+            <HoverCardTrigger className="w-fit absolute -right-10 top-1/2 z-40">
               <BsArrowLeftCircle
                 onClick={() => setIsOpen(!isOpen)}
                 className="text-slate-400 hover:text-slate-700 cursor-pointer"
@@ -141,9 +141,7 @@ const SidebarPrompt = () => {
           </HoverCard>
         ) : (
           <HoverCard>
-            <HoverCardTrigger
-              className="w-fit absolute -right-10 top-1/2 z-40"
-            >
+            <HoverCardTrigger className="w-fit absolute -right-10 top-1/2 z-40">
               <BsArrowRightCircle
                 onClick={() => setIsOpen(!isOpen)}
                 className="text-slate-400 hover:text-slate-700 cursor-pointer"
@@ -164,7 +162,7 @@ const SidebarPrompt = () => {
               <Link href={"/prompt"}>
                 <Button
                   variant={"ghost"}
-                  className="w-full flex justify-between mb-5 relative"
+                  className="w-full flex justify-between mb-5 relative animate-fade-in"
                 >
                   <div className="flex items-center gap-x-2">
                     <Image
@@ -212,8 +210,8 @@ const SidebarPrompt = () => {
               chatBox &&
               sortedKeys.map((key) => {
                 return (
-                  <div className="w-full my-2" key={key}>
-                    <label className="text-muted-foreground text-xs font-semibold">
+                  <div className="w-full my-2 animate-fade-in" key={key}>
+                    <label className="text-muted-foreground text-xs font-bold">
                       {key}
                     </label>
                     {chatBox[key].map((item, i) => (

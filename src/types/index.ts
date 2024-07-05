@@ -19,6 +19,7 @@ export interface TableContentProps {
   id: string;
   user_id: string;
   title: string;
+  public: Boolean;
   createdAt: string;
   file_size_formatted: string;
   tag: string;

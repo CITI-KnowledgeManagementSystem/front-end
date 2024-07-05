@@ -4,6 +4,7 @@ import path from "path";
 import { prisma, sftpClient } from "@/db";
 import { PrismaClient } from "@prisma/client";
 import Client from "ssh2-sftp-client";
+import { auth } from "@clerk/nextjs/server";
 
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
@@ -85,6 +86,7 @@ export async function POST(req: NextRequest) {
         });
     } catch (err) {
       console.error("Error uploading file", err);
+      await deleteRecord(Number(docs_id));
       return NextResponse.json(
         { message: "Error uploading file" },
         { status: 400 }
@@ -93,12 +95,16 @@ export async function POST(req: NextRequest) {
       await disconnect();
     }
 
+    const { getToken } = auth();
+    const token = await getToken();
+
     const res = await fetch(
-      `${process.env.LLM_SERVER_URL}/document/insert`,
+      `${process.env.NEXT_PUBLIC_LLM_SERVER_URL}/document/insert`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           user_id: user_id,
@@ -111,7 +117,7 @@ export async function POST(req: NextRequest) {
 
     if (!res.ok) {
       return NextResponse.json(
-        { message: "Error inserting to LLM" },
+        { message: "Error inserting to VDB" },
         { status: 400 }
       );
     }
@@ -169,6 +175,9 @@ export async function PUT(request: NextRequest) {
   const formData = await request.formData();
   const title = formData.get("title");
   const topic = formData.get("topic");
+  const id = formData.get("id");
+  const isPublic = formData.get("public");
+  const isPublicBool = isPublic === "true" ? true : false;
 
   if (!title || !topic) {
     return NextResponse.json(
@@ -177,7 +186,8 @@ export async function PUT(request: NextRequest) {
     );
   }
 
-  updateRecord(Number(formData.get("id")), title as string, topic as string);
+  updateRecord(Number(id), title as string, topic as string, isPublicBool);
+
   return NextResponse.json(
     { message: "Document updated successfully" },
     { status: 200 }
@@ -202,13 +212,17 @@ export async function DELETE(request: NextRequest) {
 
   await deleteRecord(Number(id));
 
+  const { getToken } = auth();
+  const token = await getToken();
+
   try {
     const res = await fetch(
-      `${process.env.LLM_SERVER_URL}/document/delete?document_id=${id}&collection_name=private`,
+      `${process.env.NEXT_PUBLIC_LLM_SERVER_URL}/document/delete?document_id=${id}&collection_name=private`,
       {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
       }
     );
@@ -333,7 +347,12 @@ async function deleteRecord(id: number) {
   }
 }
 
-async function updateRecord(id: number, title: string, topic: string) {
+async function updateRecord(
+  id: number,
+  title: string,
+  topic: string,
+  isPublicBool: boolean
+) {
   if (globalThis.prisma == null) {
     globalThis.prisma = new PrismaClient();
   }
@@ -344,6 +363,7 @@ async function updateRecord(id: number, title: string, topic: string) {
       data: {
         title: title,
         topic: topic,
+        public: isPublicBool,
         updatedAt: new Date(),
       },
     });

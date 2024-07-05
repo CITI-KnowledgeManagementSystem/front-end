@@ -174,7 +174,8 @@ const PromptPage = ({ user, conversations }: Props) => {
       prompt,
       data,
       isHydeChecked,
-      isRerankingChecked
+      isRerankingChecked,
+      selectedModel
     );
     const end = performance.now();
     setResponseTime(Math.round(end - start));
@@ -237,7 +238,7 @@ const PromptPage = ({ user, conversations }: Props) => {
   };
 
   return (
-    <div className="flex flex-col w-full py-4 h-full relative px-[50px] relative">
+    <div className="flex flex-col w-full py-4 h-full px-[50px] relative">
       <SessionDialog />
       <div className="flex w-full pb-3">
         <ModelOptions

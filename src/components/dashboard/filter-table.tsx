@@ -96,7 +96,7 @@ const FilterTable = () => {
     accumulatedSizeOfDocuments(userId || "")
       .then((res) => setStorageSize(res || 0))
       .catch((err) => console.log(err));
-  }, []);
+  }, [userId]);
 
   return (
     <div className="flex items-center mb-5 justify-between">

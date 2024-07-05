@@ -52,29 +52,29 @@ const ThreeDotSidebar: React.FC<ChildProps> = ({ id, enableRename }) => {
   };
 
   const renameChatBox = (e: React.MouseEvent<HTMLElement>) => {
-    setIsOpen(!isOpen)
+    setIsOpen(!isOpen);
     enableRename();
   };
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <HoverCard openDelay={300}>
-          <HoverCardTrigger asChild>
+        <HoverCardTrigger asChild>
           <PopoverTrigger asChild>
             <Button
               onClick={() => setIsOpen(!isOpen)}
               variant={"ghost"}
-              className={`rounded-md hover:bg-slate-400 h-fit p-1 hover:bg-slate-200 ${
+              className={`rounded-md h-fit p-[3px] hover:bg-slate-200 ${
                 id === idOnPath ? "group-hover:block block" : "hidden"
               }`}
             >
               <PiDotsThreeOutlineFill />
             </Button>
           </PopoverTrigger>
-          </HoverCardTrigger>
-          <HoverCardContent className="z-40 w-fit text-xs py-1 px-2 bg-slate-700 text-white rounded-md mt-1">
-            <p>More</p>
-          </HoverCardContent>
+        </HoverCardTrigger>
+        <HoverCardContent className="z-40 w-fit text-xs py-1 px-2 bg-slate-700 text-white rounded-md mt-1">
+          <p>More</p>
+        </HoverCardContent>
       </HoverCard>
       <PopoverContent className="w-32 p-0" align="end">
         <Button
