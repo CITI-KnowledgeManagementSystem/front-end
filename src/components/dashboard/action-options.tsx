@@ -22,6 +22,7 @@ import { useAuth } from "@clerk/nextjs";
 import { RiGlobalLine } from "react-icons/ri";
 import { NextResponse } from "next/server";
 import { toast } from "sonner";
+import { FaCheck } from "react-icons/fa";
 
 interface SuccessToastProp {
   msg: string;
@@ -39,17 +40,12 @@ type Props = {
 
 const SuccessToast = ({ msg }: SuccessToastProp) => {
   return (
-    <div className="w-full">
-      <p className="text-sm font-semibold">{msg}</p>
-      <p className="text-sm">Refresh the page to see the file</p>
-      <div className="w-full flex justify-end">
-        <Button
-          onClick={() => window.location.reload()}
-          size={"sm"}
-          className="bg-blue-700"
-        >
-          Refresh
-        </Button>
+    <div className="w-full flex justify-between">
+      <div>
+        <p className="text-sm font-bold">{msg}</p>
+      </div>
+      <div>
+        <FaCheck size={24} />
       </div>
     </div>
   );
@@ -71,10 +67,8 @@ const ActionsOption = ({
   const showToast = (promise: Promise<string>) => {
     toast.promise(promise, {
       loading: "Your file is being moved to other collections",
-      success: (msg) => {
-        return <SuccessToast msg={msg} />;
-      },
-      error: "Error when moving the file",
+      success: (msg) => msg,
+      error: "Error during moving the file",
     });
   };
 
@@ -95,6 +89,7 @@ const ActionsOption = ({
     title: string,
     topic: string
   ) => {
+    console.log(isPublic);
     const res = await fetch(
       `${
         process.env.NEXT_PUBLIC_LLM_SERVER_URL
@@ -206,7 +201,7 @@ const ActionsOption = ({
             >
               Edit <BsPencil className="text-muted-foreground" size={13} />
             </Button>
-            <Link href={`/api/document?id=${documentId}`}>
+            <Link href={`/api/document?id=${documentId}&tag=${tag}`}>
               <Button
                 size={"sm"}
                 className="w-full text-xs h-7 rounded justify-between font-normal"

@@ -134,6 +134,8 @@ export async function POST(req: NextRequest) {
 
 export async function GET(request: NextRequest) {
   const id = request.nextUrl.searchParams.get("id");
+  const tag = request.nextUrl.searchParams.get("tag");
+  const { userId } = auth();
 
   if (!id) {
     return NextResponse.json(
@@ -142,32 +144,40 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const files = searchFilesByName(
-    path.join(process.cwd(), "storage"),
-    id as string
-  );
+  try {
+    await connect();
 
-  if (files.length === 0) {
-    return NextResponse.json({ message: "File not found" }, { status: 404 });
-  }
+    const remotePath = `${process.env.NEXT_PUBLIC_QNAP_PRIVATE_STORAGE}/${userId}/${id}.${tag}`;
+    const localPath = path.join(process.cwd(), "storage", `${id}.${tag}`);
 
-  const data = fs.readFileSync(path.join(process.cwd(), "storage/", files[0]));
-  const sizeInBytes = Buffer.byteLength(data, "utf8");
+    await sftpClient.get(remotePath, localPath);
 
-  const headers = new Headers();
-  headers.set("Content-Type", "application/octet-stream");
-  headers.set("Content-Disposition", `attachment; filename=${files[0]}`);
+    const data = fs.readFileSync(localPath);
 
-  if (!data) {
+    const headers = new Headers();
+    headers.set("Content-Type", "application/octet-stream");
+    headers.set("Content-Disposition", `attachment; filename=${id}.${tag}`);
+
+    fs.unlinkSync(localPath);
+
+    if (!data) {
+      return NextResponse.json(
+        { message: "Error reading file" },
+        { status: 400 }
+      );
+    } else {
+      return new NextResponse(data, {
+        statusText: "OK",
+        headers,
+      });
+    }
+  } catch (err) {
     return NextResponse.json(
-      { message: "Error reading file" },
-      { status: 400 }
+      { message: `Error fetching file: ${err}` },
+      { status: 500 }
     );
-  } else {
-    return new NextResponse(data, {
-      statusText: "OK",
-      headers,
-    });
+  } finally {
+    await disconnect();
   }
 }
 
