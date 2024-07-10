@@ -1,4 +1,4 @@
-import React, { Dispatch, useState } from "react";
+import React, { Dispatch, RefObject, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { PiDotsThreeOutlineFill } from "react-icons/pi";
 import {
@@ -23,6 +23,12 @@ import { RiGlobalLine } from "react-icons/ri";
 import { NextResponse } from "next/server";
 import { toast } from "sonner";
 import { FaCheck } from "react-icons/fa";
+import {
+  updateDocumentMetadata,
+  deleteDocumentFromVDB,
+  insertDocumentToVDB,
+  deleteDocument,
+} from "@/lib/utils";
 
 interface SuccessToastProp {
   msg: string;
@@ -36,19 +42,10 @@ type Props = {
   topic: string;
   tableContents: TableContentProps[];
   setTableContents: Dispatch<TableContentProps[]>;
-};
-
-const SuccessToast = ({ msg }: SuccessToastProp) => {
-  return (
-    <div className="w-full flex justify-between">
-      <div>
-        <p className="text-sm font-bold">{msg}</p>
-      </div>
-      <div>
-        <FaCheck size={24} />
-      </div>
-    </div>
-  );
+  editingCell: string;
+  setEditingCell: Dispatch<string>;
+  inputTitle: string;
+  inputTopic: string;
 };
 
 const ActionsOption = ({
@@ -59,6 +56,10 @@ const ActionsOption = ({
   topic,
   tableContents,
   setTableContents,
+  editingCell,
+  setEditingCell,
+  inputTitle,
+  inputTopic,
 }: Props) => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isAlertOpen, setIsAlertOpen] = useState<boolean>(false);
@@ -72,15 +73,31 @@ const ActionsOption = ({
     });
   };
 
-  const deleteDocument = () => {
-    fetch(
-      `${process.env.NEXT_PUBLIC_SERVER_API}/document/?id=${documentId}&user_id=${userId}`,
-      { method: "DELETE" }
-    )
-      .then()
-      .catch();
-    const newContents = tableContents.filter((item) => item.id !== documentId);
+  const handleClickInsideChild = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.stopPropagation(); // Stop propagation to parent components
+    console.log("Clicked inside child");
+    // Handle other logic as needed
+  };
+
+  const handleUpdateMisc = () => {
+    const newContents = tableContents.map((item) =>
+      item.id === documentId
+        ? { ...item, title: inputTitle, topic: inputTopic }
+        : item
+    );
     setTableContents(newContents);
+  };
+
+  const deletingDocument = async () => {
+    try {
+      await deleteDocument(documentId?.toString(), userId?.toString());
+      const newContents = tableContents.filter(
+        (item) => item.id !== documentId
+      );
+      setTableContents(newContents);
+    } catch (err) {
+      console.error("Error deleting document:", err);
+    }
   };
 
   const switchToCollections = async (
@@ -89,62 +106,17 @@ const ActionsOption = ({
     title: string,
     topic: string
   ) => {
-    console.log(isPublic);
-    const res = await fetch(
-      `${
-        process.env.NEXT_PUBLIC_LLM_SERVER_URL
-      }/document/delete?document_id=${documentId}&collection_name=${
-        isPublic ? "public" : "private"
-      }`,
-      {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
+    await deleteDocumentFromVDB(documentId, isPublic ? "public" : "private");
+
+    await insertDocumentToVDB(
+      documentId,
+      userId,
+      tag,
+      isPublic ? "public" : "private",
+      true
     );
 
-    if (!res.ok) {
-      return "Error during Switching Collections";
-    }
-
-    const body = {
-      document_id: documentId,
-      user_id: userId,
-      tag: tag,
-      collection_name: isPublic ? "public" : "private",
-      change: true,
-    };
-
-    const res2 = await fetch(
-      `${process.env.NEXT_PUBLIC_LLM_SERVER_URL}/document/insert`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      }
-    );
-
-    if (!res2.ok) {
-      return "Error during Switching Collections";
-    }
-
-    const formData = new FormData();
-    formData.append("id", documentId);
-    formData.append("title", title);
-    formData.append("topic", topic);
-    formData.append("public", (!isPublic).toString());
-
-    const res3 = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API}/document`, {
-      method: "PUT",
-      body: formData,
-    });
-
-    if (!res3.ok) {
-      return "Error during Updating Records";
-    }
+    await updateDocumentMetadata(documentId, title, topic, isPublic, true);
 
     const newData = [...tableContents];
     const index = newData.findIndex((item) => item.id === documentId);
@@ -163,82 +135,112 @@ const ActionsOption = ({
     } collections.`;
   };
 
-  return (
-    <>
-      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your
-              account and remove your data from our servers.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={deleteDocument}>
-              Continue
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            size={"sm"}
-            variant={"ghost"}
-            className="flex items-center gap-[3px] w-[25px] h-[25px] p-0"
-          >
-            <PiDotsThreeOutlineFill />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="p-0 w-32 right-0" align="end">
-          <div className="p-1">
+  if (editingCell !== documentId) {
+    return (
+      <>
+        <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete your
+                account and remove your data from our servers.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={deletingDocument}>
+                Continue
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        <Popover open={isOpen} onOpenChange={setIsOpen}>
+          <PopoverTrigger asChild>
             <Button
               size={"sm"}
-              className="w-full text-xs h-7 rounded justify-between font-normal"
               variant={"ghost"}
+              className="flex items-center gap-[3px] w-[25px] h-[25px] p-0"
             >
-              Edit <BsPencil className="text-muted-foreground" size={13} />
+              <PiDotsThreeOutlineFill />
             </Button>
-            <Link href={`/api/document?id=${documentId}&tag=${tag}`}>
+          </PopoverTrigger>
+          <PopoverContent className="p-0 w-32 right-0" align="end">
+            <div className="p-1">
               <Button
                 size={"sm"}
                 className="w-full text-xs h-7 rounded justify-between font-normal"
                 variant={"ghost"}
+                onClick={() => {
+                  editingCell === "-1"
+                    ? setEditingCell(documentId)
+                    : setEditingCell("-1");
+                  setIsOpen(false);
+                }}
               >
-                Download{" "}
-                <MdOutlineFileDownload
-                  className="text-muted-foreground"
-                  size={13}
-                />{" "}
+                Edit <BsPencil className="text-muted-foreground" size={13} />
               </Button>
-            </Link>
-            <Button
-              size={"sm"}
-              className="w-full text-xs h-7 rounded justify-between font-normal"
-              variant={"ghost"}
-              onClick={() =>
-                showToast(switchToCollections(isPublic, tag, title, topic))
-              }
-            >
-              Publicize{" "}
-              <RiGlobalLine className="text-muted-foreground" size={13} />
-            </Button>
-            <Separator className="my-1" />
-            <Button
-              size={"sm"}
-              className="w-full text-red-500 hover:text-red-500 text-xs h-7 rounded justify-between font-normal"
-              variant={"ghost"}
-              onClick={() => setIsAlertOpen(true)}
-            >
-              Delete <FiDelete size={13} />
-            </Button>
-          </div>
-        </PopoverContent>
-      </Popover>
-    </>
-  );
+              <Link href={`/api/document?id=${documentId}&tag=${tag}`}>
+                <Button
+                  size={"sm"}
+                  className="w-full text-xs h-7 rounded justify-between font-normal"
+                  variant={"ghost"}
+                >
+                  Download{" "}
+                  <MdOutlineFileDownload
+                    className="text-muted-foreground"
+                    size={13}
+                  />{" "}
+                </Button>
+              </Link>
+              <Button
+                size={"sm"}
+                className="w-full text-xs h-7 rounded justify-between font-normal"
+                variant={"ghost"}
+                onClick={() =>
+                  showToast(switchToCollections(isPublic, tag, title, topic))
+                }
+              >
+                Publicize{" "}
+                <RiGlobalLine className="text-muted-foreground" size={13} />
+              </Button>
+              <Separator className="my-1" />
+              <Button
+                size={"sm"}
+                className="w-full text-red-500 hover:text-red-500 text-xs h-7 rounded justify-between font-normal"
+                variant={"ghost"}
+                onClick={() => setIsAlertOpen(true)}
+              >
+                Delete <FiDelete size={13} />
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
+      </>
+    );
+  } else {
+    return (
+      <div onClick={handleClickInsideChild}>
+        <Button
+          className="bg-blue-700"
+          style={{ width: "50px", height: "24px" }}
+          onClick={async () => {
+            updateDocumentMetadata(
+              documentId,
+              inputTitle,
+              inputTopic,
+              isPublic,
+              false
+            );
+            setEditingCell("-1");
+            handleUpdateMisc();
+          }}
+        >
+          <FaCheck size={12} />
+        </Button>
+      </div>
+    );
+  }
 };
 
 export default ActionsOption;

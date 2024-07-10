@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import PaginationTable from "./pagination-table";
 import {
   Table,
@@ -21,7 +21,12 @@ import FilterTable from "./filter-table";
 import { TableContentProps } from "@/types";
 import { useAuth } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
-import { generateDashboardDocumentsLink } from "@/lib/utils";
+import {
+  generateDashboardDocumentsLink,
+  updateDocumentMetadata,
+} from "@/lib/utils";
+import useClickOutside from "@/lib/useClickOutside";
+import { Input } from "@/components/ui/input";
 
 const DocTable = () => {
   const [tableContents, setTableContents] = useState<TableContentProps[]>([]);
@@ -29,6 +34,9 @@ const DocTable = () => {
   const [totalItems, setTotalItems] = useState<number>();
   const [error, setError] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [editingCell, setEditingCell] = useState<string>("-1");
+  const [inputTitle, setInputTitle] = useState<string>("");
+  const [inputTopic, setInputTopic] = useState<string>("");
   const { userId } = useAuth();
   const searchParams = useSearchParams();
 
@@ -36,6 +44,43 @@ const DocTable = () => {
   const tags = useMemo(() => searchParams.getAll("tag"), [searchParams]);
   const paginationIndex = Number(searchParams.get("page")) || 0;
   const rowsPerPage = Number(searchParams.get("n")) || 10;
+  const targetRef = useRef<HTMLDivElement>(null);
+  const targetRef2 = useRef<HTMLDivElement>(null);
+  const targetRef3 = useRef<HTMLDivElement>(null);
+
+  useClickOutside(
+    () => setEditingCell("-1"),
+    targetRef,
+    targetRef2,
+    targetRef3
+  );
+
+  const handleUpdateMisc = (documentId: string) => {
+    const newContents = tableContents.map((item) =>
+      item.id === documentId
+        ? { ...item, title: inputTitle, topic: inputTopic }
+        : item
+    );
+    setTableContents(newContents);
+  };
+
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    documentId: string,
+    isPublic: Boolean
+  ) => {
+    if (e.key === "Enter") {
+      updateDocumentMetadata(
+        documentId,
+        inputTitle,
+        inputTopic,
+        isPublic,
+        false
+      );
+      setEditingCell("-1");
+      handleUpdateMisc(documentId);
+    }
+  };
 
   const selectAllContents = () => {
     if (selectedItems.length === tableContents.length) {
@@ -81,6 +126,17 @@ const DocTable = () => {
       setIsLoading(false);
     });
   }, [paginationIndex, rowsPerPage, searchTerm, tags, userId]);
+
+  useEffect(() => {
+    if (editingCell !== "-1") {
+      tableContents.map((item) => {
+        if (editingCell === item.id) {
+          setInputTitle(item.title);
+          setInputTopic(item.topic);
+        }
+      });
+    }
+  }, [editingCell, tableContents]);
 
   if (isLoading) {
     return (
@@ -129,23 +185,42 @@ const DocTable = () => {
           <TableBody>
             {tableContents.map((item, i) => (
               <TableRow key={i}>
-                <TableCell className="flex font-medium items-center">
-                  <Checkbox
-                    key={i}
-                    onClick={() => selectContent(item)}
-                    checked={selectedItems?.indexOf(item) !== -1}
-                    className="mr-3"
-                  />
-                  {item.tag === "pdf" ? (
-                    <FaRegFilePdf size={16} className="mr-2" />
-                  ) : item.tag === "txt" ? (
-                    <FiFileText size={16} className="mr-2" />
-                  ) : (
-                    <SiObsidian size={16} className="mr-2" />
-                  )}
-                  {item.title}
+                <TableCell className="flex-col">
+                  <div
+                    className="flex font-medium items-center"
+                    ref={targetRef}
+                    onDoubleClick={() => setEditingCell(item.id)}
+                  >
+                    <Checkbox
+                      key={i}
+                      onClick={() => selectContent(item)}
+                      checked={selectedItems?.indexOf(item) !== -1}
+                      className="mr-3"
+                    />
+                    {item.tag === "pdf" ? (
+                      <FaRegFilePdf size={16} className="mr-2" />
+                    ) : item.tag === "txt" ? (
+                      <FiFileText size={16} className="mr-2" />
+                    ) : (
+                      <SiObsidian size={16} className="mr-2" />
+                    )}
+                    {editingCell === item.id ? (
+                      <Input
+                        className="w-25 h-7 p-1"
+                        type="text"
+                        defaultValue={item.title}
+                        placeholder="text"
+                        onChange={(e) => setInputTitle(e.target.value)}
+                        onKeyDown={(e) =>
+                          handleKeyDown(e, item.id, item.public)
+                        }
+                      />
+                    ) : (
+                      item.title
+                    )}
+                  </div>
                 </TableCell>
-                <TableCell>
+                <TableCell className="flex-col">
                   <Badge
                     variant={"default"}
                     className="bg-blue-700 border-none hover:bg-blue-700"
@@ -153,10 +228,32 @@ const DocTable = () => {
                     {item.tag}
                   </Badge>
                 </TableCell>
-                <TableCell>{item.topic}</TableCell>
-                <TableCell>{item.file_size_formatted}</TableCell>
-                <TableCell>{item.createdAt}</TableCell>
-                <TableCell>
+                <TableCell className="flex-col">
+                  <div
+                    ref={targetRef2}
+                    onDoubleClick={() => setEditingCell(item.id)}
+                  >
+                    {editingCell === item.id ? (
+                      <Input
+                        className="w-25 h-6 p-1"
+                        type="text"
+                        defaultValue={item.topic}
+                        placeholder="text"
+                        onChange={(e) => setInputTopic(e.target.value)}
+                        onKeyDown={(e) =>
+                          handleKeyDown(e, item.id, item.public)
+                        }
+                      />
+                    ) : (
+                      item.topic
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell className="flex-col">
+                  {item.file_size_formatted}
+                </TableCell>
+                <TableCell className="flex-col">{item.createdAt}</TableCell>
+                <TableCell className="flex-col">
                   {item.public === true ? (
                     <Badge
                       variant={"outline"}
@@ -173,16 +270,22 @@ const DocTable = () => {
                     </Badge>
                   )}
                 </TableCell>
-                <TableCell>
-                  <ActionsOption
-                    documentId={item.id}
-                    isPublic={item.public === true}
-                    tag={item.tag}
-                    title={item.title}
-                    topic={item.topic}
-                    tableContents={tableContents}
-                    setTableContents={setTableContents}
-                  />
+                <TableCell className="flex-col">
+                  <div ref={targetRef3}>
+                    <ActionsOption
+                      documentId={item.id}
+                      isPublic={item.public === true}
+                      tag={item.tag}
+                      title={item.title}
+                      topic={item.topic}
+                      tableContents={tableContents}
+                      setTableContents={setTableContents}
+                      editingCell={editingCell}
+                      setEditingCell={setEditingCell}
+                      inputTitle={inputTitle}
+                      inputTopic={inputTopic}
+                    />
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

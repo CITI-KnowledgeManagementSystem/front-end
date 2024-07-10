@@ -105,3 +105,101 @@ function sortMessageProps(response: any) {
   }
   return messages;
 }
+
+export const updateDocumentMetadata = async (
+  documentId: string,
+  title: string,
+  topic: string,
+  isPublic: Boolean,
+  change: Boolean
+) => {
+  console.log(documentId, title, topic, isPublic, change);
+  const formData = new FormData();
+  formData.append("id", documentId);
+  formData.append("title", title);
+  formData.append("topic", topic);
+  change
+    ? formData.append(
+        "public",
+        isPublic !== null ? (!isPublic).toString() : "public"
+      )
+    : formData.append(
+        "public",
+        isPublic !== null ? isPublic.toString() : "private"
+      );
+
+  const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API}/document`, {
+    method: "PUT",
+    body: formData,
+  });
+
+  if (!res.ok) {
+    return "Error during updating records!";
+  }
+};
+
+export const deleteDocumentFromVDB = async (
+  documentId: string,
+  collectionName: string
+) => {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_LLM_SERVER_URL}/document/delete?document_id=${documentId}&collection_name=${collectionName}`,
+    {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  if (!res.ok) {
+    return "Error during deleting document from VDB!";
+  }
+};
+
+export const insertDocumentToVDB = async (
+  documentId: string,
+  userId: string | null | undefined,
+  tag: string,
+  collectionName: string,
+  change?: Boolean
+) => {
+  const body = {
+    document_id: documentId,
+    user_id: userId,
+    tag: tag,
+    collection_name: collectionName,
+    change: change,
+  };
+
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_LLM_SERVER_URL}/document/insert`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    }
+  );
+
+  if (!res.ok) {
+    return "Error during inserting document to VDB!";
+  }
+};
+
+export const deleteDocument = async (
+  documentId: string | undefined,
+  userId: string | undefined
+) => {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_SERVER_API}/document/?id=${documentId}&user_id=${userId}`,
+    {
+      method: "DELETE",
+    }
+  );
+
+  if (!res.ok) {
+    return "Error during deleting document!";
+  }
+};
