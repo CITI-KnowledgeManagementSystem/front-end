@@ -6,6 +6,55 @@ import { PrismaClient } from "@prisma/client";
 import Client from "ssh2-sftp-client";
 import { auth } from "@clerk/nextjs/server";
 
+export async function GET(request: NextRequest) {
+  const { userId } = auth();
+  const id = request.nextUrl.searchParams.get("id");
+  const tag = request.nextUrl.searchParams.get("tag");
+
+  if (!id) {
+    return NextResponse.json(
+      { message: "Please provide an id" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    await connect();
+
+    const remotePath = `${process.env.NEXT_PUBLIC_QNAP_PRIVATE_STORAGE}/${userId}/${id}.${tag}`;
+    const localPath = path.join(process.cwd(), "storage", `${id}.${tag}`);
+
+    await sftpClient.get(remotePath, localPath);
+
+    const data = fs.readFileSync(localPath);
+
+    const headers = new Headers();
+    headers.set("Content-Type", "application/octet-stream");
+    headers.set("Content-Disposition", `attachment; filename=${id}.${tag}`);
+
+    fs.unlinkSync(localPath);
+
+    if (!data) {
+      return NextResponse.json(
+        { message: "Error reading file" },
+        { status: 400 }
+      );
+    } else {
+      return new NextResponse(data, {
+        statusText: "OK",
+        headers,
+      });
+    }
+  } catch (err) {
+    return NextResponse.json(
+      { message: `Error fetching file: ${err}` },
+      { status: 500 }
+    );
+  } finally {
+    await disconnect();
+  }
+}
+
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
 
@@ -95,8 +144,8 @@ export async function POST(req: NextRequest) {
       await disconnect();
     }
 
-    const { getToken } = auth();
-    const token = await getToken();
+    // const { getToken } = auth();
+    // const token = await getToken();
 
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_LLM_SERVER_URL}/document/insert`,
@@ -104,7 +153,7 @@ export async function POST(req: NextRequest) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          // Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           user_id: user_id,
@@ -128,56 +177,10 @@ export async function POST(req: NextRequest) {
     );
   } catch (err) {
     console.log(err);
-    return NextResponse.json({ message: err }, { status: 400 });
-  }
-}
-
-export async function GET(request: NextRequest) {
-  const id = request.nextUrl.searchParams.get("id");
-  const tag = request.nextUrl.searchParams.get("tag");
-  const { userId } = auth();
-
-  if (!id) {
     return NextResponse.json(
-      { message: "Please provide a id" },
+      { message: "Error uploading file" },
       { status: 400 }
     );
-  }
-
-  try {
-    await connect();
-
-    const remotePath = `${process.env.NEXT_PUBLIC_QNAP_PRIVATE_STORAGE}/${userId}/${id}.${tag}`;
-    const localPath = path.join(process.cwd(), "storage", `${id}.${tag}`);
-
-    await sftpClient.get(remotePath, localPath);
-
-    const data = fs.readFileSync(localPath);
-
-    const headers = new Headers();
-    headers.set("Content-Type", "application/octet-stream");
-    headers.set("Content-Disposition", `attachment; filename=${id}.${tag}`);
-
-    fs.unlinkSync(localPath);
-
-    if (!data) {
-      return NextResponse.json(
-        { message: "Error reading file" },
-        { status: 400 }
-      );
-    } else {
-      return new NextResponse(data, {
-        statusText: "OK",
-        headers,
-      });
-    }
-  } catch (err) {
-    return NextResponse.json(
-      { message: `Error fetching file: ${err}` },
-      { status: 500 }
-    );
-  } finally {
-    await disconnect();
   }
 }
 
