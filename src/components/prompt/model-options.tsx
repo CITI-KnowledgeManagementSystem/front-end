@@ -54,7 +54,7 @@ const ModelOptions = ({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="h-fit p-2 border bg-white text-blue-700 hover:bg-white shadow-none hover:shadow-blue-200 hover:shadow">
+        <Button className="h-fit px-4 py-2 rounded-xl border bg-white text-blue-700 hover:bg-white shadow-none hover:shadow-blue-200 hover:shadow">
           Options
         </Button>
       </DialogTrigger>

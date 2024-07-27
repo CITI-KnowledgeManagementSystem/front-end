@@ -41,7 +41,7 @@ const UserProfile = () => {
   return (
     <Popover>
       <PopoverTrigger>
-        <div className="h-fit w-full justify-start hover:bg-blue-600  flex items-center rounded-md py-2 px-4 text-md animate-fade-in font-base">
+        <div className="h-fit w-full justify-start hover:bg-blue-600  flex items-center rounded-xl py-2 px-4 text-md animate-fade-in font-base">
           <Avatar className="mr-3">
             <AvatarImage src={user?.img_url} />
             <AvatarFallback>

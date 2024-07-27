@@ -105,7 +105,7 @@ const SidebarPrompt = () => {
             <div className="flex items-center gap-2 justify-between">
               <HoverCard openDelay={100} closeDelay={100}>
                 <HoverCardTrigger asChild>
-                  <Button onClick={() => setIsOpen(!isOpen)} className="h-fit p-2 bg-transparent shadow-none hover:bg-white text-slate-200 hover:text-blue-700">
+                  <Button onClick={() => setIsOpen(!isOpen)} className="h-fit p-2 rounded-xl bg-transparent shadow-none hover:bg-white text-slate-200 hover:text-blue-700">
                     <BsLayoutSidebarInset size={20}/>
                   </Button>
                 </HoverCardTrigger>
@@ -117,7 +117,7 @@ const SidebarPrompt = () => {
                 <HoverCardTrigger asChild>
                   <Link href={"/prompt"}>
                     <Button
-                      className="h-fit p-2 bg-transparent shadow-none hover:bg-white text-slate-200 hover:text-blue-700 relative animate-fade-in"
+                      className="h-fit p-2 rounded-xl bg-transparent shadow-none hover:bg-white text-slate-200 hover:text-blue-700 relative animate-fade-in"
                     >
                       <BsPencilSquare size={20}/>
                     </Button>
