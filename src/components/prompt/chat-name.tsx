@@ -52,12 +52,7 @@ const ChatName = ({ id, name }: Props) => {
   return (
     <>
       {!isRenaming ? (
-        <div
-          onClick={navigateToChat}
-          className={`my-1 px-3 py-[10px] text-sm font-medium rounded-xl cursor-pointer hover:bg-blue-500 flex justify-between items-center w-full relative group ${
-            id === idOnPath && "bg-blue-500 hover:bg-blue-500"
-          }`}
-        >
+        <div onClick={navigateToChat} className={`my-1 px-3 py-[10px] text-sm font-medium rounded-xl cursor-pointer hover:bg-blue-500 flex justify-between items-center w-full relative group ${id === idOnPath && "bg-blue-500 hover:bg-blue-500"}`}>
           {chatName}
           <ThreeDotSidebar id={id} enableRename={() => setIsRenaming(true)} />
         </div>
@@ -68,7 +63,7 @@ const ChatName = ({ id, name }: Props) => {
         >
           <Input
             defaultValue={chatName}
-            className={`border-none w-full font-medium bg-white`}
+            className={`border-none w-full font-medium bg-white text-blue-700 focus:outline-none focus:ring-0`}
             onChange={(e) => setInputName(e.target.value)}
           />
           <Button

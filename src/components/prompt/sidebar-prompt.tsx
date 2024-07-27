@@ -105,7 +105,7 @@ const SidebarPrompt = () => {
                   </Button>
                 </HoverCardTrigger>
                 <HoverCardContent className="p-1 bg-white text-blue-700 w-fit border-none shadow shadow-blue-400" align="start" >
-                  <p className="text-xs">Open the sidebar</p>
+                  <p className="text-xs">Close the sidebar</p>
                 </HoverCardContent>
               </HoverCard>
               <HoverCard openDelay={100} closeDelay={100}>

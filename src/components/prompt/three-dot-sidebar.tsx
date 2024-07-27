@@ -2,15 +2,10 @@ import React, { useState } from "react";
 import { PiDotsThreeOutlineFill } from "react-icons/pi";
 import { FiDelete, FiArchive } from "react-icons/fi";
 import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@radix-ui/react-hover-card";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@radix-ui/react-hover-card";
 import { MdDriveFileRenameOutline } from "react-icons/md";
 import { Button } from "../ui/button";
-import {
-  AlertDialog,
+import { AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
@@ -52,6 +47,7 @@ const ThreeDotSidebar: React.FC<ChildProps> = ({ id, enableRename }) => {
   };
 
   const renameChatBox = (e: React.MouseEvent<HTMLElement>) => {
+    e.stopPropagation()
     setIsOpen(!isOpen);
     enableRename();
   };
@@ -62,21 +58,18 @@ const ThreeDotSidebar: React.FC<ChildProps> = ({ id, enableRename }) => {
         <HoverCardTrigger asChild>
           <PopoverTrigger asChild>
             <Button
-              onClick={() => setIsOpen(!isOpen)}
+              onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen)}}
               variant={"ghost"}
-              className={`rounded-md h-fit p-[3px] hover:bg-slate-200 ${
-                id === idOnPath ? "group-hover:block block" : "hidden"
-              }`}
-            >
+              className={`rounded-lg h-fit p-[3px] hover:bg-white hover:text-blue-700 border-none group-hover:block ${id === idOnPath || isOpen ? "block" : "hidden"}`}>
               <PiDotsThreeOutlineFill />
             </Button>
           </PopoverTrigger>
         </HoverCardTrigger>
-        <HoverCardContent className="z-40 w-fit text-xs py-1 px-2 bg-slate-700 text-white rounded-md mt-1">
-          <p>More</p>
+        <HoverCardContent hideWhenDetached className="z-40 p-1 bg-white text-blue-700 w-fit border-none shadow shadow-blue-400 rounded-md mt-2">
+          <p className="text-xs">More</p>
         </HoverCardContent>
       </HoverCard>
-      <PopoverContent className="w-32 p-0" align="end">
+      <PopoverContent hideWhenDetached className="w-32 p-0 text-blue-700 rounded-xl overflow-hidden" align="end">
         <Button
           onClick={renameChatBox}
           variant={"ghost"}

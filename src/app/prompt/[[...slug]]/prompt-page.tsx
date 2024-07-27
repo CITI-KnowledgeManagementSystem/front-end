@@ -61,10 +61,10 @@ const PromptPage = ({ user, conversations }: Props) => {
 
   useEffect(() => {
     if (divRef.current && !isPrompting && prompt === "") {
-      divRef.current.innerText = "Start a conversation in LKC";
+      divRef.current.innerText = "Start a conversation with LKC";
       divRef.current.classList.add("text-slate-400");
       divRef.current.blur()
-    } else if (divRef.current && divRef.current.innerText === "Start a conversation in LKC") {
+    } else if (divRef.current && divRef.current.innerText === "Start a conversation with LKC") {
       divRef.current.innerText = "";
       divRef.current.classList.remove("text-slate-400");
     }
