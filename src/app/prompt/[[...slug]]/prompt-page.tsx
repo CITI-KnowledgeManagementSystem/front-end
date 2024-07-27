@@ -1,15 +1,18 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
+import { BsPencilSquare, BsLayoutSidebarInset } from "react-icons/bs";
+import { HoverCard, HoverCardContent, HoverCardTrigger} from "../../../components/ui/hover-card"
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { MessageProps } from "@/types";
+import Link from "next/link";
 import ChatBox from "@/components/prompt/chat-box";
 import ModelOptions from "@/components/prompt/model-options";
 import { answerQuestions } from "@/lib/utils";
 import { UserProfileProps } from "@/types";
 import { useParams, useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
-import useStore from "@/lib/useStore";
+import { useStore, useSidebarState } from "@/lib/useStore";
 import SessionDialog from "@/components/session_dialog";
 import { toast } from "sonner";
 
@@ -21,6 +24,7 @@ type Props = {
 const PromptPage = ({ user, conversations }: Props) => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { isOpen, setIsOpen } = useSidebarState()
   const hyde = searchParams.get("hyde");
   const reranking = searchParams.get("reranking");
   const selected_model = searchParams.get("selected_model");
@@ -238,9 +242,35 @@ const PromptPage = ({ user, conversations }: Props) => {
   };
 
   return (
-    <div className="flex flex-col w-full py-4 h-full px-[50px] relative">
+    <div className={`flex flex-col w-full h-full p-4`}>
       <SessionDialog />
-      <div className="flex w-full pb-3">
+      <div className="flex w-full items-center gap-2">
+        {!isOpen && 
+        <>
+        <HoverCard openDelay={100} closeDelay={100}>
+          <HoverCardTrigger asChild>
+            <Button onClick={() => setIsOpen(!isOpen)} className="h-fit p-2 border bg-white text-blue-700 hover:bg-white shadow-none hover:shadow-blue-200 hover:shadow">
+              <BsLayoutSidebarInset size={20}/>
+            </Button>
+          </HoverCardTrigger>
+          <HoverCardContent className="p-1 bg-blue-700 text-white w-fit border-none shadow shadow-blue-700" align="start" >
+            <p className="text-xs">Open sidebar</p>
+          </HoverCardContent>
+        </HoverCard>
+        <HoverCard openDelay={100} closeDelay={100}>
+          <HoverCardTrigger asChild className="items-center justify-center">
+            <Link href={"/prompt"} className="flex">
+              <Button className="h-fit p-2 border bg-white text-blue-700 hover:bg-white shadow-none hover:shadow-blue-200 hover:shadow">
+                <BsPencilSquare size={20}/>
+              </Button>
+            </Link>
+          </HoverCardTrigger>
+          <HoverCardContent className="p-1 bg-blue-700 text-white w-fit border-none shadow shadow-blue-700" align="start">
+            <p className="text-xs">Create a new chat</p>
+          </HoverCardContent>
+        </HoverCard>
+        </>
+        }
         <ModelOptions
           selectedModel={selectedModel}
           setSelectedModel={setSelectedModel}
@@ -252,10 +282,10 @@ const PromptPage = ({ user, conversations }: Props) => {
           setTemperature={setTemperature}
         />
       </div>
-      <div className="w-full flex-1 overflow-y-auto mb-5 py-5">
+      <div className="w-full flex-1 overflow-y-auto mb-5 py-5 px-7">
         {data.length === 0 && (
           <div className="flex flex-col justify-center h-full max-w-[900px] m-auto">
-            <div className="bg-gradient-to-r from-blue-500 to-teal-300 bg-clip-text text-transparent animate-slide-in delay-300">
+            <div className="bg-gradient-to-r from-blue-700 to-teal-300 bg-clip-text text-transparent animate-slide-in delay-300">
               <h1 className="md:text-6xl lg:text-7xl font-medium py-3">
                 Welcome, {user && user.username}
               </h1>
@@ -307,7 +337,7 @@ const PromptPage = ({ user, conversations }: Props) => {
         </div>
         <div ref={bottomRef} />
       </div>
-      <div className="flex justify-center items-center">
+      <div className="flex justify-center items-center px-7">
         <form
           action="submit"
           onSubmit={handleSendPrompt}

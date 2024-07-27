@@ -41,7 +41,7 @@ const UserProfile = () => {
   return (
     <Popover>
       <PopoverTrigger>
-        <div className="h-fit w-full justify-start hover:bg-slate-100 flex items-center rounded-md py-2 px-4 text-md animate-fade-in font-medium">
+        <div className="h-fit w-full justify-start hover:bg-blue-600  flex items-center rounded-md py-2 px-4 text-md animate-fade-in font-base">
           <Avatar className="mr-3">
             <AvatarImage src={user?.img_url} />
             <AvatarFallback>
@@ -55,7 +55,7 @@ const UserProfile = () => {
         <div className="w-48">
           <Button
             onClick={() => router.push("/dashboard/my-documents")}
-            className="w-full justify-start"
+            className="w-full justify-start text-blue-700"
             variant={"ghost"}
             size={"sm"}
           >
@@ -64,7 +64,7 @@ const UserProfile = () => {
           </Button>
           <Button
             onClick={() => router.push("/dashboard/profile")}
-            className="w-full justify-start"
+            className="w-full justify-start text-blue-700"
             variant={"ghost"}
             size={"sm"}
           >

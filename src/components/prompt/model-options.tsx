@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React  from "react";
 import { Button } from "../ui/button";
 import { llmModels } from "@/constants";
 import {
@@ -54,9 +54,8 @@ const ModelOptions = ({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline">
-          <IoSettingsOutline size={18} className="mr-2" />
-          Model Options
+        <Button className="h-fit p-2 border bg-white text-blue-700 hover:bg-white shadow-none hover:shadow-blue-200 hover:shadow">
+          Options
         </Button>
       </DialogTrigger>
       <DialogContent>

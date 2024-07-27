@@ -22,7 +22,7 @@ import {
 } from "../ui/alert-dialog";
 import { Separator } from "../ui/separator";
 import { useRouter } from "next/navigation";
-import useStore from "@/lib/useStore";
+import { useStore } from "@/lib/useStore";
 import { usePathname } from "next/navigation";
 
 interface ChildProps {
