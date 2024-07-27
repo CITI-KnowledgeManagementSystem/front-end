@@ -3,18 +3,13 @@ import React, { useEffect } from "react";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "../ui/button";
-import {
-  BsLayoutSidebarInset,
-  BsPencilSquare,
-} from "react-icons/bs";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "../ui/hover-card";
+import { BsLayoutSidebarInset, BsPencilSquare } from "react-icons/bs";
+import { MdChat } from "react-icons/md";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "../ui/hover-card";
 import UserProfile from "./user-profile";
 import { useAuth } from "@clerk/nextjs";
 import { useStore, useSidebarState } from "@/lib/useStore";
+import { ScrollArea } from "../ui/scroll-area";
 import ChatName from "./chat-name";
 
 interface T {
@@ -128,7 +123,8 @@ const SidebarPrompt = () => {
                 </HoverCardContent>
               </HoverCard>
             </div>
-            <div className="flex-1 overflow-y-auto mb-3">
+            <ScrollArea className="h-full my-3">
+            <div className="flex-1">
               {isLoading ? (
                 <div className="flex w-full text-blue-700 items-center justify-center h-full">
                   <svg
@@ -151,24 +147,35 @@ const SidebarPrompt = () => {
                 </div>
               ) : (
                 chatBox &&
-                sortedKeys.map((key) => {
-                  return (
-                    <div className="w-full my-2 animate-fade-in" key={key}>
-                      <label className="text-muted-foreground text-xs font-bold">
-                        {key}
-                      </label>
-                      {chatBox[key].map((item, i) => (
-                        <ChatName
-                          id={item.id.toString()}
-                          name={item.name}
-                          key={i}
-                        />
-                      ))}
-                    </div>
-                  );
-                })
+                (
+                  sortedKeys.length == 0 ? 
+                  <div className="flex flex-col justify-center items-center h-full text-center text-slate-200 text-sm gap-y-3">
+                    <MdChat size={40}/>
+                    You have no conversation
+                    <br/>
+                    Start a new one!
+                  </div>
+                  :
+                  sortedKeys.map((key) => {
+                    return (
+                      <div className="w-full my-2 animate-fade-in" key={key}>
+                        <label className="text-blue-100 text-xs font-bold pl-2">
+                          {key}
+                        </label>
+                        {chatBox[key].map((item, i) => (
+                          <ChatName
+                            id={item.id.toString()}
+                            name={item.name}
+                            key={i}
+                          />
+                        ))}
+                      </div>
+                    );
+                  })
+                )
               )}
             </div>
+            </ScrollArea>
             <UserProfile />
           </div>
         }
