@@ -39,17 +39,19 @@ export function generateDashboardDocumentsLink(
 
 export const answerQuestions = async (
   prompt: string,
-  history: any,
+  history: MessageProps[],
   hyde: boolean,
   reranking: boolean,
   selectedModel: string
 ) => {
   const formData = new FormData();
   formData.append("question", prompt);
-  formData.append("conversation_history", history);
+  formData.append("conversation_history", JSON.stringify(history));
   formData.append("hyde", hyde.toString());
   formData.append("reranking", reranking.toString());
   formData.append("selected_model", selectedModel);
+
+  console.log(history);
 
   const response = await fetch(process.env.NEXT_PUBLIC_SERVER_API + "/prompt", {
     method: "POST",

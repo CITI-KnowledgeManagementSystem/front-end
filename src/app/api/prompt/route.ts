@@ -7,7 +7,7 @@ import { useSession } from "@clerk/nextjs";
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const question = formData.get("question");
-  const conversation_history = formData.get("history");
+  const conversation_history = formData.get("conversation_history");
   const hyde = formData.get("hyde");
   const reranking = formData.get("reranking");
   const { userId, sessionId } = auth();

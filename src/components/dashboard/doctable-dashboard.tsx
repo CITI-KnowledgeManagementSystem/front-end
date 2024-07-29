@@ -186,11 +186,7 @@ const DocTable = () => {
             {tableContents.map((item, i) => (
               <TableRow key={i}>
                 <TableCell className="flex-col">
-                  <div
-                    className="flex font-medium items-center"
-                    ref={targetRef}
-                    onDoubleClick={() => setEditingCell(item.id)}
-                  >
+                  <div className="flex font-medium items-center">
                     <Checkbox
                       key={i}
                       onClick={() => selectContent(item)}
@@ -204,20 +200,25 @@ const DocTable = () => {
                     ) : (
                       <SiObsidian size={16} className="mr-2" />
                     )}
-                    {editingCell === item.id ? (
-                      <Input
-                        className="w-25 h-7 p-1"
-                        type="text"
-                        defaultValue={item.title}
-                        placeholder="text"
-                        onChange={(e) => setInputTitle(e.target.value)}
-                        onKeyDown={(e) =>
-                          handleKeyDown(e, item.id, item.public)
-                        }
-                      />
-                    ) : (
-                      item.title
-                    )}
+                    <div
+                      ref={targetRef}
+                      onDoubleClick={() => setEditingCell(item.id)}
+                    >
+                      {editingCell === item.id ? (
+                        <Input
+                          className="w-25 h-7 p-1"
+                          type="text"
+                          defaultValue={item.title}
+                          placeholder="text"
+                          onChange={(e) => setInputTitle(e.target.value)}
+                          onKeyDown={(e) =>
+                            handleKeyDown(e, item.id, item.public)
+                          }
+                        />
+                      ) : (
+                        item.title
+                      )}
+                    </div>
                   </div>
                 </TableCell>
                 <TableCell className="flex-col">

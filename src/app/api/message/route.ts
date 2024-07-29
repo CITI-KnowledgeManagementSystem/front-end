@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
   const response = formData.get("response");
   const responseTime = formData.get("responseTime");
 
-  if (!requestChat || !userId || !chatBoxId) {
+  if (!requestChat || !userId || !chatBoxId || !response) {
     return NextResponse.json(
       { message: "Please fill in all fields" },
       { status: 400 }
