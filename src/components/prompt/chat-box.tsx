@@ -45,7 +45,7 @@ const ChatBox = ({
 }: Props) => {
   if (variant === "request") {
     return (
-      <div className="w-full">
+      <div className="w-[60%] min-w-[400px] p-4 bg-slate-100 rounded-xl mb-4 ml-auto">
         <div className="flex items-center gap-x-2">
           <Avatar className="w-6 h-6 rounded-full overflow-hidden">
             <AvatarImage
@@ -56,10 +56,7 @@ const ChatBox = ({
           </Avatar>
           <h2 className="text-sm font-medium">{user?.username}</h2>
         </div>
-        <p
-          className="text-sm bg-blue-700 rounded-lg py-2 px-4 text-white mt-2 mb-4"
-          style={{ whiteSpace: "pre-line" }}
-        >
+        <p className="text-blue-800 mt-2 break-all" style={{ whiteSpace: "pre-line" }}>
           {message}
         </p>
       </div>
@@ -102,7 +99,7 @@ const ChatBox = ({
             );
           },
         }}
-        className={"text-sm p-2 mt-2 leading-7"}
+        className={"p-2 mt-2 leading-7 text-blue-800 break-all"}
       >
         {message}
       </Markdown>

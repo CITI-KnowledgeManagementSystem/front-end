@@ -92,6 +92,7 @@ const ModelOptions = ({
                 id="airplane-mode"
                 checked={isHydeChecked}
                 onCheckedChange={handleHydeChange}
+                className="bg-blue-700"
               />
               <p>{isHydeChecked ? "ON" : "OFF"}</p>
             </div>
@@ -113,7 +114,7 @@ const ModelOptions = ({
               type="number"
               value={temperatures}
               onChange={(e) => setTemperature(Number(e.target.value))}
-              className="col-span-3"
+              className="col-span-3 focus:ring-blue-700"
               min="0"
               max="1"
               step="0.01"

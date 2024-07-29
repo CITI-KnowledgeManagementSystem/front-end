@@ -132,7 +132,7 @@ const DeleteAlert = ({ deleteFunction }: AlertProps) => {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel onClick={(e) => {e.stopPropagation(); setIsOpen(false)}}>Cancel</AlertDialogCancel>
           <AlertDialogAction className="bg-red-700" onClick={handleDelete}>
             Continue
           </AlertDialogAction>

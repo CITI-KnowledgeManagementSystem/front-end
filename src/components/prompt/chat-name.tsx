@@ -61,13 +61,13 @@ const ChatName = ({ id, name }: Props) => {
           className={`my-1 rounded-md w-full px-0.5 flex items-center gap-x-2`}
           ref={targetRef}
         >
-          <Input
+          <input
             defaultValue={chatName}
-            className={`border-none w-full font-medium bg-white text-blue-700 focus:outline-none focus:ring-0`}
+            className={`w-full outline-none rounded-lg text-blue-700 px-2 py-2 text-sm`}
             onChange={(e) => setInputName(e.target.value)}
           />
           <Button
-            className="bg-blue-700 py-0"
+            className="rounded-lg bg-white text-blue-700 hover:shadow hover:shadow-blue-400 hover:bg-white"
             size={"sm"}
             onClick={updateChatName}
           >

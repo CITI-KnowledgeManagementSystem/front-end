@@ -85,9 +85,7 @@ const SidebarPrompt = () => {
   }, [setFunction]);
 
   useEffect(() => {
-    getChatBox().then((res) => {
-      setIsLoading(false);
-    });
+    getChatBox().then().catch().finally(() => setIsLoading(false));
   }, []);
 
   return (
@@ -123,8 +121,7 @@ const SidebarPrompt = () => {
                 </HoverCardContent>
               </HoverCard>
             </div>
-            <ScrollArea className="h-full my-3">
-            <div className="flex-1">
+            
               {isLoading ? (
                 <div className="flex w-full text-blue-700 items-center justify-center h-full">
                   <svg
@@ -149,14 +146,17 @@ const SidebarPrompt = () => {
                 chatBox &&
                 (
                   sortedKeys.length == 0 ? 
-                  <div className="flex flex-col justify-center items-center h-full text-center text-slate-200 text-sm gap-y-3">
-                    <MdChat size={40}/>
-                    You have no conversation
-                    <br/>
-                    Start a new one!
+                  <div className="flex-1 h-full">
+                    <div className="flex flex-col justify-center items-center h-full text-center text-slate-200 text-sm gap-y-3">
+                      <MdChat size={40}/>
+                      You have no conversation
+                      <br/>
+                      Start a new one!
+                    </div>
                   </div>
                   :
-                  sortedKeys.map((key) => {
+                  <ScrollArea className="flex-1 h-full my-3">
+                  {sortedKeys.map((key) => {
                     return (
                       <div className="w-full my-2 animate-fade-in" key={key}>
                         <label className="text-blue-100 text-xs font-bold pl-2">
@@ -171,11 +171,10 @@ const SidebarPrompt = () => {
                         ))}
                       </div>
                     );
-                  })
+                  })}
+                  </ScrollArea>
                 )
               )}
-            </div>
-            </ScrollArea>
             <UserProfile />
           </div>
         }
