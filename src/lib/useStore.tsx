@@ -5,9 +5,18 @@ interface AppState {
   setFunction: (fn: () => void) => void;
 }
 
-const useStore = create<AppState>((set) => ({
+interface SidebarState {
+  isOpen: boolean,
+  setIsOpen: (newState: boolean) => void
+}
+
+export const useStore = create<AppState>((set) => ({
   triggerFunction: () => {},
   setFunction: (fn) => set({ triggerFunction: fn }),
 }));
 
-export default useStore;
+export const useSidebarState = create<SidebarState>((set) => ({
+  isOpen: false,
+  setIsOpen: (newState) => set({ isOpen: newState })
+}))
+

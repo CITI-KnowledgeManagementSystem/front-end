@@ -1,15 +1,18 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import { Textarea } from "@/components/ui/textarea";
+import { BsPencilSquare, BsLayoutSidebarInset } from "react-icons/bs";
+import { HoverCard, HoverCardContent, HoverCardTrigger} from "../../../components/ui/hover-card"
+import { LuSendHorizonal } from "react-icons/lu";
 import { Button } from "@/components/ui/button";
 import { MessageProps } from "@/types";
+import Link from "next/link";
 import ChatBox from "@/components/prompt/chat-box";
 import ModelOptions from "@/components/prompt/model-options";
 import { answerQuestions } from "@/lib/utils";
 import { UserProfileProps } from "@/types";
 import { useParams, useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
-import useStore from "@/lib/useStore";
+import { useStore, useSidebarState } from "@/lib/useStore";
 import SessionDialog from "@/components/session_dialog";
 import { toast } from "sonner";
 
@@ -21,6 +24,7 @@ type Props = {
 const PromptPage = ({ user, conversations }: Props) => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { isOpen, setIsOpen } = useSidebarState()
   const hyde = searchParams.get("hyde");
   const reranking = searchParams.get("reranking");
   const selected_model = searchParams.get("selected_model");
@@ -33,6 +37,7 @@ const PromptPage = ({ user, conversations }: Props) => {
     selected_model ? selected_model.toString() : "Mistral 7B"
   );
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isPrompting, setIsPrompting] = useState<boolean>(false)
   const [isHydeChecked, setIsHydeChecked] = useState<boolean>(
     hyde === null ? true : hyde === "true" ? true : false
   );
@@ -43,6 +48,8 @@ const PromptPage = ({ user, conversations }: Props) => {
     temperature ? Number(temperature) : 0
   );
   const bottomRef = useRef<HTMLDivElement>(null);
+  const divRef = useRef<HTMLDivElement>(null);
+
   const triggerFunction = useStore((state) => state.triggerFunction);
   const [enableScroll, setEnableScroll] = useState<boolean>(true);
 
@@ -51,6 +58,17 @@ const PromptPage = ({ user, conversations }: Props) => {
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
   };
+
+  useEffect(() => {
+    if (divRef.current && !isPrompting && prompt === "") {
+      divRef.current.innerText = "Start a conversation with LKC";
+      divRef.current.classList.add("text-slate-400");
+      divRef.current.blur()
+    } else if (divRef.current && divRef.current.innerText === "Start a conversation with LKC") {
+      divRef.current.innerText = "";
+      divRef.current.classList.remove("text-slate-400");
+    }
+  }, [isPrompting, prompt]);
 
   useEffect(() => {
     if (enableScroll) {
@@ -91,6 +109,7 @@ const PromptPage = ({ user, conversations }: Props) => {
       scrollDown();
     });
     setPrompt("");
+    setIsPrompting(false);
   };
 
   const handleRating = (value: number, i: number) => {
@@ -238,9 +257,35 @@ const PromptPage = ({ user, conversations }: Props) => {
   };
 
   return (
-    <div className="flex flex-col w-full py-4 h-full px-[50px] relative">
+    <div className={`flex flex-col w-full h-full p-4 relative`}>
       <SessionDialog />
-      <div className="flex w-full pb-3">
+      <div className="flex w-full items-center gap-2">
+        {!isOpen && 
+        <>
+        <HoverCard openDelay={100} closeDelay={100}>
+          <HoverCardTrigger asChild>
+            <Button onClick={() => setIsOpen(!isOpen)} className="h-fit p-2 rounded-xl border bg-white text-blue-700 hover:bg-white shadow-none hover:shadow-blue-200 hover:shadow">
+              <BsLayoutSidebarInset size={20}/>
+            </Button>
+          </HoverCardTrigger>
+          <HoverCardContent className="p-1 bg-blue-700 text-white w-fit border-none shadow shadow-blue-700" align="start" >
+            <p className="text-xs">Open sidebar</p>
+          </HoverCardContent>
+        </HoverCard>
+        <HoverCard openDelay={100} closeDelay={100}>
+          <HoverCardTrigger asChild className="items-center justify-center">
+            <Link href={"/prompt"} className="flex">
+              <Button className="h-fit p-2 rounded-xl border bg-white text-blue-700 hover:bg-white shadow-none hover:shadow-blue-200 hover:shadow">
+                <BsPencilSquare size={20}/>
+              </Button>
+            </Link>
+          </HoverCardTrigger>
+          <HoverCardContent className="p-1 bg-blue-700 text-white w-fit border-none shadow shadow-blue-700" align="start">
+            <p className="text-xs">Create a new chat</p>
+          </HoverCardContent>
+        </HoverCard>
+        </>
+        }
         <ModelOptions
           selectedModel={selectedModel}
           setSelectedModel={setSelectedModel}
@@ -252,10 +297,10 @@ const PromptPage = ({ user, conversations }: Props) => {
           setTemperature={setTemperature}
         />
       </div>
-      <div className="w-full flex-1 overflow-y-auto mb-5 py-5">
-        {data.length === 0 && (
-          <div className="flex flex-col justify-center h-full max-w-[900px] m-auto">
-            <div className="bg-gradient-to-r from-blue-500 to-teal-300 bg-clip-text text-transparent animate-slide-in delay-300">
+      <div className="w-full flex-1 overflow-y-auto pt-2 mb-[60px] px-7">
+        {data.length === 0 ? (
+          <div className="flex flex-col justify-center m-auto h-full  max-w-[900px]">
+            <div className="bg-gradient-to-r from-blue-700 to-teal-300 bg-clip-text text-transparent animate-slide-in delay-300">
               <h1 className="md:text-6xl lg:text-7xl font-medium py-3">
                 Welcome, {user && user.username}
               </h1>
@@ -264,63 +309,68 @@ const PromptPage = ({ user, conversations }: Props) => {
               Ready to learn something new?
             </h1>
           </div>
-        )}
-        <div className="flex flex-col m-auto max-w-[900px]">
-          {data.map((item, i) => (
-            <ChatBox
-              key={i}
-              variant={item.type}
-              message={item.message}
-              id={i}
-              user={user}
-              liked={item.liked}
-              disliked={item.disliked}
-              rating={item.rating}
-              handleLike={() => handleLike(i)}
-              handleDislike={() => handleDislike(i)}
-              handleRating={(value) => handleRating(value, i)}
-              handleUpdateMisc={() => handleUpdateMisc(i)}
-            />
-          ))}
-          {isLoading && (
-            <div className="flex w-full text-blue-700 items-center text-sm justify-start">
-              <svg
-                aria-hidden="true"
-                role="status"
-                className="inline w-4 h-4 me-3 text-gray-200 animate-spin dark:text-gray-600"
-                viewBox="0 0 100 101"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
-                  fill="currentColor"
-                />
-                <path
-                  d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
-                  fill="#1C64F2"
-                />
-              </svg>
-              Processing...
-            </div>
-          )}
-        </div>
+          ) :
+          <div className="flex flex-col m-auto max-w-[900px]">
+            {data.map((item, i) => (
+              <ChatBox
+                key={i}
+                variant={item.type}
+                message={item.message}
+                id={i}
+                user={user}
+                liked={item.liked}
+                disliked={item.disliked}
+                rating={item.rating}
+                handleLike={() => handleLike(i)}
+                handleDislike={() => handleDislike(i)}
+                handleRating={(value) => handleRating(value, i)}
+                handleUpdateMisc={() => handleUpdateMisc(i)}
+              />
+            ))}
+            {isLoading && (
+              <div className="flex flex-col w-full text-sm justify-start animate-pulse gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="rounded-full h-7 w-7 bg-slate-200"></div>
+                  <div className="w-24 rounded-xl h-7 bg-slate-200"></div>
+                </div>
+                <div className="flex gap-2">
+                  <div className="w-3/5 rounded-xl h-3 bg-slate-200"></div>
+                  <div className="flex-1 rounded-xl h-3 bg-slate-200"></div>
+                </div>
+                <div className="flex gap-2">
+                  <div className="w-1/5 rounded-xl h-3 bg-slate-200"></div>
+                  <div className="flex-1 rounded-xl h-3 bg-slate-200"></div>
+                </div>
+                <div className="w-48 rounded-xl h-5 bg-slate-200"></div>
+              </div>
+            )}
+          </div>
+        }
         <div ref={bottomRef} />
       </div>
-      <div className="flex justify-center items-center">
+      <div className="absolute bottom-0 right-0 left-0 m-auto w-full flex justify-center items-center px-4 py-3 z-40 bg-white overflow-hidden">
         <form
           action="submit"
           onSubmit={handleSendPrompt}
           onKeyDown={handleKeyPressDown}
-          className="flex w-full max-w-[900px] items-center gap-x-4"
+          className="flex w-full max-w-[900px] items-center gap-x-4 m-auto"
         >
-          <Textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Enter a prompt..."
-            className="resize-none w-full"
-          />
-          <Button disabled={prompt.length === 0}>Send</Button>
+          <div className="flex flex-col items-center justify-center w-full min-h-12 max-h-24 bg-slate-100 px-5 py-2 overflow-y-auto rounded-xl">
+            <div
+              ref={divRef}
+              contentEditable
+              className="w-full h-fit bg-transparent outline-none whitespace-pre-line"
+              role="textbox"
+              onInput={(e) => setPrompt(e.currentTarget.textContent || "")}
+              onFocus={() => setIsPrompting(true)}
+              onBlur={() => setIsPrompting(false)}
+              aria-multiline="true"
+            >
+          </div>
+          </div>
+          <Button disabled={prompt.length === 0} className="bg-blue-700 hover:bg-blue-500">
+            <LuSendHorizonal size={20}/>
+          </Button>
         </form>
       </div>
     </div>
