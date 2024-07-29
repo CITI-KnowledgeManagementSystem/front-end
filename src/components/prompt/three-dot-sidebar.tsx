@@ -2,15 +2,10 @@ import React, { useState } from "react";
 import { PiDotsThreeOutlineFill } from "react-icons/pi";
 import { FiDelete, FiArchive } from "react-icons/fi";
 import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@radix-ui/react-hover-card";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@radix-ui/react-hover-card";
 import { MdDriveFileRenameOutline } from "react-icons/md";
 import { Button } from "../ui/button";
-import {
-  AlertDialog,
+import { AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
@@ -22,7 +17,7 @@ import {
 } from "../ui/alert-dialog";
 import { Separator } from "../ui/separator";
 import { useRouter } from "next/navigation";
-import useStore from "@/lib/useStore";
+import { useStore } from "@/lib/useStore";
 import { usePathname } from "next/navigation";
 
 interface ChildProps {
@@ -52,31 +47,29 @@ const ThreeDotSidebar: React.FC<ChildProps> = ({ id, enableRename }) => {
   };
 
   const renameChatBox = (e: React.MouseEvent<HTMLElement>) => {
-    setIsOpen(!isOpen)
+    e.stopPropagation()
+    setIsOpen(!isOpen);
     enableRename();
   };
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <HoverCard openDelay={300}>
-          <HoverCardTrigger asChild>
+        <HoverCardTrigger asChild>
           <PopoverTrigger asChild>
             <Button
-              onClick={() => setIsOpen(!isOpen)}
+              onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen)}}
               variant={"ghost"}
-              className={`rounded-md hover:bg-slate-400 h-fit p-1 hover:bg-slate-200 ${
-                id === idOnPath ? "group-hover:block block" : "hidden"
-              }`}
-            >
+              className={`rounded-lg h-fit p-[3px] hover:bg-white hover:text-blue-700 border-none group-hover:block ${id === idOnPath || isOpen ? "block" : "hidden"}`}>
               <PiDotsThreeOutlineFill />
             </Button>
           </PopoverTrigger>
-          </HoverCardTrigger>
-          <HoverCardContent className="z-40 w-fit text-xs py-1 px-2 bg-slate-700 text-white rounded-md mt-1">
-            <p>More</p>
-          </HoverCardContent>
+        </HoverCardTrigger>
+        <HoverCardContent hideWhenDetached className="z-40 p-1 bg-white text-blue-700 w-fit border-none shadow shadow-blue-400 rounded-md mt-2">
+          <p className="text-xs">More</p>
+        </HoverCardContent>
       </HoverCard>
-      <PopoverContent className="w-32 p-0" align="end">
+      <PopoverContent hideWhenDetached className="w-32 p-0 text-blue-700 rounded-xl overflow-hidden" align="end">
         <Button
           onClick={renameChatBox}
           variant={"ghost"}
@@ -139,7 +132,7 @@ const DeleteAlert = ({ deleteFunction }: AlertProps) => {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel onClick={(e) => {e.stopPropagation(); setIsOpen(false)}}>Cancel</AlertDialogCancel>
           <AlertDialogAction className="bg-red-700" onClick={handleDelete}>
             Continue
           </AlertDialogAction>

@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/db";
+import { useAuth } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
+import { useSession } from "@clerk/nextjs";
 
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const question = formData.get("question");
-  const conversation_history = formData.get("history");
+  const conversation_history = formData.get("conversation_history");
   const hyde = formData.get("hyde");
   const reranking = formData.get("reranking");
-  const { userId } = auth();
+  const { userId, sessionId } = auth();
 
   const body = {
     user_id: userId,
@@ -15,16 +18,21 @@ export async function POST(request: NextRequest) {
     conversation_history: conversation_history,
     hyde: hyde,
     reranking: reranking,
-    collection_name: "private"
+    collection_name: "private",
   };
 
+  console.log(body);
+
   try {
+    const { getToken } = auth();
+    const token = await getToken();
     const response = await fetch(
-      process.env.LLM_SERVER_URL + "/llm/chat_with_llm",
+      process.env.NEXT_PUBLIC_LLM_SERVER_URL + "/llm/chat_with_llm",
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(body),
       }

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React  from "react";
 import { Button } from "../ui/button";
 import { llmModels } from "@/constants";
 import {
@@ -54,9 +54,8 @@ const ModelOptions = ({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline">
-          <IoSettingsOutline size={18} className="mr-2" />
-          Model Options
+        <Button className="h-fit px-4 py-2 rounded-xl border bg-white text-blue-700 hover:bg-white shadow-none hover:shadow-blue-200 hover:shadow">
+          Options
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -93,6 +92,7 @@ const ModelOptions = ({
                 id="airplane-mode"
                 checked={isHydeChecked}
                 onCheckedChange={handleHydeChange}
+                className="bg-blue-700"
               />
               <p>{isHydeChecked ? "ON" : "OFF"}</p>
             </div>
@@ -114,7 +114,7 @@ const ModelOptions = ({
               type="number"
               value={temperatures}
               onChange={(e) => setTemperature(Number(e.target.value))}
-              className="col-span-3"
+              className="col-span-3 focus:ring-blue-700"
               min="0"
               max="1"
               step="0.01"

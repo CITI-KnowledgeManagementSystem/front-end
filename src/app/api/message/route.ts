@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { request } from "http";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/db";
+import { auth } from "@clerk/nextjs/server";
 
 export async function GET(request: NextRequest) {
   return NextResponse.json({ message: "File uploaded successfully" });
@@ -15,7 +16,7 @@ export async function POST(request: NextRequest) {
   const response = formData.get("response");
   const responseTime = formData.get("responseTime");
 
-  if (!requestChat || !userId || !chatBoxId) {
+  if (!requestChat || !userId || !chatBoxId || !response) {
     return NextResponse.json(
       { message: "Please fill in all fields" },
       { status: 400 }
@@ -82,6 +83,9 @@ async function createRecord(
 }
 
 async function getRecordLLM(questions: string): Promise<unknown> {
+  const { getToken } = auth();
+  const token = await getToken();
+
   try {
     const response = await fetch(
       "http://140.118.101.189:5000/answer_questions",
@@ -89,6 +93,7 @@ async function getRecordLLM(questions: string): Promise<unknown> {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ questions: [questions] }),
       }
