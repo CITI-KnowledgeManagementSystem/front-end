@@ -120,11 +120,9 @@ const DocTable = () => {
         setError("An error has occured when fetching the data");
       }
       const newData = await res.json();
-
       setTableContents(newData.data.list);
       setTotalItems(newData.data.docCounts);
-      setIsLoading(false);
-    });
+    }).finally(() => setIsLoading(false));
   }, [paginationIndex, rowsPerPage, searchTerm, tags, userId]);
 
   useEffect(() => {
@@ -183,7 +181,7 @@ const DocTable = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {tableContents.map((item, i) => (
+            {tableContents.length !== 0 ? tableContents.map((item, i) => (
               <TableRow key={i}>
                 <TableCell className="flex-col">
                   <div className="flex font-medium items-center">
@@ -289,10 +287,11 @@ const DocTable = () => {
                   </div>
                 </TableCell>
               </TableRow>
-            ))}
-            {tableContents.length === 0 && (
+            ))
+            : 
+            (
               <TableRow>
-                <TableCell colSpan={5}>
+                <TableCell colSpan={6}>
                   <p className="text-muted-foreground text-sm italic flex justify-center">
                     No documents found
                   </p>

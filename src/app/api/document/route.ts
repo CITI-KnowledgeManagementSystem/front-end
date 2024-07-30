@@ -148,7 +148,7 @@ export async function POST(req: NextRequest) {
     // const token = await getToken();
 
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_LLM_SERVER_URL}/document/insert`,
+      `${process.env.LLM_SERVER_URL}/document/insert`,
       {
         method: "POST",
         headers: {
@@ -230,7 +230,7 @@ export async function DELETE(request: NextRequest) {
 
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_LLM_SERVER_URL}/document/delete?document_id=${id}&collection_name=private`,
+      `${process.env.LLM_SERVER_URL}/document/delete?document_id=${id}&collection_name=private`,
       {
         method: "DELETE",
         headers: {

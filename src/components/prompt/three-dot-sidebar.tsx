@@ -78,14 +78,14 @@ const ThreeDotSidebar: React.FC<ChildProps> = ({ id, enableRename }) => {
         >
           Rename <MdDriveFileRenameOutline />
         </Button>
-        <Button
+        {/* <Button
           onClick={() => setIsOpen(!isOpen)}
           variant={"ghost"}
           className="px-4 w-full rounded-none justify-between"
           size={"sm"}
         >
           Archive <FiArchive />
-        </Button>
+        </Button> */}
         <Separator />
         <DeleteAlert deleteFunction={deleteChatBox} />
       </PopoverContent>
