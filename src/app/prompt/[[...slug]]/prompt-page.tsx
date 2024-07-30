@@ -34,7 +34,7 @@ const PromptPage = ({ user, conversations }: Props) => {
   const [data, setData] = useState<MessageProps[]>(conversations);
   const [prompt, setPrompt] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>(
-    selected_model ? selected_model.toString() : "Mistral 7B"
+    selected_model ? selected_model.toString() : "Llama 3 8B - 4 bit quantization"
   );
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isPrompting, setIsPrompting] = useState<boolean>(false)

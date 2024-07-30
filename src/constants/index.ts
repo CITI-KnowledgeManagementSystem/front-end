@@ -33,10 +33,10 @@ export const dashboardMenu = [
 
 export const llmModels = [
     {
-        name: "Mistral 7B",
+        name: "Llama 3 8B - 4 bit quantization",
     },
     {
-        name: "Llama 2 70B",
+        name: "Llama 3 8B - 8 bit quantization",
     }
 ]
 
