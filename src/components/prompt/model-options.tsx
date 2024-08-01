@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { IoSettingsOutline } from "react-icons/io5";
 import {
   Select,
   SelectContent,

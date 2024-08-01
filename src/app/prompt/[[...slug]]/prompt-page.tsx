@@ -34,7 +34,7 @@ const PromptPage = ({ user, conversations }: Props) => {
   const [data, setData] = useState<MessageProps[]>(conversations);
   const [prompt, setPrompt] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>(
-    selected_model ? selected_model.toString() : "Mistral 7B"
+    selected_model ? selected_model.toString() : "Llama 3 8B - 4 bit quantization"
   );
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isPrompting, setIsPrompting] = useState<boolean>(false)
@@ -259,7 +259,7 @@ const PromptPage = ({ user, conversations }: Props) => {
   return (
     <div className={`flex flex-col w-full h-full p-4 relative`}>
       <SessionDialog />
-      <div className="flex w-full items-center gap-2">
+      <div className="flex w-full items-center gap-2 pb-4">
         {!isOpen && 
         <>
         <HoverCard openDelay={100} closeDelay={100}>
@@ -328,7 +328,7 @@ const PromptPage = ({ user, conversations }: Props) => {
               />
             ))}
             {isLoading && (
-              <div className="flex flex-col w-full text-sm justify-start animate-pulse gap-3">
+              <div className="flex flex-col w-full text-sm justify-start animate-pulse gap-3 mt-4">
                 <div className="flex items-center gap-2">
                   <div className="rounded-full h-7 w-7 bg-slate-200"></div>
                   <div className="w-24 rounded-xl h-7 bg-slate-200"></div>

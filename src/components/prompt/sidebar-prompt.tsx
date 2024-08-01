@@ -158,8 +158,8 @@ const SidebarPrompt = () => {
                   <ScrollArea className="flex-1 h-full my-3">
                   {sortedKeys.map((key) => {
                     return (
-                      <div className="w-full my-2 animate-fade-in" key={key}>
-                        <label className="text-blue-100 text-xs font-bold pl-2">
+                      <div className="w-full my-4 animate-fade-in" key={key}>
+                        <label className="text-blue-100 text-xs pl-2 font-medium">
                           {key}
                         </label>
                         {chatBox[key].map((item, i) => (
