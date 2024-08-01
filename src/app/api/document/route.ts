@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
   try {
     await connect();
 
-    const remotePath = `${process.env.NEXT_PUBLIC_QNAP_PRIVATE_STORAGE}/${userId}/${id}.${tag}`;
+    const remotePath = `${process.env.QNAP_PRIVATE_STORAGE}/${userId}/${id}.${tag}`;
     const localPath = path.join(process.cwd(), "storage", `${id}.${tag}`);
 
     await sftpClient.get(remotePath, localPath);
@@ -105,13 +105,13 @@ export async function POST(req: NextRequest) {
     await connect();
 
     const exists = await sftpClient.exists(
-      `${process.env.NEXT_PUBLIC_QNAP_PRIVATE_STORAGE}/${user_id}`
+      `${process.env.QNAP_PRIVATE_STORAGE}/${user_id}`
     );
 
     if (!exists) {
       try {
         await sftpClient.mkdir(
-          `${process.env.NEXT_PUBLIC_QNAP_PRIVATE_STORAGE}/${user_id}`,
+          `${process.env.QNAP_PRIVATE_STORAGE}/${user_id}`,
           true
         );
       } catch (err) {
@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
       await sftpClient
         .put(
           buffer,
-          `${process.env.NEXT_PUBLIC_QNAP_PRIVATE_STORAGE}/${user_id}/${docs_id}.${format}`
+          `${process.env.QNAP_PRIVATE_STORAGE}/${user_id}/${docs_id}.${format}`
         )
         .then(() => {
           console.log("File uploaded successfully");
@@ -238,7 +238,7 @@ export async function DELETE(request: NextRequest) {
           Authorization: `Bearer ${token}`,
         },
       }
-    );
+    );  
     if (!res.ok) {
       return NextResponse.json(
         { message: "Error deleting from LLM" },
@@ -256,7 +256,7 @@ export async function DELETE(request: NextRequest) {
   try {
     await connect();
     await sftpClient.delete(
-      `${process.env.NEXT_PUBLIC_QNAP_PRIVATE_STORAGE}/${userId}/${id}.${extension}`
+      `${process.env.QNAP_PRIVATE_STORAGE}/${userId}/${id}.${extension}`
     );
   } catch (error) {
     console.error("Error deleting file", error);
@@ -396,10 +396,10 @@ async function connect() {
 
   try {
     await sftpClient.connect({
-      host: process.env.NEXT_PUBLIC_QNAP_SFTP_URL,
-      port: process.env.NEXT_PUBLIC_QNAP_SFTP_PORT,
-      username: process.env.NEXT_PUBLIC_QNAP_USERNAME,
-      password: process.env.NEXT_PUBLIC_QNAP_PASSWORD,
+      host: process.env.QNAP_SFTP_URL,
+      port: process.env.QNAP_SFTP_PORT,
+      username: process.env.QNAP_USERNAME,
+      password: process.env.QNAP_PASSWORD,
     });
   } catch (error) {
     return NextResponse.json(
