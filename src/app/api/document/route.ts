@@ -238,7 +238,7 @@ export async function DELETE(request: NextRequest) {
           Authorization: `Bearer ${token}`,
         },
       }
-    );
+    );  
     if (!res.ok) {
       return NextResponse.json(
         { message: "Error deleting from LLM" },
