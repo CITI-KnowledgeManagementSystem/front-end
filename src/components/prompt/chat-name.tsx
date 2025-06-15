@@ -31,13 +31,10 @@ const ChatName = ({ id, name }: Props) => {
     formData.append("name", inputName);
 
     try {
-      await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_API}/chatbox`,
-        {
-          method: "PUT",
-          body: formData,
-        }
-      );
+      await fetch(`${process.env.NEXT_PUBLIC_SERVER_API}/chatbox`, {
+        method: "PUT",
+        body: formData,
+      });
       setChatName(inputName);
       setIsRenaming(false);
     } catch (error) {
@@ -52,7 +49,13 @@ const ChatName = ({ id, name }: Props) => {
   return (
     <>
       {!isRenaming ? (
-        <div onClick={navigateToChat} className={`my-1 px-3 py-[10px] text-sm rounded-xl cursor-pointer hover:bg-blue-500 flex justify-between items-center w-full relative group ${id === idOnPath && "bg-blue-500 hover:bg-blue-500"}`}>
+        <div
+          onClick={navigateToChat}
+          className={`my-1 px-3 py-[10px] text-sm rounded-xl cursor-pointer hover:bg-blue-600 flex justify-between items-center w-full relative group ${
+            id === idOnPath &&
+            "bg-blue-500 dark:bg-blue-700 hover:bg-blue-500 dark:hover:bg-blue-700"
+          }`}
+        >
           {chatName}
           <ThreeDotSidebar id={id} enableRename={() => setIsRenaming(true)} />
         </div>

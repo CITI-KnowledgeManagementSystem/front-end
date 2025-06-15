@@ -55,20 +55,20 @@ const UserProfile = () => {
         <div className="w-48">
           <Button
             onClick={() => router.push("/dashboard/my-documents")}
-            className="w-full justify-start text-blue-700"
+            className="w-full justify-start text-blue-700 dark:text-blue-300"
             variant={"ghost"}
             size={"sm"}
           >
-            <MdDashboard className="mr-3" size={16} />
+            <MdDashboard className="mr-3 text-blue-700 dark:text-blue-300" size={16} />
             Go to your dashboard
           </Button>
           <Button
             onClick={() => router.push("/dashboard/profile")}
-            className="w-full justify-start text-blue-700"
+            className="w-full justify-start text-blue-700 dark:text-blue-300"
             variant={"ghost"}
             size={"sm"}
           >
-            <FaUserEdit className="mr-3" size={16} />
+            <FaUserEdit className="mr-3 text-blue-700 dark:text-blue-300" size={16} />
             Profile Settings
           </Button>
           <Separator className="my-1" />

@@ -45,7 +45,7 @@ const ChatBox = ({
 }: Props) => {
   if (variant === "request") {
     return (
-      <div className="w-[60%] min-w-[400px] p-4 bg-slate-100 rounded-xl mb-4 ml-auto">
+      <div className="w-[60%] min-w-[400px] p-4 bg-slate-100 dark:bg-gray-800 rounded-xl mb-4 ml-auto">
         <div className="flex items-center gap-x-2">
           <Avatar className="w-6 h-6 rounded-full overflow-hidden">
             <AvatarImage
@@ -56,7 +56,7 @@ const ChatBox = ({
           </Avatar>
           <h2 className="text-sm font-medium">{user?.username}</h2>
         </div>
-        <p className="text-blue-800 mt-2 break-all" style={{ whiteSpace: "pre-line" }}>
+        <p className="mt-2 break-all text-blue-800 dark:text-gray-300" style={{ whiteSpace: "pre-line" }}>
           {message}
         </p>
       </div>
@@ -99,7 +99,7 @@ const ChatBox = ({
             );
           },
         }}
-        className={"p-2 mt-2 leading-7 text-blue-800 break-all"}
+        className="p-2 mt-2 leading-7 break-all text-blue-800 dark:text-white"
       >
         {message}
       </Markdown>
@@ -110,9 +110,9 @@ const ChatBox = ({
           className="mr-[5px] px-[5px] py-[5px] h-[35px]"
         >
           {liked ? (
-            <BiSolidLike className="text-blue-700 cursor-pointer" size={15} />
+            <BiSolidLike className="text-blue-700 dark:text-gray-300 cursor-pointer" size={15} />
           ) : (
-            <BiLike className="text-blue-700 cursor-pointer" size={15} />
+            <BiLike className="text-blue-700 dark:text-gray-300 cursor-pointer" size={15} />
           )}
         </Button>
         <Button
@@ -122,15 +122,15 @@ const ChatBox = ({
         >
           {disliked ? (
             <BiSolidDislike
-              className="text-blue-700 cursor-pointer"
+              className="text-blue-700 dark:text-gray-300 cursor-pointer"
               size={15}
             />
           ) : (
-            <BiDislike className="text-blue-700 cursor-pointer" size={15} />
+            <BiDislike className="text-blue-700 dark:text-gray-300 cursor-pointer" size={15} />
           )}
         </Button>
         <Select onValueChange={(value) => handleRating(value as any, id)}>
-          <SelectTrigger className="mx-[5px] w-[60px] h-[35px]">
+          <SelectTrigger className="mx-[5px] w-[60px] h-[35px] dark:text-gray-300">
             <SelectValue placeholder={rating} />
           </SelectTrigger>
           <SelectContent>
@@ -143,7 +143,7 @@ const ChatBox = ({
         </Select>
         <Button
           variant="ghost"
-          className="mx-[5px] h-[35px]"
+          className="mx-[5px] h-[35px] dark:text-gray-300"
           onClick={handleUpdateMisc}
         >
           Update

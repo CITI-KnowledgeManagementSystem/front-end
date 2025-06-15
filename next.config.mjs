@@ -30,7 +30,7 @@ const nextConfig = {
     ];
   },
   images: {
-    domains: ["img.clerk.com"],
+    domains: ["img.clerk.com", "via.placeholder.com"],
   },
 };
 

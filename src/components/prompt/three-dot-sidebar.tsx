@@ -5,15 +5,16 @@ import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@radix-ui/react-hover-card";
 import { MdDriveFileRenameOutline } from "react-icons/md";
 import { Button } from "../ui/button";
-import { AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle, 
+  AlertDialogTrigger 
 } from "../ui/alert-dialog";
 import { Separator } from "../ui/separator";
 import { useRouter } from "next/navigation";
@@ -36,7 +37,7 @@ const ThreeDotSidebar: React.FC<ChildProps> = ({ id, enableRename }) => {
   const deleteChatBox = async () => {
     fetch(`/api/chatbox?id=${id}`, { method: "DELETE" }).then((res) => {
       if (!res.ok) {
-        console.log("Error occured");
+        console.log("Error occurred");
         return;
       }
 
@@ -47,7 +48,7 @@ const ThreeDotSidebar: React.FC<ChildProps> = ({ id, enableRename }) => {
   };
 
   const renameChatBox = (e: React.MouseEvent<HTMLElement>) => {
-    e.stopPropagation()
+    e.stopPropagation();
     setIsOpen(!isOpen);
     enableRename();
   };
@@ -69,23 +70,15 @@ const ThreeDotSidebar: React.FC<ChildProps> = ({ id, enableRename }) => {
           <p className="text-xs">More</p>
         </HoverCardContent>
       </HoverCard>
-      <PopoverContent hideWhenDetached className="w-32 p-0 text-blue-700 rounded-xl overflow-hidden" align="end">
+      <PopoverContent hideWhenDetached className="w-32 p-0 text-blue-700 dark:text-blue-300 rounded-xl overflow-hidden" align="end">
         <Button
           onClick={renameChatBox}
           variant={"ghost"}
-          className="px-4 w-full rounded-none justify-between"
+          className="px-4 w-full rounded-none justify-between dark:text-blue-300"
           size={"sm"}
         >
-          Rename <MdDriveFileRenameOutline />
+          Rename <MdDriveFileRenameOutline className="dark:text-blue-300" />
         </Button>
-        {/* <Button
-          onClick={() => setIsOpen(!isOpen)}
-          variant={"ghost"}
-          className="px-4 w-full rounded-none justify-between"
-          size={"sm"}
-        >
-          Archive <FiArchive />
-        </Button> */}
         <Separator />
         <DeleteAlert deleteFunction={deleteChatBox} />
       </PopoverContent>
@@ -133,7 +126,10 @@ const DeleteAlert = ({ deleteFunction }: AlertProps) => {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel onClick={(e) => {e.stopPropagation(); setIsOpen(false)}}>Cancel</AlertDialogCancel>
-          <AlertDialogAction className="bg-red-700" onClick={handleDelete}>
+          <AlertDialogAction 
+            className="bg-red-700 dark:text-white text-white dark:hover:text-red-500 hover:text-red-500"
+            onClick={handleDelete}
+          >
             Continue
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -141,5 +137,6 @@ const DeleteAlert = ({ deleteFunction }: AlertProps) => {
     </AlertDialog>
   );
 };
+
 
 export default ThreeDotSidebar;

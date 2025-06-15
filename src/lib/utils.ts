@@ -1,11 +1,6 @@
 import { MessageProps } from "@/types";
-import { auth } from "@clerk/nextjs/server";
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+export { cn } from "./cn";
 
 export function parseDate(date: string) {
   return new Date(date);
@@ -67,15 +62,16 @@ export const answerQuestions = async (
 };
 
 export const getChatMessages = async (id: string) => {
-  const { getToken } = auth();
-  const token = await getToken();
+  // TODO: Fix Clerk auth integration for server components
+  // const { getToken } = auth();
+  // const token = await getToken();
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_SERVER_API}/chatbox/` + id,
     {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        // Authorization: `Bearer ${token}`,
       },
     }
   );

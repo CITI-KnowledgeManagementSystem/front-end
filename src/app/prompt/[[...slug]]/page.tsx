@@ -8,7 +8,7 @@ import { getChatMessages } from "@/lib/utils";
 import { redirect } from "next/navigation";
 
 const Page = async ({ params }: { params: { slug: string } }) => {
-  const { userId, getToken } = auth();
+  const { userId, getToken } = await auth();
   const token = await getToken();
 
   if (userId && !(await checkIfUserExistInDb(userId))) {
