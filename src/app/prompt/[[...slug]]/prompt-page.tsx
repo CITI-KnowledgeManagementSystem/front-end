@@ -1,8 +1,8 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import { BsPencilSquare, BsLayoutSidebarInset } from "react-icons/bs";
-import { HoverCard, HoverCardContent, HoverCardTrigger} from "../../../components/ui/hover-card"
-import { LuSendHorizonal } from "react-icons/lu";
+import { BsPencilSquare, BsLayoutSidebarInset, BsMoon, BsSun } from "react-icons/bs"; // Importing the icons
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../../components/ui/hover-card";
+import { LuSendHorizontal } from "react-icons/lu";
 import { Button } from "@/components/ui/button";
 import { MessageProps } from "@/types";
 import Link from "next/link";
@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { useStore, useSidebarState } from "@/lib/useStore";
 import SessionDialog from "@/components/session_dialog";
 import { toast } from "sonner";
+import { useTheme } from "@/hooks/useTheme";
 
 type Props = {
   user: UserProfileProps | null;
@@ -24,7 +25,7 @@ type Props = {
 const PromptPage = ({ user, conversations }: Props) => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isOpen, setIsOpen } = useSidebarState()
+  const { isOpen, setIsOpen } = useSidebarState();
   const hyde = searchParams.get("hyde");
   const reranking = searchParams.get("reranking");
   const selected_model = searchParams.get("selected_model");
@@ -37,7 +38,7 @@ const PromptPage = ({ user, conversations }: Props) => {
     selected_model ? selected_model.toString() : "Llama 3 8B - 4 bit quantization"
   );
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isPrompting, setIsPrompting] = useState<boolean>(false)
+  const [isPrompting, setIsPrompting] = useState<boolean>(false);
   const [isHydeChecked, setIsHydeChecked] = useState<boolean>(
     hyde === null ? true : hyde === "true" ? true : false
   );
@@ -58,12 +59,14 @@ const PromptPage = ({ user, conversations }: Props) => {
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
   };
+  
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     if (divRef.current && !isPrompting && prompt === "") {
       divRef.current.innerText = "Start a conversation with LKC";
       divRef.current.classList.add("text-slate-400");
-      divRef.current.blur()
+      divRef.current.blur();
     } else if (divRef.current && divRef.current.innerText === "Start a conversation with LKC") {
       divRef.current.innerText = "";
       divRef.current.classList.remove("text-slate-400");
@@ -96,11 +99,7 @@ const PromptPage = ({ user, conversations }: Props) => {
         if (!slug) {
           await handleNewChatBox(prompt, res.message);
         } else {
-          const id = (await handleSaveResponse(
-            prompt,
-            res.message,
-            slug[0]
-          )) as number;
+          const id = (await handleSaveResponse(prompt, res.message, slug[0])) as number;
           res.message_id = id.toString();
         }
         setData([...newData, res]);
@@ -189,13 +188,7 @@ const PromptPage = ({ user, conversations }: Props) => {
 
   const handleGetResponse = async () => {
     const start = performance.now();
-    const res = await answerQuestions(
-      prompt,
-      data,
-      isHydeChecked,
-      isRerankingChecked,
-      selectedModel
-    );
+    const res = await answerQuestions(prompt, data, isHydeChecked, isRerankingChecked, selectedModel);
     const end = performance.now();
     setResponseTime(Math.round(end - start));
 
@@ -260,46 +253,58 @@ const PromptPage = ({ user, conversations }: Props) => {
     <div className={`flex flex-col w-full h-full p-4 relative`}>
       <SessionDialog />
       <div className="flex w-full items-center gap-2 pb-4">
-        {!isOpen && 
-        <>
-        <HoverCard openDelay={100} closeDelay={100}>
-          <HoverCardTrigger asChild>
-            <Button onClick={() => setIsOpen(!isOpen)} className="h-fit p-2 rounded-xl border bg-white text-blue-700 hover:bg-white shadow-none hover:shadow-blue-200 hover:shadow">
-              <BsLayoutSidebarInset size={20}/>
-            </Button>
-          </HoverCardTrigger>
-          <HoverCardContent className="p-1 bg-blue-700 text-white w-fit border-none shadow shadow-blue-700" align="start" >
-            <p className="text-xs">Open sidebar</p>
-          </HoverCardContent>
-        </HoverCard>
-        <HoverCard openDelay={100} closeDelay={100}>
-          <HoverCardTrigger asChild className="items-center justify-center">
-            <Link href={"/prompt"} className="flex">
-              <Button className="h-fit p-2 rounded-xl border bg-white text-blue-700 hover:bg-white shadow-none hover:shadow-blue-200 hover:shadow">
-                <BsPencilSquare size={20}/>
-              </Button>
-            </Link>
-          </HoverCardTrigger>
-          <HoverCardContent className="p-1 bg-blue-700 text-white w-fit border-none shadow shadow-blue-700" align="start">
-            <p className="text-xs">Create a new chat</p>
-          </HoverCardContent>
-        </HoverCard>
-        </>
-        }
-        <ModelOptions
-          selectedModel={selectedModel}
-          setSelectedModel={setSelectedModel}
-          isHydeChecked={isHydeChecked}
-          isRerankingChecked={isRerankingChecked}
-          setIsHydeChecked={setIsHydeChecked}
-          setIsRerankingChecked={setIsRerankingChecked}
-          temperatures={temperatures}
-          setTemperature={setTemperature}
-        />
-      </div>
+  {!isOpen && 
+  <>
+  <HoverCard openDelay={100} closeDelay={100}>
+    <HoverCardTrigger asChild>
+      <Button 
+        onClick={() => setIsOpen(!isOpen)} 
+        className="h-fit p-2 rounded-xl border bg-white text-blue-700 hover:bg-white shadow-none hover:shadow-blue-200 hover:shadow dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600">
+        <BsLayoutSidebarInset size={20}/>
+      </Button>
+    </HoverCardTrigger>
+    <HoverCardContent className="p-1 bg-blue-700 text-white w-fit border-none shadow shadow-blue-700 dark:bg-gray-800 dark:text-gray-300" align="start" >
+      <p className="text-xs">Open sidebar</p>
+    </HoverCardContent>
+  </HoverCard>
+  <HoverCard openDelay={100} closeDelay={100}>
+    <HoverCardTrigger asChild className="items-center justify-center">
+      <Link href={"/prompt"} className="flex">
+        <Button 
+          className="h-fit p-2 rounded-xl border bg-white text-blue-700 hover:bg-white shadow-none hover:shadow-blue-200 hover:shadow dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600">
+          <BsPencilSquare size={20}/>
+        </Button>
+      </Link>
+    </HoverCardTrigger>
+    <HoverCardContent className="p-1 bg-blue-700 text-white w-fit border-none shadow shadow-blue-700 dark:bg-gray-800 dark:text-gray-300" align="start">
+      <p className="text-xs">Create a new chat</p>
+    </HoverCardContent>
+  </HoverCard>
+  </>
+  }
+  <ModelOptions
+    selectedModel={selectedModel}
+    setSelectedModel={setSelectedModel}
+    isHydeChecked={isHydeChecked}
+    isRerankingChecked={isRerankingChecked}
+    setIsHydeChecked={setIsHydeChecked}
+    setIsRerankingChecked={setIsRerankingChecked}
+    temperatures={temperatures}
+    setTemperature={setTemperature}
+  />
+</div>
+      {/* Dark Mode Toggle Button */}
+      <button
+         onClick={toggleTheme}
+         className="fixed top-4 right-4 p-2 bg-gray-200 dark:bg-gray-700 rounded-full"
+         aria-label="Toggle Theme"
+       >
+ 
+         {theme === "light" ? <BsSun size={24} /> : <BsMoon size={24} />}
+      </button>
       <div className="w-full flex-1 overflow-y-auto pt-2 mb-[60px] px-7">
         {data.length === 0 ? (
-          <div className="flex flex-col justify-center m-auto h-full  max-w-[900px]">
+          <div className="flex flex-col justify-center m-auto h-full max-w-[900px]">
             <div className="bg-gradient-to-r from-blue-700 to-teal-300 bg-clip-text text-transparent animate-slide-in delay-300">
               <h1 className="md:text-6xl lg:text-7xl font-medium py-3">
                 Welcome, {user && user.username}
@@ -309,7 +314,7 @@ const PromptPage = ({ user, conversations }: Props) => {
               Ready to learn something new?
             </h1>
           </div>
-          ) :
+        ) : (
           <div className="flex flex-col m-auto max-w-[900px]">
             {data.map((item, i) => (
               <ChatBox
@@ -345,34 +350,36 @@ const PromptPage = ({ user, conversations }: Props) => {
               </div>
             )}
           </div>
-        }
+        )}
         <div ref={bottomRef} />
       </div>
-      <div className="absolute bottom-0 right-0 left-0 m-auto w-full flex justify-center items-center px-4 py-3 z-40 bg-white overflow-hidden">
-        <form
-          action="submit"
-          onSubmit={handleSendPrompt}
-          onKeyDown={handleKeyPressDown}
-          className="flex w-full max-w-[900px] items-center gap-x-4 m-auto"
-        >
-          <div className="flex flex-col items-center justify-center w-full min-h-12 max-h-24 bg-slate-100 px-5 py-2 overflow-y-auto rounded-xl">
-            <div
-              ref={divRef}
-              contentEditable
-              className="w-full h-fit bg-transparent outline-none whitespace-pre-line"
-              role="textbox"
-              onInput={(e) => setPrompt(e.currentTarget.textContent || "")}
-              onFocus={() => setIsPrompting(true)}
-              onBlur={() => setIsPrompting(false)}
-              aria-multiline="true"
-            >
-          </div>
-          </div>
-          <Button disabled={prompt.length === 0} className="bg-blue-700 hover:bg-blue-500">
-            <LuSendHorizonal size={20}/>
-          </Button>
-        </form>
-      </div>
+      <div className="absolute bottom-0 right-0 left-0 m-auto w-full flex justify-center items-center px-4 py-3 z-40 bg-white dark:bg-[hsl(var(--background))] overflow-hidden">
+  <form
+    action="submit"
+    onSubmit={handleSendPrompt}
+    onKeyDown={handleKeyPressDown}
+    className="flex w-full max-w-[900px] items-center gap-x-4 m-auto"
+  >
+    <div
+      className="flex flex-col items-center justify-center w-full min-h-12 max-h-24 bg-slate-100 dark:bg-gray-700 px-5 py-2 overflow-y-auto rounded-xl"
+    >
+      <div
+        ref={divRef}
+        contentEditable
+        className="w-full h-fit bg-transparent outline-none whitespace-pre-line text-gray-800 dark:text-white"
+        role="textbox"
+        onInput={(e) => setPrompt(e.currentTarget.textContent || "")}
+        onFocus={() => setIsPrompting(true)}
+        onBlur={() => setIsPrompting(false)}
+        aria-multiline="true"
+      ></div>
+    </div>
+    <Button disabled={prompt.length === 0} className="bg-blue-700 hover:bg-blue-500">
+      <LuSendHorizontal size={20} />
+    </Button>
+  </form>
+</div>
+
     </div>
   );
 };

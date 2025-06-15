@@ -53,11 +53,11 @@ const ModelOptions = ({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="h-fit px-4 py-2 rounded-xl border bg-white text-blue-700 hover:bg-white shadow-none hover:shadow-blue-200 hover:shadow">
+        <Button className="h-fit px-4 py-2 rounded-xl border bg-white text-blue-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-600 shadow-none hover:shadow-blue-200 dark:hover:shadow-gray-500">
           Options
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="dark:bg-gray-800 dark:text-gray-300">
         <DialogHeader>
           <DialogTitle className="flex justify-center">
             Model Options
@@ -68,12 +68,12 @@ const ModelOptions = ({
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label className="text-right">Model Name</Label>
+            <Label className="text-right dark:text-gray-300">Model Name</Label>
             <Select onValueChange={(val) => setSelectedModel(val)}>
-              <SelectTrigger className="col-span-3">
+              <SelectTrigger className="col-span-3 dark:bg-gray-700 dark:text-gray-300">
                 <SelectValue placeholder={selectedModel} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="dark:bg-gray-700 dark:text-gray-300">
                 <SelectGroup>
                   {llmModels.map((item) => (
                     <SelectItem value={item.name} key={item.name}>
@@ -85,7 +85,7 @@ const ModelOptions = ({
             </Select>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label className="text-right">Hyde</Label>
+            <Label className="text-right dark:text-gray-300">Hyde</Label>
             <div className="flex items-center space-x-2">
               <Switch
                 id="airplane-mode"
@@ -97,7 +97,7 @@ const ModelOptions = ({
             </div>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label className="text-right">Reranking</Label>
+            <Label className="text-right dark:text-gray-300">Reranking</Label>
             <div className="flex items-center space-x-2">
               <Switch
                 id="airplane-mode"
@@ -108,12 +108,12 @@ const ModelOptions = ({
             </div>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label className="text-right">Temperature</Label>
+            <Label className="text-right dark:text-gray-300">Temperature</Label>
             <Input
               type="number"
               value={temperatures}
               onChange={(e) => setTemperature(Number(e.target.value))}
-              className="col-span-3 focus:ring-blue-700"
+              className="col-span-3 focus:ring-blue-700 dark:bg-gray-700 dark:text-gray-300 dark:focus:ring-gray-500"
               min="0"
               max="1"
               step="0.01"
