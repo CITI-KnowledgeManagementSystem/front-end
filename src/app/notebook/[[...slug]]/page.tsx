@@ -7,11 +7,12 @@ import { redirect } from "next/navigation";
 
 const Page = async ({ params }: { params: { slug?: string[] } }) => {
   const { userId, getToken } = await auth();
-  const token = await getToken();
 
   if (!userId) {
     return redirect("/sign-in");
   }
+
+  const token = await getToken();
 
   // Register user if they don't exist in database
   if (userId && !(await checkIfUserExistInDb(userId))) {

@@ -207,24 +207,34 @@ export class NotebookAPI {
     return this.handleResponse(response)
   }
 
-  // LLM Server Integration (if needed directly)
+  // LLM Server Integration
   static async queryLLM(
     questions: string[],
     userId?: string,
-    documents?: string[]
+    documents?: string[],
+    hyde: boolean = true,
+    reranking: boolean = true,
+    selectedModel: string = "Llama 3 8B - 4 bit quantization"
   ): Promise<any> {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API}/answer_questions`, {
+    // Use the internal API route instead of directly calling external LLM server
+    const formData = new FormData()
+    formData.append("question", questions[0]) // Take first question for now
+    formData.append("conversation_history", JSON.stringify([]))
+    formData.append("hyde", hyde.toString())
+    formData.append("reranking", reranking.toString())
+    formData.append("selected_model", selectedModel)
+
+    const response = await fetch('/api/prompt', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        questions,
-        user_id: userId,
-        documents,
-      }),
+      body: formData,
     })
-    return this.handleResponse(response)
+    
+    if (!response.ok) {
+      throw new Error(`LLM query failed: ${response.statusText}`)
+    }
+    
+    const data = await response.json()
+    return data.message
   }
 }
 

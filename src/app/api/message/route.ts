@@ -83,7 +83,7 @@ async function createRecord(
 }
 
 async function getRecordLLM(questions: string): Promise<unknown> {
-  const { getToken } = auth();
+  const { getToken } = await auth();
   const token = await getToken();
 
   try {

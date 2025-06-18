@@ -5,7 +5,7 @@ import { auth, currentUser } from '@clerk/nextjs/server'
 import { checkIfUserExistInDb, registerUser } from "@/lib/user-queries"
 
 const DashboardPage = async () => {
-  const { userId } = auth()
+  const { userId } = await auth()
 
   // check if the userId is already in the database, if not, create
   if (userId && !await checkIfUserExistInDb(userId)) {

@@ -8,6 +8,8 @@ import { Send, Bookmark, Copy, ThumbsUp, ThumbsDown, MessageCircle } from 'lucid
 import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@clerk/nextjs'
 import { useNotebookAPI, Document, Message } from '@/lib/api'
+import { getChatMessages } from '@/lib/utils'
+import { MessageProps } from '@/types'
 import { toast } from 'sonner'
 
 interface ChatPanelProps {
@@ -27,11 +29,22 @@ export function ChatPanel({
   const { api } = useNotebookAPI()
   
   const [messages, setMessages] = useState<Message[]>([])
+  const [conversationHistory, setConversationHistory] = useState<MessageProps[]>([])
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [chatBoxName, setChatBoxName] = useState('')
 
   const selectedSourcesData = sources.filter(s => selectedSources.includes(s.id))
+
+  // Load conversation history when chatbox changes
+  useEffect(() => {
+    if (currentChatBoxId) {
+      loadConversationHistory()
+    } else {
+      setMessages([])
+      setConversationHistory([])
+    }
+  }, [currentChatBoxId])
 
   // Create a new chat box if none exists and we have selected sources
   useEffect(() => {
@@ -39,6 +52,40 @@ export function ChatPanel({
       createNewChatBox()
     }
   }, [selectedSources, userId, currentChatBoxId])
+
+  const loadConversationHistory = async () => {
+    if (!currentChatBoxId) return
+    
+    try {
+      const history = await getChatMessages(currentChatBoxId)
+      setConversationHistory(history)
+      
+      // Convert MessageProps to Message format for display
+      const displayMessages: Message[] = []
+      for (let i = 0; i < history.length; i += 2) {
+        const request = history[i]
+        const response = history[i + 1]
+        
+        if (request && response) {
+                     displayMessages.push({
+             id: parseInt(response.message_id || Date.now().toString()),
+             request: request.message,
+             response: response.message,
+             userId: userId || '',
+             chatBoxId: parseInt(currentChatBoxId),
+             createdAt: new Date(),
+             liked: response.liked,
+             disliked: response.disliked,
+             rating: response.rating,
+           })
+        }
+      }
+      setMessages(displayMessages)
+    } catch (error) {
+      console.error('Failed to load conversation history:', error)
+      toast.error('Failed to load conversation history')
+    }
+  }
 
   const createNewChatBox = async () => {
     if (!userId) return
@@ -80,7 +127,7 @@ export function ChatPanel({
     setMessages(prev => [...prev, tempUserMessage])
 
     try {
-      // Query the LLM server with the selected documents
+      // Query the LLM server with the selected documents and conversation history
       const selectedDocIds = selectedSources.map(id => 
         sources.find(s => s.id === id)?.id
       ).filter((id): id is string => id !== undefined)
@@ -88,12 +135,13 @@ export function ChatPanel({
       const llmResponse = await api.queryLLM(
         [userMessage],
         userId,
-        selectedDocIds
+        selectedDocIds,
+        true, // hyde
+        true, // reranking
+        "Llama 3 8B - 4 bit quantization" // selectedModel
       )
 
-      const aiResponseText = Array.isArray(llmResponse) && llmResponse.length > 0
-        ? llmResponse[0]
-        : typeof llmResponse === 'string' 
+      const aiResponseText = typeof llmResponse === 'string' 
         ? llmResponse
         : 'I apologize, but I encountered an error processing your request. Please try again.'
 
@@ -122,6 +170,13 @@ export function ChatPanel({
         ...prev.filter(m => m.id !== tempUserMessage.id),
         completeMessage
       ])
+
+             // Update conversation history for next query
+       setConversationHistory(prev => [
+         ...prev,
+         { type: "request", message: userMessage },
+         { type: "response", message: aiResponseText, message_id: messageResponse.id.toString() }
+       ])
 
     } catch (error) {
       console.error('Failed to send message:', error)
@@ -188,6 +243,11 @@ export function ChatPanel({
             {chatBoxName && (
               <Badge variant="secondary" className="text-xs">
                 {chatBoxName}
+              </Badge>
+            )}
+            {currentChatBoxId && (
+              <Badge variant="outline" className="text-xs">
+                Session #{currentChatBoxId}
               </Badge>
             )}
           </div>
