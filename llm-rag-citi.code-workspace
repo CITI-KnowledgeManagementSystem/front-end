@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../../PycharmProjects/llm-rag-citi"
+		},
+		{
+			"path": "."
+		},
+		{
+			"path": "../admin-interface"
+		}
+	],
+	"settings": {}
+}
