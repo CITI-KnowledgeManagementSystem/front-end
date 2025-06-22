@@ -1,5 +1,6 @@
 import { MessageProps } from "@/types";
 
+// Re-export cn from the separate file to maintain compatibility
 export { cn } from "./cn";
 
 export function parseDate(date: string) {
@@ -48,7 +49,7 @@ export const answerQuestions = async (
 
   console.log(history);
 
-  const response = await fetch(process.env.NEXT_PUBLIC_SERVER_API + "/prompt", {
+  const response = await fetch("/api/prompt", {
     method: "POST",
     body: formData,
   });
@@ -62,19 +63,12 @@ export const answerQuestions = async (
 };
 
 export const getChatMessages = async (id: string) => {
-  // TODO: Fix Clerk auth integration for server components
-  // const { getToken } = auth();
-  // const token = await getToken();
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_SERVER_API}/chatbox/` + id,
-    {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        // Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+  const response = await fetch(`/api/chatbox/${id}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
   const data = await response.json();
   return sortMessageProps(data);
 };
@@ -126,7 +120,7 @@ export const updateDocumentMetadata = async (
         isPublic !== null ? isPublic.toString() : "private"
       );
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API}/document`, {
+  const res = await fetch("/api/document", {
     method: "PUT",
     body: formData,
   });
@@ -191,7 +185,7 @@ export const deleteDocument = async (
   userId: string | undefined
 ) => {
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_SERVER_API}/document/?id=${documentId}&user_id=${userId}`,
+    `/api/document?id=${documentId}&user_id=${userId}`,
     {
       method: "DELETE",
     }

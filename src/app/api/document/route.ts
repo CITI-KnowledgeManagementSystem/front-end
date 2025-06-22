@@ -7,7 +7,7 @@ import Client from "ssh2-sftp-client";
 import { auth } from "@clerk/nextjs/server";
 
 export async function GET(request: NextRequest) {
-  const { userId } = auth();
+  const { userId } = await auth();
   const id = request.nextUrl.searchParams.get("id");
   const tag = request.nextUrl.searchParams.get("tag");
 
@@ -225,7 +225,7 @@ export async function DELETE(request: NextRequest) {
 
   await deleteRecord(Number(id));
 
-  const { getToken } = auth();
+  const { getToken } = await auth();
   const token = await getToken();
 
   try {

@@ -128,7 +128,7 @@ const ProfilePage = () => {
         <p>This is the profile page</p>
       </div>
       <div className="p-10 border-2 rounded-lg flex-1">
-        <Image priority src={user?.img_url || "https://via.placeholder.com/200"} alt="" width={200} height={200} className="rounded-full h-auto w-auto overflow-hidden object-cover mx-auto" />
+        <Image priority src={user?.img_url || ""} alt="" width={200} height={200} className="rounded-full h-auto w-auto overflow-hidden object-cover mx-auto" />
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}

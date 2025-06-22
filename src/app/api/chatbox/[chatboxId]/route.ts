@@ -1,61 +1,68 @@
-import { PrismaClient } from "@prisma/client";
-import { NextResponse, NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/db";
 
-export async function GET(request: NextRequest, context: any) {
-  const { params } = context;
-  const chatboxId = params.chatboxId;
-  const record = (await getRecord(Number(chatboxId))) as [];
-
-  if (record === null) {
-    return NextResponse.json(
-      {
-        message: "Record not found",
-      },
-      {
-        status: 404,
-      }
-    );
-  }
-
-  return NextResponse.json(
-    {
-      message: "Record fetched successfully",
-      data: record,
-    },
-    {
-      status: 200,
-    }
-  );
-}
-
-async function getRecord(id: number) {
-  if (globalThis.prisma == null) {
-    globalThis.prisma = new PrismaClient();
-  }
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { chatboxId: string } }
+) {
   try {
-    const record = await prisma.message.findMany({
-      select: {
-        request: true,
-        response: true,
-        chatBoxId: true,
-        userId: true,
-        createdAt: true,
-        rating: true,
-        liked: true,
-        disliked: true,
-        id: true,
-      },
+    const { userId } = await auth();
+    
+    if (!userId) {
+      return NextResponse.json(
+        { message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const chatboxId = params.chatboxId;
+
+    if (!chatboxId) {
+      return NextResponse.json(
+        { message: "Please provide a chatbox ID" },
+        { status: 400 }
+      );
+    }
+
+    // Verify the chatbox belongs to the user
+    const chatbox = await prisma.chatBox.findFirst({
       where: {
-        chatBoxId: id,
+        id: parseInt(chatboxId),
+        userId: userId,
         deletedAt: null,
+      },
+    });
+
+    if (!chatbox) {
+      return NextResponse.json(
+        { message: "Chatbox not found" },
+        { status: 404 }
+      );
+    }
+
+    // Fetch messages for this chatbox
+    const messages = await prisma.message.findMany({
+      where: {
+        chatBoxId: parseInt(chatboxId),
       },
       orderBy: {
         createdAt: "asc",
       },
     });
-    return record;
-  } catch (err) {
-    console.error("Error fetching record", err);
+
+    return NextResponse.json(
+      {
+        message: "Messages fetched successfully",
+        data: messages,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error fetching chatbox messages:", error);
+    return NextResponse.json(
+      { message: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

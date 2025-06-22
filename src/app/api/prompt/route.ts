@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
   const conversation_history = formData.get("conversation_history");
   const hyde = formData.get("hyde");
   const reranking = formData.get("reranking");
-  const { userId } = auth();
+  const { userId } = await auth();
 
   const body = {
     user_id: userId,
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
   console.log(body);
 
   try {
-    const { getToken } = auth();
+    const { getToken } = await auth();
     const token = await getToken();
     console.log(process.env.LLM_SERVER_URL + "/llm/chat_with_llm");
     const response = await fetch(
