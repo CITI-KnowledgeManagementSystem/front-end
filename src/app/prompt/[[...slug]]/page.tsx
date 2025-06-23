@@ -27,12 +27,15 @@ const Page = async ({ params }: { params: { slug: string } }) => {
 
   var conversations: MessageProps[] = [];
 
+  
+  const tempSlug = await params;
+
   if (
-    params.slug &&
-    params.slug.length !== 0 &&
-    params.slug[0].indexOf(".") === -1
+    tempSlug.slug &&
+    tempSlug.slug.length !== 0 &&
+    tempSlug.slug[0].indexOf(".") === -1
   ) {
-    conversations = await getChatMessages(params.slug[0]);
+    conversations = (await getChatMessages(tempSlug.slug[0], token)) || [];
     if (conversations.length === 0) {
       return redirect("/prompt");
     }

@@ -27,7 +27,7 @@ export function ChatPanel({
 }: ChatPanelProps) {
   const { userId } = useAuth()
   const { api } = useNotebookAPI()
-  
+  const { getToken } = useAuth();
   const [messages, setMessages] = useState<Message[]>([])
   const [conversationHistory, setConversationHistory] = useState<MessageProps[]>([])
   const [inputValue, setInputValue] = useState('')
@@ -57,9 +57,22 @@ export function ChatPanel({
     if (!currentChatBoxId) return
     
     try {
-      const history = await getChatMessages(currentChatBoxId)
-      setConversationHistory(history)
+    const token = await getToken(); //TOKEN AUTHENTICATION
+
+    if (!token) {
+      // Handle kasus kalo user tiba-tiba logout
+      toast.error("Your session has expired. Please log in again.");
+      return;
+    }
+
+    
+      const history = await getChatMessages(currentChatBoxId, token)
+      setConversationHistory(history ?? [])
       
+      if(!history || history.length === 0) {
+        setMessages([])
+        return
+      }
       // Convert MessageProps to Message format for display
       const displayMessages: Message[] = []
       for (let i = 0; i < history.length; i += 2) {
@@ -86,6 +99,7 @@ export function ChatPanel({
       toast.error('Failed to load conversation history')
     }
   }
+
 
   const createNewChatBox = async () => {
     if (!userId) return

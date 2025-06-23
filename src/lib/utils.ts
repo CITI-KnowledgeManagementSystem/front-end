@@ -35,7 +35,7 @@ export function generateDashboardDocumentsLink(
 
 export const answerQuestions = async (
   prompt: string,
-  history: MessageProps[],
+  history: MessageProps[] | null | undefined,
   hyde: boolean,
   reranking: boolean,
   selectedModel: string
@@ -53,24 +53,49 @@ export const answerQuestions = async (
     method: "POST",
     body: formData,
   });
-  if (!response.ok) return null;
-
+  if (!response.ok){
+    console.log("Error fetching record123");
+    return null;}
+    else {
+      console.log("Response successfully");
+  }
   const data = await response.json();
 
   const { message } = data;
-
+  if (!message) {
+    console.error("No message returned from the API");
+    // return null;
+  }
   return message;
 };
 
-export const getChatMessages = async (id: string) => {
-  const response = await fetch(`/api/chatbox/${id}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-  const data = await response.json();
-  return sortMessageProps(data);
+export const getChatMessages = async (id: string, token: string | null) => {
+  if (!token) {
+    // Fail fast kalo gak ada token
+    throw new Error("Authentication token is missing.");
+  }
+
+  try {
+    const response = await fetch(`${process.env.HOST_URL}/api/chatbox/${id}`, {
+      credentials: 'include',
+      method: "GET",
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status} ${response.statusText}`);
+    }
+    else console.log("Chat messages fetched successfully");
+
+    const data = await response.json();
+    return sortMessageProps(data);
+  } catch (error) {
+    console.error("Failed to fetch chat messages:", error);
+    return null; // or handle error as needed
+  }
 };
 
 function sortMessageProps(response: any) {
