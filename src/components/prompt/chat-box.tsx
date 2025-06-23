@@ -99,7 +99,7 @@ const ChatBox = ({
             );
           },
         }}
-        className="p-2 mt-2 leading-7 break-all text-blue-800 dark:text-white"
+        // className="p-2 mt-2 leading-7 break-all text-blue-800 dark:text-white"
       >
         {message}
       </Markdown>

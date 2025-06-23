@@ -193,7 +193,9 @@ const PromptPage = ({ user, conversations }: Props) => {
     setResponseTime(Math.round(end - start));
 
     // If the response is null, return null
-    if (!res) return null;
+    if (!res)
+      { console.log("No response received from the LLM API");
+        return null;}
 
     const newResponse: MessageProps = {
       type: "response",

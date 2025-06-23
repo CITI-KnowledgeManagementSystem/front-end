@@ -15,8 +15,9 @@ export async function GET(
         { status: 401 }
       );
     }
-
-    const chatboxId = params.chatboxId;
+    const awaitedparams = await params
+    const chatboxId = awaitedparams.chatboxId;
+    console.log("Fetching messages for chatbox ID:", chatboxId);
 
     if (!chatboxId) {
       return NextResponse.json(
@@ -59,7 +60,7 @@ export async function GET(
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error fetching chatbox messages:", error);
+    console.error("Error fetching chatbox messages :", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
