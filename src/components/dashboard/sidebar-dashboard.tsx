@@ -24,7 +24,7 @@ const SidebarDashboard = () => {
       <nav
         className={`${
           isOpen ? "w-72 p-3" : "w-0 pt-3 pb-3 px-0"
-        } h-full bg-white border relative transition-all duration-300 ease-in-out flex flex-col justify-between items-center`}
+        } h-full bg-white dark:bg-gray-600 border relative transition-all duration-300 ease-in-out flex flex-col justify-between items-center`}
       >
         <HoverCard openDelay={10}>
           <div className={`flex w-full`}>
@@ -52,11 +52,11 @@ const SidebarDashboard = () => {
             </HoverCardTrigger>
           </div>
           <HoverCardContent
-            className="p-1 bg-slate-700 text-white w-fit border-none"
+            className="p-1 bg-slate-600 text-white w-fit border-none"
             align="start"
           >
             {isOpen ? (
-              <p className="text-xs">Collapse sidebar</p>
+              <p className="text-xs">Close sidebar</p>
             ) : (
               <p className="text-xs">Expand sidebar</p>
             )}
@@ -80,7 +80,7 @@ const SidebarDashboard = () => {
                       item.url.split("/")[1] ===
                         (pathname ? pathname.split("/")[2] : "") &&
                       isOpen &&
-                      "bg-blue-700 text-white hover:bg-blue-700 hover:text-white"
+                      "bg-blue-700 text-white hover:bg-blue-700 dark:bg-gray-700 dark:hover:bg-gray-700 hover:text-white"
                     }`}
                   >
                     {item.icon && isOpen && (

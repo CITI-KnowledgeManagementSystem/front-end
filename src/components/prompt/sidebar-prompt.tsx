@@ -89,7 +89,7 @@ const SidebarPrompt = () => {
   return (
     <aside className="h-screen">
       <nav
-        className={`h-full ${isOpen ? "w-64" : "w-0"} flex flex-col bg-blue-700 dark:bg-blue-900 text-white transition-all duration-300 ease-in-out ${!isOpen ? "bg-transparent" : ""}`}
+        className={`h-full ${isOpen ? "w-64" : "w-0"} flex flex-col bg-blue-700 dark:bg-gray-700 text-white transition-all duration-300 ease-in-out ${!isOpen ? "bg-transparent" : ""}`}
       >
         {isOpen && (
           <div className="flex flex-col p-4 justify-between h-full">

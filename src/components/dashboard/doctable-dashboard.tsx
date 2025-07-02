@@ -146,7 +146,7 @@ const DocTable = () => {
       <FilterTable />
       <div className="max-h-[calc(100%-136px)] relative overflow-auto border rounded-md">
         <Table>
-          <TableHeader className="sticky w-full top-0 bg-white z-40">
+          <TableHeader className="sticky w-full top-0 bg-background dark:bg-card z-40">
             <TableRow className="text-xs">
               <TableHead className="flex items-center">
                 <Checkbox
@@ -263,7 +263,7 @@ const DocTable = () => {
                   ) : (
                     <Badge
                       variant={"outline"}
-                      className="border-red-200 bg-red-100 font-medium"
+                      className="border-red-200 bg-red-200 font-medium"
                     >
                       Not Shared
                     </Badge>
