@@ -47,8 +47,8 @@ export const answerQuestions = async (
   formData.append("reranking", reranking.toString());
   formData.append("selected_model", selectedModel);
 
-  console.log(history);
-
+  // console.log(history);
+  console.log("Sending request to the API with prompt:", prompt);
   const response = await fetch("/api/prompt", {
     method: "POST",
     body: formData,
@@ -57,11 +57,14 @@ export const answerQuestions = async (
     console.log("Error fetching record123");
     return null;}
     else {
-      console.log("Response successfully");
+      // console.log("Response:", response);
+      console.log("Response successfully1214213123131312x312x31231x3123");
+      
   }
   const data = await response.json();
 
   const { message } = data;
+  console.log("Received message:", message);
   if (!message) {
     console.error("No message returned from the API");
     // return null;
@@ -89,8 +92,9 @@ export const getChatMessages = async (id: string, token: string | null) => {
       throw new Error(`Error: ${response.status} ${response.statusText}`);
     }
     else console.log("Chat messages fetched successfully");
-
+    //  console.log("----------------------INI DARI UTILS GETCHATMESSAGES ----------------------");
     const data = await response.json();
+    // console.log("Data:", data);
     return sortMessageProps(data);
   } catch (error) {
     console.error("Failed to fetch chat messages:", error);
@@ -118,6 +122,7 @@ function sortMessageProps(response: any) {
       liked: data[i].liked,
       disliked: data[i].disliked,
       rating: data[i].rating,
+      sourceDocs: data[i].sourceDocs
     });
   }
   return messages;
@@ -130,7 +135,7 @@ export const updateDocumentMetadata = async (
   isPublic: Boolean,
   change: Boolean
 ) => {
-  console.log(documentId, title, topic, isPublic, change);
+  // console.log(documentId, title, topic, isPublic, change);
   const formData = new FormData();
   formData.append("id", documentId);
   formData.append("title", title);

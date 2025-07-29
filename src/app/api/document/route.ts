@@ -160,6 +160,7 @@ export async function POST(req: NextRequest) {
           collection_name: "private",
           document_id: `${docs_id}`,
           tag: format,
+          original_filename: filename,
         }),
       }
     );

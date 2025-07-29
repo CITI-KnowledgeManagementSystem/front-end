@@ -15,10 +15,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
+import { DocumentProps } from "@/types"; 
 interface Props {
   variant: string;
   message: string;
+  sourceDocs?: DocumentProps[]; // Assuming sourceDocs is an array of DocumentProps
   user: UserProfileProps | null;
   liked?: boolean;
   disliked?: boolean;
@@ -33,6 +34,7 @@ interface Props {
 const ChatBox = ({
   variant,
   message,
+  sourceDocs,
   user,
   liked,
   disliked,
@@ -103,6 +105,28 @@ const ChatBox = ({
       >
         {message}
       </Markdown>
+
+          {sourceDocs && sourceDocs.length > 0 && (
+      <div className="mt-3 pt-3 border-t border-slate-200 dark:border-gray-700">
+        <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">
+          Documents Source:
+        </h4>
+        <div className="flex flex-wrap gap-2">
+          {sourceDocs.map((doc) => (
+            <div 
+              key={doc.id} 
+              className="text-xs bg-slate-100 dark:bg-gray-700 text-slate-700 dark:text-gray-300 px-2 py-1 rounded-full"
+              title={`Topic: ${doc.topic || 'N/A'}`}
+            >
+              {doc.title}
+              <br />
+              {doc.original_name}
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
       <div className="mb-5 flex ">
         <Button
           variant="ghost"
@@ -147,6 +171,13 @@ const ChatBox = ({
           onClick={handleUpdateMisc}
         >
           Update
+        </Button>
+        <Button
+          variant="ghost"
+          className="mx-[5px] h-[35px] dark:text-gray-300"
+          onClick={() => alert("awkoawkowakowakowakoawk")}
+        >
+          Evaluate
         </Button>
       </div>
     </div>
