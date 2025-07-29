@@ -16,11 +16,11 @@ export interface Document {
   id: string
   title: string
   topic: string
-  filename: string
-  file_size: number
-  isPublic: boolean
-  createdAt: Date
-  updatedAt: Date
+  original_name: string
+  file_size_formatted: string
+  public: boolean
+  createdAt: string
+  tag: string
 }
 
 export interface Message {
@@ -54,6 +54,30 @@ export interface CreateMessageData {
   chatBoxId: string
   response: string
   responseTime?: number
+}
+
+export interface GeneratePodcastData {
+  question: string
+  user_id: string
+  speaker_voices?: {
+    HOST_A?: any
+    HOST_B?: any
+  }
+}
+
+export interface PodcastResponse {
+  question: string
+  script: string
+  segments: Array<{
+    speaker: string
+    text: string
+    audio_path: string
+    segment_index: number
+  }>
+  final_audio_path: string
+  user_id: string
+  sources: any[]
+  segment_count: number
 }
 
 // API Functions
@@ -159,14 +183,14 @@ export class NotebookAPI {
     page?: number
     n?: number
     userId?: string
-  }): Promise<{ message: string; data: Document[]; total: number }> {
+  }): Promise<{ message: string; data: { list: Document[]; docCounts: number } }> {
     const searchParams = new URLSearchParams()
     
     if (params?.searchTerm) searchParams.append('searchTerm', params.searchTerm)
     if (params?.tag) params.tag.forEach(t => searchParams.append('tag', t))
     if (params?.page) searchParams.append('page', params.page.toString())
     if (params?.n) searchParams.append('n', params.n.toString())
-    if (params?.userId) searchParams.append('userId', params.userId)
+    if (params?.userId) searchParams.append('id', params.userId)
 
     const response = await fetch(`/api/documents?${searchParams.toString()}`)
     return this.handleResponse(response)
@@ -235,6 +259,27 @@ export class NotebookAPI {
     
     const data = await response.json()
     return data.message
+  }
+
+  // TTS/Podcast API
+  static async generateConversationalPodcast(data: GeneratePodcastData): Promise<PodcastResponse> {
+    const response = await fetch('/api/tts/podcast/conversational', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+    const result = await this.handleResponse(response)
+    return result.payload
+  }
+
+  static async downloadAudio(filename: string): Promise<Blob> {
+    const response = await fetch(`/api/tts/download?filename=${filename}`)
+    if (!response.ok) {
+      throw new Error(`Failed to download audio: ${response.statusText}`)
+    }
+    return response.blob()
   }
 }
 

@@ -69,6 +69,8 @@ const SidebarPrompt = () => {
   const setFunction = useStore((state) => state.setFunction);
 
   const getChatBox = async () => {
+    console.log("Fetching chatbox data...");
+    console.log("User ID:", userId);
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_SERVER_API}/chatbox?user_id=${userId?.toString()}`
     );

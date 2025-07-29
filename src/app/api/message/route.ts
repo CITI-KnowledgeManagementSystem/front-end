@@ -14,7 +14,10 @@ export async function POST(request: NextRequest) {
   const userId = formData.get("userId");
   const chatBoxId = formData.get("chatBoxId");
   const response = formData.get("response");
+  const retrievedDocString = formData.get("retrievedDocIds");
   const responseTime = formData.get("responseTime");
+
+  const retrievedDocs = retrievedDocString ? JSON.parse(retrievedDocString as string) : [];
 
   if (!requestChat || !userId || !chatBoxId || !response) {
     return NextResponse.json(
@@ -29,7 +32,8 @@ export async function POST(request: NextRequest) {
     response as string,
     userId.toString(),
     Number(chatBoxId),
-    Number(responseTime)
+    Number(responseTime),
+    retrievedDocs
   );
 
   return NextResponse.json(
@@ -59,7 +63,8 @@ async function createRecord(
   response: string,
   userId: string,
   chatBoxId: number,
-  responseTime: number
+  responseTime: number,
+  retrievedDocs: any
 ) {
   if (globalThis.prisma == null) {
     globalThis.prisma = new PrismaClient();
@@ -74,6 +79,7 @@ async function createRecord(
         chatBoxId,
         createdAt: new Date(),
         response_time: responseTime,
+        retrieved_docs: retrievedDocs.length > 0 ? retrievedDocs : null,
       },
     });
     return message.id;

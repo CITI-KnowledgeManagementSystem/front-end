@@ -69,6 +69,11 @@ model Message {
   disliked      Boolean?
   liked         Boolean?
   response_time Int?
+  faithfulness  Float?
+  answer_relevancy Float?
+  context_precision Float?
+  context_relevance Float?
+  retrieved_docs Json?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime? @updatedAt
   deletedAt     DateTime?
