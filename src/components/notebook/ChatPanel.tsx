@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -11,6 +11,9 @@ import { useNotebookAPI, Document, Message } from '@/lib/api'
 import { getChatMessages } from '@/lib/utils'
 import { MessageProps } from '@/types'
 import { toast } from 'sonner'
+import { Transformer } from 'markmap-lib';
+import * as markmap from "markmap-view";
+const { Markmap } = markmap;
 
 interface ChatPanelProps {
   sources: Document[]
@@ -33,7 +36,8 @@ export function ChatPanel({
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [chatBoxName, setChatBoxName] = useState('')
-
+  const [error, setError] = useState(null);
+  const [mindMapData, setMindMapData] = useState('');
   const selectedSourcesData = sources.filter(s => selectedSources.includes(s.id))
 
   // Load conversation history when chatbox changes
@@ -121,6 +125,8 @@ export function ChatPanel({
     }
   }
 
+  
+
   const handleSendMessage = async () => {
     if (!inputValue.trim() || !userId || !currentChatBoxId) return
 
@@ -155,8 +161,10 @@ export function ChatPanel({
         "Llama 3 8B - 4 bit quantization" // selectedModel
       )
 
-      const aiResponseText = typeof llmResponse === 'string' 
-        ? llmResponse
+      console.log("LLM Response:", llmResponse)
+
+      const aiResponseText = typeof llmResponse.answer === 'string' 
+        ? llmResponse.answer
         : 'I apologize, but I encountered an error processing your request. Please try again.'
 
       // Save the message to the database
@@ -202,6 +210,47 @@ export function ChatPanel({
       setIsLoading(false)
     }
   }
+
+  const handleMindMap = async () => {
+    // Kalo lagi loading, jangan jalanin fungsi lagi
+    if (isLoading) return;
+
+    setIsLoading(true); // Mulai loading
+    setMindMapData(''); // Bersihin data mind map lama
+
+    try {
+      // Kirim request ke server
+      const response = await fetch(`${process.env.LLM_SERVER_URL}/document/mind_map`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // Kirim data 'selectedSources' dalam body request
+        body: JSON.stringify({ sources: selectedSources }),
+      });
+
+      // Kalo respons dari server nggak oke (misal: error 404 atau 500)
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      // Ambil data JSON dari response
+      const data = await response.json();
+
+      console.log('Data mind map:', data);
+      
+      // Simpan data mind map ke state
+      setMindMapData(data);
+      // console.log('Sukses dapet data mind map:', data);
+
+    } catch (err) {
+      // Kalo ada error di try block (masalah network atau dari throw di atas)
+      console.error('Gagal fetch mind map:', err);
+    } finally {
+      // Apapun yang terjadi (sukses atau gagal), loading selesai
+      setIsLoading(false);
+    }
+  };
 
   const handleMessageFeedback = async (messageId: number, type: 'like' | 'dislike') => {
     try {
@@ -385,6 +434,35 @@ export function ChatPanel({
               </p>
             </div>
           )}
+
+          <div className="flex justify-start mb-3">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50 hover:border-blue-600 transition"
+              onClick={handleMindMap}
+              disabled={isLoading || selectedSources.length === 0}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <circle cx="12" cy="12" r="3" strokeWidth="2" />
+                <circle cx="5" cy="7" r="2" strokeWidth="2" />
+                <circle cx="19" cy="7" r="2" strokeWidth="2" />
+                <circle cx="5" cy="17" r="2" strokeWidth="2" />
+                <circle cx="19" cy="17" r="2" strokeWidth="2" />
+                <line x1="7" y1="7" x2="11" y2="11" strokeWidth="2" />
+                <line x1="17" y1="7" x2="13" y2="11" strokeWidth="2" />
+                <line x1="7" y1="17" x2="11" y2="13" strokeWidth="2" />
+                <line x1="17" y1="17" x2="13" y2="13" strokeWidth="2" />
+              </svg>
+              Mindmap
+            </Button>
+          </div>
           
           <div className="relative">
             <Textarea
