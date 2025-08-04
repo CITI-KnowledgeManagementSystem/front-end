@@ -117,14 +117,14 @@ export function SourcesPanel({
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col dark:bg-gray-700 dark:border-gray-600 bg-white">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-600">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Sources</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-200 dark:hover:text-white">Sources</h2>
           <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-gray-600 dark:hover:bg-gray-500">
                 <Plus className="w-4 h-4 mr-1" />
                 Add
               </Button>
@@ -181,7 +181,7 @@ export function SourcesPanel({
           </Dialog>
         </div>
         
-        <div className="flex items-center justify-between text-sm text-gray-600">
+        <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-200 dark:hover:text-white">
           <span>Select all sources</span>
           <Checkbox 
             checked={selectedSources.length === sources.length && sources.length > 0}
@@ -201,8 +201,8 @@ export function SourcesPanel({
           ) : sources.length === 0 ? (
             <div className="text-center py-8">
               <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">No documents uploaded yet</p>
-              <p className="text-sm text-gray-500">Upload your first document to get started</p>
+              <p className="text-gray-600 dark:text-gray-200 dark:hover:text-white">No documents uploaded yet</p>
+              <p className="text-sm text-gray-500 dark:text-gray-200 dark:hover:text-white">Upload your first document to get started</p>
             </div>
           ) : (
             sources.map((source) => (
@@ -268,7 +268,7 @@ export function SourcesPanel({
       </ScrollArea>
 
       {/* Upload Area */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-gray-200 dark:border-gray-600">
         <div
           className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
             dragOver 
@@ -280,7 +280,7 @@ export function SourcesPanel({
           onDrop={handleDrop}
         >
           <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-          <p className="text-sm text-gray-600 mb-2">
+          <p className="text-sm text-gray-600 mb-2 dark:text-gray-200 dark:hover:text-white">
             Drag and drop files here, or click to browse
           </p>
           <Button 
@@ -290,7 +290,7 @@ export function SourcesPanel({
           >
             Choose files
           </Button>
-          <p className="text-xs text-gray-500 mt-2">
+          <p className="text-xs text-gray-500 mt-2 dark:text-gray-200 dark:hover:text-white">
             Supports PDF, DOC, TXT, and more
           </p>
         </div>
