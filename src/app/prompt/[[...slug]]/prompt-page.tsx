@@ -17,6 +17,10 @@ import SessionDialog from "@/components/session_dialog";
 import { toast } from "sonner";
 import { useTheme } from "@/hooks/useTheme";
 
+// import { DocumentProps } from "@/types";
+import SourceDetailModal from "@/components/prompt/source-detail-modal";
+import EvalResultModal from "@/components/prompt/eval-result-modal";
+
 type Props = {
   user: UserProfileProps | null;
   conversations: MessageProps[];
@@ -91,52 +95,67 @@ const PromptPage = ({ user, conversations }: Props) => {
     setData(newData);
     setIsLoading(true);
     setEnableScroll(true);
-
-    handleGetResponse().then(async (res) => {
-      if (!res) {
-        toast.error("Error fetching the data");
-      } else {
-       const newResponseForUI = { type: "response", message: res.message, retrieved_doc_ids: res.retrieved_doc_ids, sourceDocs: [] };
-      let responseMessageId = null;
-      if (!slug) {
-        await handleNewChatBox(prompt, res.message, res.retrieved_doc_ids);
-      } else {
-        const id = (await handleSaveResponse(prompt, res.message, res.retrieved_doc_ids, slug[0])) as number;
-        responseMessageId = id ? id.toString() : null;
-        newResponseForUI.message = res.message;
-      }
-      setData([...newData, newResponseForUI]);
+    const currentPrompt = prompt
+    setPrompt("");
+    if (divRef.current) {
+      divRef.current.innerText = "";
     }
-    setIsLoading(false);
-    scrollDown();
-    if (res!.retrieved_doc_ids && res!.retrieved_doc_ids.length > 0) {
-      // Bikin URL buat fetch dokumen
-      const params = new URLSearchParams();
-      res!.retrieved_doc_ids.forEach(id => params.append('ids', id));
+  
+    // TAMBAHKAN BLOK INI
+  try {
+    // Langkah 1: Ambil jawaban dari LLM (via Next.js -> Python)
+    const res = await handleGetResponse();
+    if (!res) {
+      throw new Error("Gak dapet balasan dari server.");
+    }
 
-      // Fetch nama dokumennya
-      const docResponse = await fetch(`/api/retrievedocs?${params.toString()}`);
+    // Langkah 2: Simpen ke DB buat dapet ID asli
+    // Kita asumsikan handleSaveResponse/handleNewChatBox balikin ID
+    let responseMessageId: string | null = null;
+    if (!slug) {
+      // Lo mungkin perlu ngemodif handleNewChatBox biar balikin ID juga
+      const id = await handleNewChatBox(currentPrompt, res.message, res.retrieved_docs);
+      // responseMessageId = id ? id.toString() : null;
+    } else {
+      const id = await handleSaveResponse(currentPrompt, res.message, res.retrieved_docs, slug[0]);
+      responseMessageId = id ? id.toString() : null;
+    }
+    
+    // Langkah 3: Update Tampilan Pertama (Jawaban Teks)
+    const newResponseForUI: MessageProps = {
+      type: "response",
+      message: res.message,
+      message_id: responseMessageId ?? undefined, // <-- Pake ID asli dari DB, null diganti undefined
+      retrieved_docs: res.retrieved_docs,
+      sourceDocs: [], // "Ransel" masih kosong
+    };
+    setData(currentData => [...currentData, newResponseForUI]);
+
+    // Langkah 4: Ambil Detail Dokumen
+    if (responseMessageId) {
+      const docResponse = await fetch(`/api/retrievedocs/${responseMessageId}`);
       if (docResponse.ok) {
         const docs = await docResponse.json();
-
-        // Setelah dapet, UPDATE lagi state 'data'
-        // Cari pesan yang tadi, terus isi 'ransel'-nya
-        setData(currentData => {
-          // Find the last response message (the one we just added)
-          const lastIndex = currentData.slice().reverse().findIndex(msg => msg.type === "response");
-          if (lastIndex === -1) return currentData;
-          const realIndex = currentData.length - 1 - lastIndex;
-          return currentData.map((msg, idx) =>
-            idx === realIndex ? { ...msg, sourceDocs: docs } : msg
-          );
-        });
-        
+        console.log("Retrieved Docs:", docs);
+        // Langkah 5: Update Tampilan Kedua (Sumber Dokumen)
+        setData(currentData =>
+          currentData.map(msg =>
+            msg.message_id === responseMessageId ? { ...msg, sourceDocs: docs } : msg
+          )
+        );
       }
     }
 
-  });
+  } catch (error: any) {
+    console.error("Error di handleSendPrompt:", error);
+    toast.error(error.message || "Terjadi kesalahan");
+  } finally {
+    // Ini blok "bersih-bersih" yang PASTI jalan, mau error atau enggak
+    setIsLoading(false);
+    scrollDown();
     setPrompt("");
     setIsPrompting(false);
+  }
   };
 
   const handleRating = (value: number, i: number) => {
@@ -228,7 +247,7 @@ const PromptPage = ({ user, conversations }: Props) => {
     const newResponse: MessageProps = {
       type: "response",
       message: res.answer,
-      retrieved_doc_ids: res.retrieved_doc_ids || [],
+      retrieved_docs: res.retrieved_docs || [],
     };
     console.log("Response received:", newResponse);
     return newResponse;
@@ -237,16 +256,16 @@ const PromptPage = ({ user, conversations }: Props) => {
   const handleSaveResponse = async (
     request: string,
     response: string,
-    retrievedDocIds: string[] | undefined,
+    retrievedDoc: string[] | undefined,
     chatBoxId: string
   ) => {
     const formData = new FormData();
     formData.append("request", request);
     formData.append("userId", user?.id || "");
     formData.append("response", response);
-    if (retrievedDocIds) {
-      // console.log("Retrieved Document IDs:", retrievedDocIds);
-      formData.append("retrievedDocIds", JSON.stringify(retrievedDocIds));
+    if (retrievedDoc) {
+      // console.log("Retrieved Document IDs:", retrievedDoc);
+      formData.append("retrievedDocIds", JSON.stringify(retrievedDoc));
     }
     formData.append("chatBoxId", chatBoxId);
     formData.append("responseTime", responseTime.toString());
@@ -284,6 +303,52 @@ const PromptPage = ({ user, conversations }: Props) => {
       );
     }
   };
+
+const handleEvaluate = async (messageToEvaluate: MessageProps) => {
+  console.log("Evaluating message:", messageToEvaluate);
+  if (!messageToEvaluate || !messageToEvaluate.message_id) {
+    toast.error("Message ID tidak ditemukan, tidak bisa evaluasi.");
+    return;
+  }
+
+  // 1. Kumpulin semua data yang dibutuhkan
+  // Cari pertanyaan yang relevan untuk jawaban ini
+  const requestMessage = data.find((msg, index) => data[index + 1] === messageToEvaluate);
+  
+  if (!requestMessage) {
+    toast.error("Pertanyaan asli tidak ditemukan.");
+    return;
+  }
+  
+  const payload = {
+    messageId: messageToEvaluate.message_id,
+    question: requestMessage.message,
+    answer: messageToEvaluate.message,
+    contexts: (messageToEvaluate.sourceDocs || []).map(doc => doc.content),
+  };
+
+  console.log("Mengirim data untuk evaluasi:", payload);
+
+  // 2. Tembak ke endpoint 'jembatan' di Next.js
+  const promise = fetch('/api/evaluate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  }).then(res => {
+    if (!res.ok) throw new Error("Gagal memulai evaluasi.");
+    return "Evaluasi berhasil dijadwalkan!";
+  });
+
+  // 3. Tampilkan notifikasi ke user
+  toast.promise(promise, {
+    loading: "Memulai evaluasi...",
+    success: (msg) => msg,
+    error: (err) => err.toString(),
+  });
+};
+
+const [selectedDoc, setSelectedDoc] = useState<DocumentProps | null>(null);
+const [selectedScores, setSelectedScores] = useState<MessageProps | null>(null);
 
   return (
     <div className={`flex flex-col w-full h-full p-4 relative`}>
@@ -367,6 +432,9 @@ const PromptPage = ({ user, conversations }: Props) => {
                 handleDislike={() => handleDislike(i)}
                 handleRating={(value) => handleRating(value, i)}
                 handleUpdateMisc={() => handleUpdateMisc(i)}
+                handleEvaluate={() => handleEvaluate(item)}
+                onSourceClick={(doc) => setSelectedDoc(doc)}
+                onShowScores={() => setSelectedScores(item)}
               />
             ))}
             {isLoading && (
@@ -402,7 +470,7 @@ const PromptPage = ({ user, conversations }: Props) => {
     >
       <div
         ref={divRef}
-        contentEditable
+        contentEditable={!isLoading}
         className="w-full h-fit bg-transparent outline-none whitespace-pre-line text-gray-800 dark:text-white"
         role="textbox"
         onInput={(e) => setPrompt(e.currentTarget.textContent || "")}
@@ -411,12 +479,21 @@ const PromptPage = ({ user, conversations }: Props) => {
         aria-multiline="true"
       ></div>
     </div>
-    <Button disabled={prompt.length === 0} className="bg-blue-700 hover:bg-blue-500">
+    <Button disabled={prompt.length === 0 || isLoading} className="bg-blue-700 hover:bg-blue-500">
       <LuSendHorizontal size={20} />
     </Button>
   </form>
 </div>
-
+ <SourceDetailModal 
+        doc={selectedDoc} 
+        isOpen={!!selectedDoc} 
+        onClose={() => setSelectedDoc(null)} 
+      />
+      <EvalResultModal 
+        scores={selectedScores} 
+        isOpen={!!selectedScores} 
+        onClose={() => setSelectedScores(null)} 
+      />
     </div>
   );
 };

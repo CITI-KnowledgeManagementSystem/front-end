@@ -20,6 +20,8 @@ interface Props {
   variant: string;
   message: string;
   sourceDocs?: DocumentProps[]; // Assuming sourceDocs is an array of DocumentProps
+  onSourceClick: (doc: DocumentProps) => void;
+  onShowScores: () => void;
   user: UserProfileProps | null;
   liked?: boolean;
   disliked?: boolean;
@@ -28,7 +30,9 @@ interface Props {
   handleDislike: () => void;
   handleRating: (value: number, i: number) => void;
   handleUpdateMisc?: () => void;
+  handleEvaluate: () => void;
   id: number;
+  faithfulness?: number | null; // <-- Added property
 }
 
 const ChatBox = ({
@@ -44,6 +48,11 @@ const ChatBox = ({
   handleDislike,
   handleRating,
   handleUpdateMisc,
+  handleEvaluate,
+  onSourceClick,
+  faithfulness,
+  // answer_relevancy,
+  onShowScores,
 }: Props) => {
   if (variant === "request") {
     return (
@@ -64,6 +73,8 @@ const ChatBox = ({
       </div>
     );
   }
+
+  const hasScores = faithfulness !== null && faithfulness !== undefined;
 
   return (
     <div className="w-full my-1">
@@ -113,15 +124,14 @@ const ChatBox = ({
         </h4>
         <div className="flex flex-wrap gap-2">
           {sourceDocs.map((doc) => (
-            <div 
-              key={doc.id} 
-              className="text-xs bg-slate-100 dark:bg-gray-700 text-slate-700 dark:text-gray-300 px-2 py-1 rounded-full"
-              title={`Topic: ${doc.topic || 'N/A'}`}
+            <button 
+              key={doc.document_id}
+              onClick={() => onSourceClick(doc)} // <-- Panggil fungsi dari props
+              className="text-xs bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-slate-700 dark:text-gray-300 px-2.5 py-1 rounded-full text-left"
+              title={doc.document_name}
             >
-              {doc.title}
-              <br />
-              {doc.original_name}
-            </div>
+              {doc.document_name}
+            </button>
           ))}
         </div>
       </div>
@@ -175,10 +185,22 @@ const ChatBox = ({
         <Button
           variant="ghost"
           className="mx-[5px] h-[35px] dark:text-gray-300"
-          onClick={() => alert("awkoawkowakowakowakoawk")}
+          onClick={handleEvaluate}
+          disabled={!sourceDocs || sourceDocs.length === 0} 
+    title={(!sourceDocs || sourceDocs.length === 0) ? "Tidak ada sumber untuk dievaluasi" : "Evaluasi jawaban"}
         >
           Evaluate
         </Button>
+
+        {hasScores && (
+          <Button
+            variant="outline"
+            className="mx-[5px] h-[35px] dark:text-gray-300"
+            onClick={onShowScores}
+          >
+            Eval Results
+          </Button>
+        )}
       </div>
     </div>
   );

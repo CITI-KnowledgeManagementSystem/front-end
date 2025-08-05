@@ -54,34 +54,41 @@ export async function GET(
       },
     });
 
-     const docIdsAsStrings = messages
-      .map(msg => msg.retrieved_docs) // Ambil array retrieved_docs dari tiap pesan
-      .filter(Array.isArray)          // Pastiin itu array
-      .flat() as string[];            // Gabungin semua array jadi satu
+    const allDocIds = messages
+  .map(msg => msg.retrieved_docs) // Ambil array retrieved_docs dari tiap pesan
+  .filter(Array.isArray)          // Pastiin itu array
+  .flatMap(docs => docs.map(doc => doc.document_id)) // Ambil `document_id` dari tiap objek
+  .filter(Boolean) as string[];   // Buang yg null/undefined
 
-    // Ubah dari string ke angka dan ambil yang unik
-    const uniqueDocIds = [...new Set(docIdsAsStrings.map(id => parseInt(id)))];
-    
-    // 3. Panggil 'penerjemah' buat dapet detailnya
-    const docDetails = await getDocumentsByIds(uniqueDocIds);
-    const docsMap = new Map(docDetails.map(doc => [doc.id, doc]));
+// Ubah dari string ke angka dan ambil yang unik
+const uniqueDocIds = [...new Set(allDocIds.map(id => parseInt(id)))];
 
-    // 4. 'Suntik' detailnya balik ke data chat
-    const enrichedMessages = messages.map(msg => {
-      // Cek apakah pesan ini punya retrieved_docs
+// 2. Panggil 'penerjemah' buat dapet detailnya
+const docDetails = await getDocumentsByIds(uniqueDocIds);
+const docsMap = new Map(docDetails.map(doc => [doc.id, doc]));
+
+// 3. "Suntik" detailnya balik ke data chat
+const enrichedMessages = messages.map(msg => {
+      // Cek kalo retrieved_docs ada dan merupakan array
       if (msg.retrieved_docs && Array.isArray(msg.retrieved_docs)) {
-        const uniqueIdsForThisMessage = [...new Set(msg.retrieved_docs as string[])];
-        return {
-          ...msg,
-          // Bikin properti baru 'sourceDocs' yang isinya objek dokumen lengkap
-          sourceDocs: uniqueIdsForThisMessage
-            .map(id => docsMap.get(parseInt(id)))
-            .filter(Boolean) as DocumentProps[]
-        };
+        
+        const seen = new Map();
+        // Lakukan de-duplikasi berdasarkan `document_id`
+        (msg.retrieved_docs as any[]).forEach(doc => {
+          if (doc && doc.document_id) {
+            seen.set(doc.document_id, doc);
+          }
+        });
+        const uniqueDocs = Array.from(seen.values());
+        
+        // Balikin pesan dengan properti `sourceDocs` yang udah unik
+        return { ...msg, sourceDocs: uniqueDocs };
       }
-      return msg;
-    });
 
+      // Kalo gak ada, balikin pesan apa adanya dengan sourceDocs kosong
+      return { ...msg, sourceDocs: [] };
+    });
+  // console.log("Enriched messages with document details:", enrichedMessages);
     return NextResponse.json(
       {
         message: "Messages fetched successfully",

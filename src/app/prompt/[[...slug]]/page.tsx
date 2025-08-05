@@ -40,8 +40,7 @@ const Page = async ({ params }: { params: { slug: string } }) => {
       return redirect("/prompt");
     }
   }
-  //  console.log("----------------------INI DARI PAGE TSX ----------------------");
-  // console.log("Conversations:", conversations);
+
   return <PromptPage user={user} conversations={conversations} />;
 };
 
