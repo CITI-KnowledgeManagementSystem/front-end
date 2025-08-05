@@ -243,11 +243,11 @@ export function ChatPanel({
   }
 
   return (
-    <div className="h-full flex flex-col bg-white">
+    <div className="h-full flex flex-col bg-white dark:bg-gray-700">
       {/* Chat Header */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-600">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Chat</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-200 dark:hover:text-white">Chat</h2>
           <div className="flex items-center gap-2">
             {selectedSources.length > 0 && (
               <Badge variant="outline" className="text-xs">
@@ -274,10 +274,10 @@ export function ChatPanel({
           {messages.length === 0 && !isLoading && (
             <div className="text-center py-12">
               <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <h3 className="text-lg font-medium text-gray-900 mb-2 dark:text-gray-200 dark:hover:text-white">
                 Ready to chat with your documents
               </h3>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-200 dark:hover:text-white">
                 {selectedSources.length > 0 
                   ? `Ask questions about your ${selectedSources.length} selected document${selectedSources.length > 1 ? 's' : ''}`
                   : 'Select documents from the sidebar to start chatting'
@@ -376,7 +376,7 @@ export function ChatPanel({
       </ScrollArea>
 
       {/* Input Area */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-gray-200 dark:border-gray-600">
         <div className="max-w-4xl mx-auto">
           {selectedSources.length === 0 && (
             <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -396,14 +396,14 @@ export function ChatPanel({
                   ? "Ask questions about your selected sources..." 
                   : "Select sources to start chatting..."
               }
-              className="min-h-[60px] pr-12 resize-none"
+              className="min-h-[60px] pr-12 resize-none dark:text-gray-200 dark:hover:text-white"
               disabled={selectedSources.length === 0 || isLoading}
             />
             <Button
               onClick={handleSendMessage}
               disabled={!inputValue.trim() || selectedSources.length === 0 || isLoading}
               size="sm"
-              className="absolute right-2 bottom-2 h-8 w-8 p-0"
+              className="absolute right-2 bottom-2 h-8 w-8 p-0 dark:text-gray-200 dark:hover:text-white"
             >
               <Send className="w-4 h-4" />
             </Button>
