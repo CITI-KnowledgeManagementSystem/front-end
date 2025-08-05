@@ -225,9 +225,9 @@ export function SourcesPanel({
                       <div className="flex items-center gap-2 mb-1">
                         <FileText className="w-4 h-4 text-red-500 flex-shrink-0" />
                         <Badge variant="secondary" className="text-xs">
-                          {getFileExtension(source.filename).toUpperCase()}
+                          {getFileExtension(source.original_name).toUpperCase()}
                         </Badge>
-                        {source.isPublic && (
+                        {source.public && (
                           <Badge variant="outline" className="text-xs">
                             Public
                           </Badge>
@@ -240,7 +240,7 @@ export function SourcesPanel({
                         Topic: {source.topic}
                       </p>
                       <div className="flex items-center gap-2 text-xs text-gray-500">
-                        <span>{formatFileSize(source.file_size)}</span>
+                        <span>{source.file_size_formatted}</span>
                         <span>•</span>
                         <span>{new Date(source.createdAt).toLocaleDateString()}</span>
                       </div>

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/db";
+import { getDocumentsByIds } from "@/lib/document-queries";
+import { DocumentProps } from "@/types";
 
 export async function GET(
   request: NextRequest,
@@ -52,10 +54,38 @@ export async function GET(
       },
     });
 
+     const docIdsAsStrings = messages
+      .map(msg => msg.retrieved_docs) // Ambil array retrieved_docs dari tiap pesan
+      .filter(Array.isArray)          // Pastiin itu array
+      .flat() as string[];            // Gabungin semua array jadi satu
+
+    // Ubah dari string ke angka dan ambil yang unik
+    const uniqueDocIds = [...new Set(docIdsAsStrings.map(id => parseInt(id)))];
+    
+    // 3. Panggil 'penerjemah' buat dapet detailnya
+    const docDetails = await getDocumentsByIds(uniqueDocIds);
+    const docsMap = new Map(docDetails.map(doc => [doc.id, doc]));
+
+    // 4. 'Suntik' detailnya balik ke data chat
+    const enrichedMessages = messages.map(msg => {
+      // Cek apakah pesan ini punya retrieved_docs
+      if (msg.retrieved_docs && Array.isArray(msg.retrieved_docs)) {
+        const uniqueIdsForThisMessage = [...new Set(msg.retrieved_docs as string[])];
+        return {
+          ...msg,
+          // Bikin properti baru 'sourceDocs' yang isinya objek dokumen lengkap
+          sourceDocs: uniqueIdsForThisMessage
+            .map(id => docsMap.get(parseInt(id)))
+            .filter(Boolean) as DocumentProps[]
+        };
+      }
+      return msg;
+    });
+
     return NextResponse.json(
       {
         message: "Messages fetched successfully",
-        data: messages,
+        data: enrichedMessages,
       },
       { status: 200 }
     );

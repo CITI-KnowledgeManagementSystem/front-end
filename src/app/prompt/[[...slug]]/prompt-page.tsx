@@ -4,7 +4,7 @@ import { BsPencilSquare, BsLayoutSidebarInset, BsMoon, BsSun } from "react-icons
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../../components/ui/hover-card";
 import { LuSendHorizontal } from "react-icons/lu";
 import { Button } from "@/components/ui/button";
-import { MessageProps } from "@/types";
+import { MessageProps, DocumentProps } from "@/types";
 import Link from "next/link";
 import ChatBox from "@/components/prompt/chat-box";
 import ModelOptions from "@/components/prompt/model-options";
@@ -96,17 +96,45 @@ const PromptPage = ({ user, conversations }: Props) => {
       if (!res) {
         toast.error("Error fetching the data");
       } else {
-        if (!slug) {
-          await handleNewChatBox(prompt, res.message);
-        } else {
-          const id = (await handleSaveResponse(prompt, res.message, slug[0])) as number;
-          res.message_id = id.toString();
-        }
-        setData([...newData, res]);
+       const newResponseForUI = { type: "response", message: res.message, retrieved_doc_ids: res.retrieved_doc_ids, sourceDocs: [] };
+      let responseMessageId = null;
+      if (!slug) {
+        await handleNewChatBox(prompt, res.message, res.retrieved_doc_ids);
+      } else {
+        const id = (await handleSaveResponse(prompt, res.message, res.retrieved_doc_ids, slug[0])) as number;
+        responseMessageId = id ? id.toString() : null;
+        newResponseForUI.message = res.message;
       }
-      setIsLoading(false);
-      scrollDown();
-    });
+      setData([...newData, newResponseForUI]);
+    }
+    setIsLoading(false);
+    scrollDown();
+    if (res!.retrieved_doc_ids && res!.retrieved_doc_ids.length > 0) {
+      // Bikin URL buat fetch dokumen
+      const params = new URLSearchParams();
+      res!.retrieved_doc_ids.forEach(id => params.append('ids', id));
+
+      // Fetch nama dokumennya
+      const docResponse = await fetch(`/api/retrievedocs?${params.toString()}`);
+      if (docResponse.ok) {
+        const docs = await docResponse.json();
+
+        // Setelah dapet, UPDATE lagi state 'data'
+        // Cari pesan yang tadi, terus isi 'ransel'-nya
+        setData(currentData => {
+          // Find the last response message (the one we just added)
+          const lastIndex = currentData.slice().reverse().findIndex(msg => msg.type === "response");
+          if (lastIndex === -1) return currentData;
+          const realIndex = currentData.length - 1 - lastIndex;
+          return currentData.map((msg, idx) =>
+            idx === realIndex ? { ...msg, sourceDocs: docs } : msg
+          );
+        });
+        
+      }
+    }
+
+  });
     setPrompt("");
     setIsPrompting(false);
   };
@@ -199,21 +227,27 @@ const PromptPage = ({ user, conversations }: Props) => {
 
     const newResponse: MessageProps = {
       type: "response",
-      message: res,
+      message: res.answer,
+      retrieved_doc_ids: res.retrieved_doc_ids || [],
     };
-
+    console.log("Response received:", newResponse);
     return newResponse;
   };
 
   const handleSaveResponse = async (
     request: string,
     response: string,
+    retrievedDocIds: string[] | undefined,
     chatBoxId: string
   ) => {
     const formData = new FormData();
     formData.append("request", request);
     formData.append("userId", user?.id || "");
     formData.append("response", response);
+    if (retrievedDocIds) {
+      // console.log("Retrieved Document IDs:", retrievedDocIds);
+      formData.append("retrievedDocIds", JSON.stringify(retrievedDocIds));
+    }
     formData.append("chatBoxId", chatBoxId);
     formData.append("responseTime", responseTime.toString());
 
@@ -230,7 +264,7 @@ const PromptPage = ({ user, conversations }: Props) => {
     return data.id;
   };
 
-  const handleNewChatBox = async (request: string, response: string) => {
+  const handleNewChatBox = async (request: string, response: string, retrieved_doc_ids: string[] | undefined) => {
     const formData = new FormData();
     formData.append("name", "New Chat Box");
     formData.append("userId", user?.id || "");
@@ -244,7 +278,7 @@ const PromptPage = ({ user, conversations }: Props) => {
     else {
       const { id: chatId } = await res.json();
       triggerFunction();
-      await handleSaveResponse(request, response, chatId);
+      await handleSaveResponse(request, response, retrieved_doc_ids ,chatId);
       router.push(
         `/prompt/${chatId}?selected_model=${selectedModel}&hyde=${isHydeChecked}&reranking=${isRerankingChecked}&temperature=${temperatures}`
       );
@@ -320,9 +354,10 @@ const PromptPage = ({ user, conversations }: Props) => {
           <div className="flex flex-col m-auto max-w-[900px]">
             {data.map((item, i) => (
               <ChatBox
-                key={i}
+                key={item.message_id || `msg-${i}`}
                 variant={item.type}
                 message={item.message}
+                sourceDocs={item.sourceDocs} 
                 id={i}
                 user={user}
                 liked={item.liked}

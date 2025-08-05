@@ -89,7 +89,7 @@ const NotebookPage = ({ user, mode, notebookId, token }: NotebookPageProps) => {
     try {
       setIsLoadingSources(true)
       const response = await api.getDocuments({ userId: user.id, page: 0, n: 100 })
-      setSources(response.data || [])
+      setSources(response.data?.list || [])
     } catch (error) {
       console.error('Failed to load documents:', error)
       toast.error('Failed to load your documents')

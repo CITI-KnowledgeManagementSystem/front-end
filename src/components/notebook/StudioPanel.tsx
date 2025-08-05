@@ -16,7 +16,8 @@ import {
   Headphones,
   Plus,
   MoreVertical,
-  CheckCircle
+  CheckCircle,
+  Loader2
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -24,6 +25,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { NotebookAPI, PodcastResponse } from '@/lib/api'
+import { useAuth } from '@clerk/nextjs'
 
 interface StudyTool {
   id: string
@@ -40,8 +43,12 @@ interface StudioPanelProps {
 }
 
 export function StudioPanel({ selectedSources }: StudioPanelProps) {
+  const { userId } = useAuth()
   const [isPlaying, setIsPlaying] = useState(false)
   const [audioProgress, setAudioProgress] = useState(35)
+  const [isGeneratingPodcast, setIsGeneratingPodcast] = useState(false)
+  const [podcastData, setPodcastData] = useState<PodcastResponse | null>(null)
+  const [podcastError, setPodcastError] = useState<string | null>(null)
   const [studyTools, setStudyTools] = useState<StudyTool[]>([
     {
       id: '1',
@@ -146,6 +153,65 @@ export function StudioPanel({ selectedSources }: StudioPanelProps) {
     }, 500)
   }
 
+  const generatePodcast = async () => {
+    if (!canGenerate || !userId) return
+
+    setIsGeneratingPodcast(true)
+    setPodcastError(null)
+
+    try {
+      // Generate a question based on the selected sources
+      const question = `Please create a comprehensive overview of the content from these ${selectedSources.length} selected document${selectedSources.length !== 1 ? 's' : ''}.`
+      
+      const response = await NotebookAPI.generateConversationalPodcast({
+        question,
+        user_id: userId,
+        // Optional: customize speaker voices
+        speaker_voices: {
+          HOST_A: {
+            predefined_voice_id: "Adrian.wav",
+            temperature: 0.6,
+            exaggeration: 0.8
+          },
+          HOST_B: {
+            predefined_voice_id: "Emily.wav", 
+            temperature: 0.8,
+            exaggeration: 1.2
+          }
+        }
+      })
+
+      setPodcastData(response)
+      console.log('Podcast generated successfully:', response)
+    } catch (error) {
+      console.error('Error generating podcast:', error)
+      setPodcastError(error instanceof Error ? error.message : 'Failed to generate podcast')
+    } finally {
+      setIsGeneratingPodcast(false)
+    }
+  }
+
+  const downloadPodcast = async () => {
+    if (!podcastData?.final_audio_path) return
+
+    try {
+      const filename = podcastData.final_audio_path.split('/').pop()
+      if (!filename) return
+
+      const audioBlob = await NotebookAPI.downloadAudio(filename)
+      const url = URL.createObjectURL(audioBlob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error downloading podcast:', error)
+    }
+  }
+
   const canGenerate = selectedSources.length > 0
 
   return (
@@ -229,22 +295,48 @@ export function StudioPanel({ selectedSources }: StudioPanelProps) {
         </div>
         
         <Button 
-          className="w-full mb-3 bg-orange-500 hover:bg-orange-60 0 text-white"
-          disabled={!canGenerate}
+          className="w-full mb-3 bg-orange-500 hover:bg-orange-600 text-white"
+          disabled={!canGenerate || isGeneratingPodcast}
+          onClick={generatePodcast}
         >
-          <Play className="w-4 h-4 mr-2" />
-          Generate Audio Overview
+          {isGeneratingPodcast ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Generating Podcast...
+            </>
+          ) : (
+            <>
+              <Play className="w-4 h-4 mr-2" />
+              Generate Audio Overview
+            </>
+          )}
         </Button>
         
+        {/* Error Message */}
+        {podcastError && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
+            <p className="text-sm text-red-800">{podcastError}</p>
+          </div>
+        )}
+
         {/* Audio Player (when generated) */}
-        {canGenerate && (
+        {podcastData && (
           <div className="bg-white rounded-lg p-4 border border-orange-200">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-900">Document Overview</span>
-              <span className="text-xs text-gray-500">5:42 / 8:30</span>
+              <span className="text-sm font-medium text-gray-900">
+                Conversational Podcast ({podcastData.segment_count} segments)
+              </span>
+              <span className="text-xs text-gray-500">
+                {podcastData.segments.length} speakers
+              </span>
             </div>
             
-            <Progress value={audioProgress} className="mb-3" indicatorColor="bg-orange-500" />
+            <div className="mb-3">
+              <p className="text-xs text-gray-600 mb-2">
+                {podcastData.script.substring(0, 100)}...
+              </p>
+              <Progress value={100} className="mb-3" indicatorColor="bg-orange-500" />
+            </div>
             
             <div className="flex items-center justify-between">
               <Button
@@ -254,10 +346,27 @@ export function StudioPanel({ selectedSources }: StudioPanelProps) {
               >
                 {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               </Button>
-              <Button size="sm" variant="ghost">
+              <Button 
+                size="sm" 
+                variant="ghost"
+                onClick={downloadPodcast}
+              >
                 <Download className="w-4 h-4" />
               </Button>
             </div>
+          </div>
+        )}
+
+        {/* Generation Status */}
+        {isGeneratingPodcast && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+              <span className="text-sm font-medium text-blue-900">Generating Podcast</span>
+            </div>
+            <p className="text-xs text-blue-700">
+              Creating conversational audio overview from your selected documents...
+            </p>
           </div>
         )}
       </div>
