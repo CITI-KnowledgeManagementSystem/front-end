@@ -219,15 +219,24 @@ export function ChatPanel({
     setMindMapData(''); // Bersihin data mind map lama
 
     try {
+
       // Kirim request ke server
-      const response = await fetch(`${process.env.LLM_SERVER_URL}/document/mind_map`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        // Kirim data 'selectedSources' dalam body request
-        body: JSON.stringify({ sources: selectedSources }),
-      });
+      const response = await fetch(
+        "http://localhost:5000/document/mind_map",
+        {
+          method: "POST",
+          headers: {
+        "Content-Type": "application/json",
+        // Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            user_id: String(userId),
+            collection_name: "private",
+            document_id: String(selectedSources[0]),
+            tag: String(sources.find(s => s.id === selectedSources[0])?.tag ?? ""),
+          }),
+        }
+      );
 
       // Kalo respons dari server nggak oke (misal: error 404 atau 500)
       if (!response.ok) {
@@ -435,34 +444,38 @@ export function ChatPanel({
             </div>
           )}
 
-          <div className="flex justify-start mb-3">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50 hover:border-blue-600 transition"
-              onClick={handleMindMap}
-              disabled={isLoading || selectedSources.length === 0}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-5 h-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+          {selectedSources.length > 0 && selectedSources.length < 2 && (
+            <div className="flex justify-start mb-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50 hover:border-blue-600 transition"
+                onClick={handleMindMap}
+                disabled={isLoading || selectedSources.length === 0}
               >
-                <circle cx="12" cy="12" r="3" strokeWidth="2" />
-                <circle cx="5" cy="7" r="2" strokeWidth="2" />
-                <circle cx="19" cy="7" r="2" strokeWidth="2" />
-                <circle cx="5" cy="17" r="2" strokeWidth="2" />
-                <circle cx="19" cy="17" r="2" strokeWidth="2" />
-                <line x1="7" y1="7" x2="11" y2="11" strokeWidth="2" />
-                <line x1="17" y1="7" x2="13" y2="11" strokeWidth="2" />
-                <line x1="7" y1="17" x2="11" y2="13" strokeWidth="2" />
-                <line x1="17" y1="17" x2="13" y2="13" strokeWidth="2" />
-              </svg>
-              Mindmap
-            </Button>
-          </div>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <circle cx="12" cy="12" r="3" strokeWidth="2" />
+                  <circle cx="5" cy="7" r="2" strokeWidth="2" />
+                  <circle cx="19" cy="7" r="2" strokeWidth="2" />
+                  <circle cx="5" cy="17" r="2" strokeWidth="2" />
+                  <circle cx="19" cy="17" r="2" strokeWidth="2" />
+                  <line x1="7" y1="7" x2="11" y2="11" strokeWidth="2" />
+                  <line x1="17" y1="7" x2="13" y2="11" strokeWidth="2" />
+                  <line x1="7" y1="17" x2="11" y2="13" strokeWidth="2" />
+                  <line x1="17" y1="17" x2="13" y2="13" strokeWidth="2" />
+                </svg>
+                Mindmap
+              </Button>
+            </div>
+          )}
+
+
           
           <div className="relative">
             <Textarea

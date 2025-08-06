@@ -103,6 +103,8 @@ export async function POST(req: NextRequest) {
     }
 
     await connect();
+    
+    console.log(process.env.QNAP_PRIVATE_STORAGE);
 
     const exists = await sftpClient.exists(
       `${process.env.QNAP_PRIVATE_STORAGE}/${user_id}`
