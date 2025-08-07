@@ -11,9 +11,11 @@ import { useNotebookAPI, Document, Message } from '@/lib/api'
 import { getChatMessages } from '@/lib/utils'
 import { MessageProps } from '@/types'
 import { toast } from 'sonner'
-import { Transformer } from 'markmap-lib';
-import * as markmap from "markmap-view";
-const { Markmap } = markmap;
+
+import { Markmap } from 'markmap-view';
+import { transformer } from './markmap';
+import { Toolbar } from 'markmap-toolbar';
+import 'markmap-toolbar/dist/style.css';
 
 interface ChatPanelProps {
   sources: Document[]
@@ -21,6 +23,32 @@ interface ChatPanelProps {
   currentChatBoxId: string
   onChatBoxCreate: (chatBoxId: string) => void
 }
+
+function renderToolbar(mm: Markmap, wrapper: HTMLElement) {
+  while (wrapper?.firstChild) wrapper.firstChild.remove();
+  if (mm && wrapper) {
+    const toolbar = new Toolbar();
+    toolbar.attach(mm);
+    // Register custom buttons
+    toolbar.register({
+      id: 'alert',
+      title: 'Click to show an alert',
+      content: 'Alert',
+      onClick: () => alert('You made it!'),
+    });
+    toolbar.setItems([...Toolbar.defaultItems, 'alert']);
+    wrapper.append(toolbar.render());
+  }
+}
+
+// const initMindMap = `# markmap
+
+// - beautiful
+// - useful
+// - easy
+// - interactive
+// `;
+
 
 export function ChatPanel({ 
   sources, 
@@ -216,7 +244,7 @@ export function ChatPanel({
     if (isLoading) return;
 
     setIsLoading(true); // Mulai loading
-    setMindMapData(''); // Bersihin data mind map lama
+    // setMindMapData(''); // Bersihin data mind map lama
 
     try {
 
@@ -249,7 +277,7 @@ export function ChatPanel({
       console.log('Data mind map:', data);
       
       // Simpan data mind map ke state
-      setMindMapData(data);
+      setMindMapData(data.payload);
       // console.log('Sukses dapet data mind map:', data);
 
     } catch (err) {
@@ -260,6 +288,33 @@ export function ChatPanel({
       setIsLoading(false);
     }
   };
+
+  const refSvg = useRef<SVGSVGElement>();
+  // Ref for markmap object
+  const refMm = useRef<Markmap>();
+  // Ref for toolbar wrapper
+  const refToolbar = useRef<HTMLDivElement>();
+
+  useEffect(() => {
+    // Create markmap and save to refMm
+    if (refMm.current) return;
+    const mm = Markmap.create(refSvg.current);
+    console.log('create', refSvg.current);
+    refMm.current = mm;
+    renderToolbar(refMm.current, refToolbar.current);
+  }, [refSvg.current]);
+
+  console.log('mindMapData', mindMapData);
+
+  useEffect(() => {;
+    // Update data for markmap once value is changed
+    const mm = refMm.current;
+    if (!mm) return;
+    const { root } = transformer.transform(mindMapData);
+    mm.setData(root).then(() => {
+      mm.fit();
+    });
+  }, [refMm.current, mindMapData]);
 
   const handleMessageFeedback = async (messageId: number, type: 'like' | 'dislike') => {
     try {
@@ -343,6 +398,34 @@ export function ChatPanel({
               </p>
             </div>
           )}
+
+          {/* Mindmap SVG */}
+          <div className="relative w-full flex justify-center items-center min-h-[320px]">
+            <svg
+              ref={refSvg}
+              width="100%"
+              height="320"
+              style={{
+                display: mindMapData ? 'block' : 'none',
+                background: '#fff',
+                borderRadius: '12px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                minHeight: '320px',
+                maxWidth: '100%',
+                overflow: 'visible',
+              }}
+              className="w-full h-[320px] transition-all"
+            />
+            <div
+              ref={refToolbar}
+              className="absolute top-2 right-2 z-10"
+            />
+            {!mindMapData && (
+              <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+                <span className="text-sm">Mindmap will appear here</span>
+              </div>
+            )}
+          </div>
 
           {messages.map((message) => (
             <div key={message.id} className="space-y-3">
