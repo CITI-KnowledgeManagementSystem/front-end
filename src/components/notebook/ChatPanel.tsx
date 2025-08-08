@@ -155,8 +155,8 @@ export function ChatPanel({
         "Llama 3 8B - 4 bit quantization" // selectedModel
       )
 
-      const aiResponseText = typeof llmResponse === 'string' 
-        ? llmResponse
+      const aiResponseText = typeof llmResponse.answer === 'string' 
+        ? llmResponse.answer
         : 'I apologize, but I encountered an error processing your request. Please try again.'
 
       // Save the message to the database
