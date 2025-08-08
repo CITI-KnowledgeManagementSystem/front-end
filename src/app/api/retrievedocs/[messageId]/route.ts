@@ -41,9 +41,12 @@ export async function GET(
     const seen = new Map();
     rawDocs.forEach(doc => {
       // `document_id` akan jadi 'KTP'-nya
-      // Kalo ada ID yang sama, data yang lama akan ditimpa, jadi otomatis unik
+      
       if (doc && doc.document_id) {
-        seen.set(doc.document_id, doc);
+        if (!seen.has(doc.document_id)) { 
+    
+         seen.set(doc.document_id, doc); 
+    }
       }
     });
 

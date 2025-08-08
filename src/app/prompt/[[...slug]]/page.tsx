@@ -36,6 +36,7 @@ const Page = async ({ params }: { params: { slug: string } }) => {
     tempSlug.slug[0].indexOf(".") === -1
   ) {
     conversations = (await getChatMessages(tempSlug.slug[0], token)) || [];
+    // console.log("Chat messages retrieved:", conversations);
     if (conversations.length === 0) {
       return redirect("/prompt");
     }

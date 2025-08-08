@@ -3,8 +3,9 @@ import { prisma } from "@/db";
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { messageId: string } }
+  context: { params: { messageId: string } }
 ) {
+
   // 1. Proteksi endpoint
   const internalSecret = request.headers.get("x-internal-secret");
   if (internalSecret !== process.env.INTERNAL_SECRET_KEY) {
@@ -12,7 +13,9 @@ export async function PATCH(
   }
 
   try {
-    const messageId = parseInt(params.messageId);
+    const { params } = context;
+    const awaitedParams = await params;
+    const messageId = parseInt(awaitedParams.messageId);
     if (isNaN(messageId)) {
       return NextResponse.json({ message: "Invalid Message ID" }, { status: 400 });
     }
@@ -31,8 +34,10 @@ export async function PATCH(
       },
     });
 
+    console.log("Scores updated successfully for message ID:", messageId);
+    console.log("Scores data:", scores);
     return NextResponse.json({ success: true, message: "Scores updated." });
-
+    
   } catch (error) {
     console.error("Gagal update skor:", error);
     return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });

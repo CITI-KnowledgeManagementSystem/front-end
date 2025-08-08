@@ -91,7 +91,7 @@ export const getChatMessages = async (id: string, token: string | null) => {
     if (!response.ok) {
       throw new Error(`Error: ${response.status} ${response.statusText}`);
     }
-    else console.log("Chat messages fetched successfully");
+    // else console.log("Chat messages fetched successfully");
     //  console.log("----------------------INI DARI UTILS GETCHATMESSAGES ----------------------");
     const data = await response.json();
     // console.log("Data:", data);
@@ -122,7 +122,11 @@ function sortMessageProps(response: any) {
       liked: data[i].liked,
       disliked: data[i].disliked,
       rating: data[i].rating,
-      sourceDocs: data[i].sourceDocs
+      sourceDocs: data[i].sourceDocs,
+      faithfulness: data[i].faithfulness,
+      answer_relevancy: data[i].answer_relevancy,
+      context_precision: data[i].context_precision,
+      context_relevance: data[i].context_relevance,
     });
   }
   return messages;

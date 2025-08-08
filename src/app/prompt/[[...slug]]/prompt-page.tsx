@@ -83,6 +83,13 @@ const PromptPage = ({ user, conversations }: Props) => {
     }
   }, [data, enableScroll]);
 
+  useEffect(() => {
+  // Setiap kali 'conversations' (prop dari server) berubah,
+  // paksa 'data' (state lokal) buat ikut berubah.
+  setData(conversations);
+  setEvaluatingMessageId(null); 
+}, [conversations]);
+
   const handleSendPrompt = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -328,7 +335,7 @@ const handleEvaluate = async (messageToEvaluate: MessageProps) => {
   };
 
   console.log("Mengirim data untuk evaluasi:", payload);
-
+  setEvaluatingMessageId(messageToEvaluate.message_id);
   // 2. Tembak ke endpoint 'jembatan' di Next.js
   const promise = fetch('/api/evaluate', {
     method: 'POST',
@@ -337,19 +344,55 @@ const handleEvaluate = async (messageToEvaluate: MessageProps) => {
   }).then(res => {
     if (!res.ok) throw new Error("Gagal memulai evaluasi.");
     return "Evaluasi berhasil dijadwalkan!";
-  });
+  }).catch((err) => {
+      // Kalo gagal, matiin lagi saklarnya
+      setEvaluatingMessageId(null);
+      throw err; // Lempar errornya biar toast.promise nangkep
+    });
 
   // 3. Tampilkan notifikasi ke user
   toast.promise(promise, {
     loading: "Memulai evaluasi...",
-    success: (msg) => msg,
+    success: () => {
+      startPollingForScores(messageToEvaluate.message_id!);
+      return "Evaluasi berhasil dijadwalkan!";
+    },
     error: (err) => err.toString(),
   });
 };
 
+const startPollingForScores = (messageId: string) => {
+    const intervalId = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/message/status/${messageId}`);
+        const data = await response.json();
+
+        if (data.status === "complete") {
+          console.log("Evaluasi selesai! Refreshing data...");
+          clearInterval(intervalId); // <-- BERHENTI NANYA
+          toast.success("Skor evaluasi berhasil diterima!");
+          router.refresh(); // <-- REFRESH TAMPILAN
+        } else {
+          console.log("Status evaluasi masih 'pending', menunggu...");
+        }
+      } catch (error) {
+        console.error("Gagal ngecek status, polling dihentikan.");
+        clearInterval(intervalId);
+      }
+    }, 2000); // <-- Nanya setiap 2 detik
+
+    // Buat pengaman, hentikan polling setelah 2 menit kalo gak ada hasil
+    setTimeout(() => {
+      clearInterval(intervalId);
+      setEvaluatingMessageId(null);
+      console.log("Polling dihentikan karena timeout.");
+    }, 120000); // 2 menit
+  };
+
 const [selectedDoc, setSelectedDoc] = useState<DocumentProps | null>(null);
 const [selectedScores, setSelectedScores] = useState<MessageProps | null>(null);
-
+const [evaluatingMessageId, setEvaluatingMessageId] = useState<string | null>(null);
+// console.log("PROPS 'conversations' YANG DITERIMA PROMPTPAGE:", conversations);
   return (
     <div className={`flex flex-col w-full h-full p-4 relative`}>
       <SessionDialog />
@@ -435,6 +478,11 @@ const [selectedScores, setSelectedScores] = useState<MessageProps | null>(null);
                 handleEvaluate={() => handleEvaluate(item)}
                 onSourceClick={(doc) => setSelectedDoc(doc)}
                 onShowScores={() => setSelectedScores(item)}
+                faithfulness={item.faithfulness}
+                answer_relevancy={item.answer_relevancy}
+                context_precision={item.context_precision}
+                context_relevance={item.context_relevance}
+                isEvaluating={evaluatingMessageId === item.message_id}
               />
             ))}
             {isLoading && (
