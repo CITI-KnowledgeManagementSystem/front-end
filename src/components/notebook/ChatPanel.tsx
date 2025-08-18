@@ -11,6 +11,7 @@ import { useNotebookAPI, Document, Message } from '@/lib/api'
 import { getChatMessages } from '@/lib/utils'
 import { MessageProps } from '@/types'
 import { toast } from 'sonner'
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 interface ChatPanelProps {
   sources: Document[]
@@ -65,9 +66,9 @@ export function ChatPanel({
       return;
     }
 
-    
+      console.log("Calling getChatMessages with ID:", currentChatBoxId); 
       const history = await getChatMessages(currentChatBoxId, token)
-      setConversationHistory(history ?? [])
+      setConversationHistory(history ?? []) 
       
       if(!history || history.length === 0) {
         setMessages([])
@@ -122,86 +123,106 @@ export function ChatPanel({
   }
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || !userId || !currentChatBoxId) return
+    if (!inputValue.trim() || !userId || !currentChatBoxId) return;
 
-    const userMessage = inputValue
-    setInputValue('')
-    setIsLoading(true)
+    const userMessage = inputValue;
+    setInputValue('');
 
-    // Add user message to UI immediately
-    const tempUserMessage: Message = {
-      id: Date.now(),
-      request: userMessage,
-      response: '',
-      userId,
-      chatBoxId: parseInt(currentChatBoxId),
-      createdAt: new Date(),
-    }
+    // Buat pesan pengguna dan pesan AI yang masih kosong
+    const tempUserMessageId = Date.now();
+    const tempAiMessageId = tempUserMessageId + 1;
 
-    setMessages(prev => [...prev, tempUserMessage])
+    setMessages(prev => [
+        ...prev,
+        {
+            id: tempUserMessageId,
+            request: userMessage,
+            response: '',
+            userId,
+            chatBoxId: parseInt(currentChatBoxId),
+            createdAt: new Date(),
+        },
+        {
+            id: tempAiMessageId,
+            request: '', // AI response tidak punya request
+            response: '', // Tampilkan indikator loading awal
+            userId,
+            chatBoxId: parseInt(currentChatBoxId),
+            createdAt: new Date(),
+        }
+    ]);
 
     try {
-      // Query the LLM server with the selected documents and conversation history
-      const selectedDocIds = selectedSources.map(id => 
-        sources.find(s => s.id === id)?.id
-      ).filter((id): id is string => id !== undefined)
+        const response = await fetch('http://localhost:5000/llm/chat_with_llm', { // URL endpoint kamu
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                question: userMessage,
+                userId,
+                conversation_history: conversationHistory,
+                hyde: 'true', // sesuaikan dengan logikamu
+                reranking: 'true'
+            }),
+        });
 
-      const llmResponse = await api.queryLLM(
-        [userMessage],
-        userId,
-        selectedDocIds,
-        true, // hyde
-        true, // reranking
-        "Llama 3 8B - 4 bit quantization" // selectedModel
-      )
+        if (!response.body) throw new Error("Response body is null");
 
-      const aiResponseText = typeof llmResponse === 'string' 
-        ? llmResponse
-        : 'I apologize, but I encountered an error processing your request. Please try again.'
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullResponse = "";
 
-      // Save the message to the database
-      const startTime = Date.now()
-      const messageResponse = await api.createMessage({
-        request: userMessage,
-        userId,
-        chatBoxId: currentChatBoxId,
-        response: aiResponseText,
-        responseTime: Date.now() - startTime,
-      })
+        // Loop untuk membaca stream
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
 
-      // Update the message with the actual response
-      const completeMessage: Message = {
-        id: messageResponse.id,
-        request: userMessage,
-        response: aiResponseText,
-        userId,
-        chatBoxId: parseInt(currentChatBoxId),
-        createdAt: new Date(),
-        responseTime: Date.now() - startTime,
-      }
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n\n').filter(line => line.trim());
 
-      setMessages(prev => [
-        ...prev.filter(m => m.id !== tempUserMessage.id),
-        completeMessage
-      ])
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    const dataStr = line.substring(6);
+                    if (dataStr === '[DONE]') {
+                        // Simpan jawaban lengkap ke database setelah selesai
+                        // api.createMessage({ ... , response: fullResponse });
+                        return;
+                    }
+                    
+                    try {
+                        const data = JSON.parse(dataStr);
 
-             // Update conversation history for next query
-       setConversationHistory(prev => [
-         ...prev,
-         { type: "request", message: userMessage },
-         { type: "response", message: aiResponseText, message_id: messageResponse.id.toString() }
-       ])
+                        // Cek apakah ini data token jawaban atau ID dokumen
+                        if (data.answer_token) {
+                            for (const char of data.answer_token) {
+                              // Tambahkan satu karakter ke state
+                              setMessages(prev =>
+                                  prev.map(msg =>
+                                      msg.id === tempAiMessageId
+                                          ? { ...msg, response: msg.response + char }
+                                          : msg
+                                  )
+                              );
+                              // Beri jeda singkat sebelum karakter berikutnya
+                              await sleep(5); // <-- Sesuaikan angka ini (dalam milidetik)
+                            }
+                        } else if (data.retrieved_doc_ids) {
+                            console.log("Retrieved document IDs:", data.retrieved_doc_ids);
+                            // Kamu bisa simpan ID ini di state terpisah jika perlu
+                        }
 
+                    } catch(e) {
+                         console.error("Failed to parse JSON from stream", e);
+                    }
+                }
+            }
+        }
     } catch (error) {
-      console.error('Failed to send message:', error)
-      toast.error('Failed to send message')
-      
-      // Remove the temporary message on error
-      setMessages(prev => prev.filter(m => m.id !== tempUserMessage.id))
-    } finally {
-      setIsLoading(false)
+        console.error('Failed to stream message:', error);
+        setMessages(prev => prev.map(msg => 
+            msg.id === tempAiMessageId ? {...msg, response: "Sorry, an error occurred."} : msg
+        ));
     }
-  }
+  };
 
   const handleMessageFeedback = async (messageId: number, type: 'like' | 'dislike') => {
     try {
@@ -289,12 +310,13 @@ export function ChatPanel({
           {messages.map((message) => (
             <div key={message.id} className="space-y-3">
               {/* User Message */}
+              { message.request &&(
               <div className="flex justify-end">
                 <div className="bg-blue-600 text-white rounded-2xl px-4 py-3 max-w-lg">
                   <p className="text-sm">{message.request}</p>
                 </div>
               </div>
-
+              )}
               {/* AI Response */}
               {message.response && (
                 <div className="space-y-3">
