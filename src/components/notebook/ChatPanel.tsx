@@ -13,9 +13,11 @@ import { MessageProps } from '@/types'
 import { toast } from 'sonner'
 
 import { Markmap } from 'markmap-view';
-import { transformer } from './markmap';
+// import { transformer } from './markmap';
 import { Toolbar } from 'markmap-toolbar';
 import 'markmap-toolbar/dist/style.css';
+import { Transformer } from 'markmap-lib';
+import useMindMapStore from './markmap'
 
 interface ChatPanelProps {
   sources: Document[]
@@ -41,14 +43,6 @@ function renderToolbar(mm: Markmap, wrapper: HTMLElement) {
   }
 }
 
-// const initMindMap = `# markmap
-
-// - beautiful
-// - useful
-// - easy
-// - interactive
-// `;
-
 
 export function ChatPanel({ 
   sources, 
@@ -65,8 +59,12 @@ export function ChatPanel({
   const [isLoading, setIsLoading] = useState(false)
   const [chatBoxName, setChatBoxName] = useState('')
   const [error, setError] = useState(null);
-  const [mindMapData, setMindMapData] = useState('');
+  // const [mindMapData, setMindMapData] = useState('');
+  // const [isLoadingMindMap, setIsLoadingMindMap] = useState(false);
+  const { mindMapData, setMindMapData, isLoadingMindMap, setIsLoadingMindMap } = useMindMapStore(); 
   const selectedSourcesData = sources.filter(s => selectedSources.includes(s.id))
+
+  const transformer = new Transformer();
 
   // Load conversation history when chatbox changes
   useEffect(() => {
@@ -241,43 +239,23 @@ export function ChatPanel({
 
   const handleMindMap = async () => {
     // Kalo lagi loading, jangan jalanin fungsi lagi
-    if (isLoading) return;
+    if (isLoadingMindMap) return;
 
-    setIsLoading(true); // Mulai loading
+    setIsLoadingMindMap(true); // Mulai loading
     // setMindMapData(''); // Bersihin data mind map lama
 
     try {
 
-      // Kirim request ke server
-      const response = await fetch(
-        "http://localhost:5000/document/mind_map",
-        {
-          method: "POST",
-          headers: {
-        "Content-Type": "application/json",
-        // Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            user_id: String(userId),
-            collection_name: "private",
-            document_id: String(selectedSources[0]),
-            tag: String(sources.find(s => s.id === selectedSources[0])?.tag ?? ""),
-          }),
-        }
+      const mindMap = await api.generateMindMap(
+        'private',
+        selectedSources[0],
+        sources.find(s => s.id === selectedSources[0])?.tag || ''
       );
 
-      // Kalo respons dari server nggak oke (misal: error 404 atau 500)
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-
-      // Ambil data JSON dari response
-      const data = await response.json();
-
-      console.log('Data mind map:', data);
+      console.log('Data mind map:', mindMap);
       
       // Simpan data mind map ke state
-      setMindMapData(data.payload);
+      setMindMapData(mindMap);
       // console.log('Sukses dapet data mind map:', data);
 
     } catch (err) {
@@ -285,36 +263,9 @@ export function ChatPanel({
       console.error('Gagal fetch mind map:', err);
     } finally {
       // Apapun yang terjadi (sukses atau gagal), loading selesai
-      setIsLoading(false);
+      setIsLoadingMindMap(false);
     }
   };
-
-  const refSvg = useRef<SVGSVGElement>();
-  // Ref for markmap object
-  const refMm = useRef<Markmap>();
-  // Ref for toolbar wrapper
-  const refToolbar = useRef<HTMLDivElement>();
-
-  useEffect(() => {
-    // Create markmap and save to refMm
-    if (refMm.current) return;
-    const mm = Markmap.create(refSvg.current);
-    console.log('create', refSvg.current);
-    refMm.current = mm;
-    renderToolbar(refMm.current, refToolbar.current);
-  }, [refSvg.current]);
-
-  console.log('mindMapData', mindMapData);
-
-  useEffect(() => {;
-    // Update data for markmap once value is changed
-    const mm = refMm.current;
-    if (!mm) return;
-    const { root } = transformer.transform(mindMapData);
-    mm.setData(root).then(() => {
-      mm.fit();
-    });
-  }, [refMm.current, mindMapData]);
 
   const handleMessageFeedback = async (messageId: number, type: 'like' | 'dislike') => {
     try {
@@ -398,34 +349,6 @@ export function ChatPanel({
               </p>
             </div>
           )}
-
-          {/* Mindmap SVG */}
-          <div className="relative w-full flex justify-center items-center min-h-[320px]">
-            <svg
-              ref={refSvg}
-              width="100%"
-              height="320"
-              style={{
-                display: mindMapData ? 'block' : 'none',
-                background: '#fff',
-                borderRadius: '12px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                minHeight: '320px',
-                maxWidth: '100%',
-                overflow: 'visible',
-              }}
-              className="w-full h-[320px] transition-all"
-            />
-            <div
-              ref={refToolbar}
-              className="absolute top-2 right-2 z-10"
-            />
-            {!mindMapData && (
-              <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-                <span className="text-sm">Mindmap will appear here</span>
-              </div>
-            )}
-          </div>
 
           {messages.map((message) => (
             <div key={message.id} className="space-y-3">
@@ -527,15 +450,22 @@ export function ChatPanel({
             </div>
           )}
 
-          {selectedSources.length > 0 && selectedSources.length < 2 && (
+            {selectedSources.length > 0 && selectedSources.length < 2 && (
             <div className="flex justify-start mb-3">
               <Button
-                type="button"
-                variant="outline"
-                className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50 hover:border-blue-600 transition"
-                onClick={handleMindMap}
-                disabled={isLoading || selectedSources.length === 0}
+              type="button"
+              variant="outline"
+              className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50 hover:border-blue-600 transition"
+              onClick={handleMindMap}
+              disabled={isLoading || selectedSources.length === 0 || isLoadingMindMap}
               >
+              {isLoadingMindMap ? (
+                <span className="inline-flex items-center">
+                <span className="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent mr-2"></span>
+                Loading...
+                </span>
+              ) : (
+                <>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="w-5 h-5"
@@ -554,9 +484,11 @@ export function ChatPanel({
                   <line x1="17" y1="17" x2="13" y2="13" strokeWidth="2" />
                 </svg>
                 Mindmap
+                </>
+              )}
               </Button>
             </div>
-          )}
+            )}
 
 
           
