@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     reranking: reranking,
   };
 
-  console.log(body);
+  // console.log(body);
 
   try {
     const { getToken } = await auth();

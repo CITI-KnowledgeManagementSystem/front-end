@@ -36,12 +36,12 @@ const Page = async ({ params }: { params: { slug: string } }) => {
     tempSlug.slug[0].indexOf(".") === -1
   ) {
     conversations = (await getChatMessages(tempSlug.slug[0], token)) || [];
+    // console.log("Chat messages retrieved:", conversations);
     if (conversations.length === 0) {
       return redirect("/prompt");
     }
   }
-  //  console.log("----------------------INI DARI PAGE TSX ----------------------");
-  // console.log("Conversations:", conversations);
+
   return <PromptPage user={user} conversations={conversations} />;
 };
 

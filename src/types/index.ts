@@ -4,18 +4,26 @@ export interface MessageProps {
   message_id?: string;
   type: string;
   message: string;
-  retrieved_doc_ids?: string[];
+  retrieved_docs?: DocumentProps[];
   sourceDocs?: DocumentProps[];
   liked?: boolean;
   disliked?: boolean;
   rating?: number;
+  faithfulness?: number | null;
+  answer_relevancy?: number | null;
+  context_precision?: number | null;
+  context_relevance?: number | null;
 }
 
 export interface DocumentProps {
   id: number;
-  original_name: string;
+  document_id?: string;
+  document_name?: string;
   title: string;
   topic: string;
+  content?: string; 
+  page_number?: number;
+  source?: string;
 }
 
 export interface SidebarItems {

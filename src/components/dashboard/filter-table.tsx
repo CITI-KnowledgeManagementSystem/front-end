@@ -111,7 +111,7 @@ const FilterTable = () => {
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild className="border border-dashed">
             <Button
-              variant="ghost"
+              variant={"ghost"}
               role="combobox"
               className="h-8 text-xs mx-3 shadow border border-dashed"
             >

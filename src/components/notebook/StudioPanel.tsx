@@ -310,11 +310,11 @@ export function StudioPanel({ selectedSources }: StudioPanelProps) {
 
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col dark:bg-gray-700 bg-white">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-600">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Studio</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-200 dark:hover:text-white">Studio</h2>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
@@ -326,7 +326,7 @@ export function StudioPanel({ selectedSources }: StudioPanelProps) {
                 Create
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuContent align="end" className="w-48 ">
               <DropdownMenuItem 
                 onClick={() => generateNewTool('audio-overview')}
                 disabled={!canGenerate}
@@ -373,14 +373,14 @@ export function StudioPanel({ selectedSources }: StudioPanelProps) {
       </div>
 
       {/* Audio Overview Section */}
-      <div className="p-4 border-b border-gray-200 bg-orange-50">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-600 bg-orange-200 dark:bg-gray-700">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
             <Headphones className="w-5 h-5 text-white" />
           </div>
           <div className="flex-1">
-            <h3 className="font-medium text-gray-900">Audio Overview</h3>
-            <p className="text-sm text-gray-600">
+            <h3 className="font-medium text-gray-900 dark:text-gray-200 dark:hover:text-white">Audio Overview</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-200 dark:hover:text-white">
               {canGenerate 
                 ? `Create an Audio Overview from ${selectedSources.length} source${selectedSources.length !== 1 ? 's' : ''}!`
                 : 'Select sources to create an Audio Overview!'
@@ -467,14 +467,14 @@ export function StudioPanel({ selectedSources }: StudioPanelProps) {
       </div>
 
       {/* Notes Section */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-600">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-medium text-gray-900">Notes</h3>
+          <h3 className="font-medium text-gray-900 dark:text-gray-200 dark:hover:text-white">Notes</h3>
           <Button size="sm" variant="ghost" disabled={!canGenerate}>
             <Plus className="w-4 h-4" />
           </Button>
         </div>
-        <p className="text-sm text-gray-500 italic">
+        <p className="text-sm text-gray-500 italic dark:text-gray-200 dark:hover:text-white">
           {canGenerate 
             ? 'Ready to take notes from your selected sources.'
             : 'Select sources to enable note-taking.'

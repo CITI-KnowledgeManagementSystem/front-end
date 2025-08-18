@@ -51,9 +51,9 @@ const ChatName = ({ id, name }: Props) => {
       {!isRenaming ? (
         <div
           onClick={navigateToChat}
-          className={`my-1 px-3 py-[10px] text-sm rounded-xl cursor-pointer hover:bg-blue-600 flex justify-between items-center w-full relative group ${
+          className={`my-1 px-3 py-[10px] text-sm rounded-xl cursor-pointer hover:bg-blue-600 dark:hover:bg-gray-600 flex justify-between items-center w-full relative group ${
             id === idOnPath &&
-            "bg-blue-500 dark:bg-blue-700 hover:bg-blue-500 dark:hover:bg-blue-700"
+            "bg-blue-600 dark:bg-gray-600 hover:bg-blue-600 dark:hover:bg-gray-600"
           }`}
         >
           {chatName}
