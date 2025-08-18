@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -12,12 +12,37 @@ import { getChatMessages } from '@/lib/utils'
 import { MessageProps } from '@/types'
 import { toast } from 'sonner'
 
+import { Markmap } from 'markmap-view';
+// import { transformer } from './markmap';
+import { Toolbar } from 'markmap-toolbar';
+import 'markmap-toolbar/dist/style.css';
+import { Transformer } from 'markmap-lib';
+import useMindMapStore from './markmap'
+
 interface ChatPanelProps {
   sources: Document[]
   selectedSources: string[]
   currentChatBoxId: string
   onChatBoxCreate: (chatBoxId: string) => void
 }
+
+function renderToolbar(mm: Markmap, wrapper: HTMLElement) {
+  while (wrapper?.firstChild) wrapper.firstChild.remove();
+  if (mm && wrapper) {
+    const toolbar = new Toolbar();
+    toolbar.attach(mm);
+    // Register custom buttons
+    toolbar.register({
+      id: 'alert',
+      title: 'Click to show an alert',
+      content: 'Alert',
+      onClick: () => alert('You made it!'),
+    });
+    toolbar.setItems([...Toolbar.defaultItems, 'alert']);
+    wrapper.append(toolbar.render());
+  }
+}
+
 
 export function ChatPanel({ 
   sources, 
@@ -33,8 +58,13 @@ export function ChatPanel({
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [chatBoxName, setChatBoxName] = useState('')
-
+  const [error, setError] = useState(null);
+  // const [mindMapData, setMindMapData] = useState('');
+  // const [isLoadingMindMap, setIsLoadingMindMap] = useState(false);
+  const { mindMapData, setMindMapData, isLoadingMindMap, setIsLoadingMindMap } = useMindMapStore(); 
   const selectedSourcesData = sources.filter(s => selectedSources.includes(s.id))
+
+  const transformer = new Transformer();
 
   // Load conversation history when chatbox changes
   useEffect(() => {
@@ -121,6 +151,8 @@ export function ChatPanel({
     }
   }
 
+  
+
   const handleSendMessage = async () => {
     if (!inputValue.trim() || !userId || !currentChatBoxId) return
 
@@ -154,7 +186,7 @@ export function ChatPanel({
         true, // reranking
         "Llama 3 8B - 4 bit quantization" // selectedModel
       )
-
+      
       const aiResponseText = typeof llmResponse.answer === 'string' 
         ? llmResponse.answer
         : 'I apologize, but I encountered an error processing your request. Please try again.'
@@ -202,6 +234,36 @@ export function ChatPanel({
       setIsLoading(false)
     }
   }
+
+  const handleMindMap = async () => {
+    // Kalo lagi loading, jangan jalanin fungsi lagi
+    if (isLoadingMindMap) return;
+
+    setIsLoadingMindMap(true); // Mulai loading
+    // setMindMapData(''); // Bersihin data mind map lama
+
+    try {
+
+      const mindMap = await api.generateMindMap(
+        'private',
+        selectedSources[0],
+        sources.find(s => s.id === selectedSources[0])?.tag || ''
+      );
+
+      console.log('Data mind map:', mindMap);
+      
+      // Simpan data mind map ke state
+      setMindMapData(mindMap);
+      // console.log('Sukses dapet data mind map:', data);
+
+    } catch (err) {
+      // Kalo ada error di try block (masalah network atau dari throw di atas)
+      console.error('Gagal fetch mind map:', err);
+    } finally {
+      // Apapun yang terjadi (sukses atau gagal), loading selesai
+      setIsLoadingMindMap(false);
+    }
+  };
 
   const handleMessageFeedback = async (messageId: number, type: 'like' | 'dislike') => {
     try {
@@ -385,6 +447,48 @@ export function ChatPanel({
               </p>
             </div>
           )}
+
+            {selectedSources.length > 0 && selectedSources.length < 2 && (
+            <div className="flex justify-start mb-3">
+              <Button
+              type="button"
+              variant="outline"
+              className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50 hover:border-blue-600 transition"
+              onClick={handleMindMap}
+              disabled={isLoading || selectedSources.length === 0 || isLoadingMindMap}
+              >
+              {isLoadingMindMap ? (
+                <span className="inline-flex items-center">
+                <span className="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent mr-2"></span>
+                Loading...
+                </span>
+              ) : (
+                <>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <circle cx="12" cy="12" r="3" strokeWidth="2" />
+                  <circle cx="5" cy="7" r="2" strokeWidth="2" />
+                  <circle cx="19" cy="7" r="2" strokeWidth="2" />
+                  <circle cx="5" cy="17" r="2" strokeWidth="2" />
+                  <circle cx="19" cy="17" r="2" strokeWidth="2" />
+                  <line x1="7" y1="7" x2="11" y2="11" strokeWidth="2" />
+                  <line x1="17" y1="7" x2="13" y2="11" strokeWidth="2" />
+                  <line x1="7" y1="17" x2="11" y2="13" strokeWidth="2" />
+                  <line x1="17" y1="17" x2="13" y2="13" strokeWidth="2" />
+                </svg>
+                Mindmap
+                </>
+              )}
+              </Button>
+            </div>
+            )}
+
+
           
           <div className="relative">
             <Textarea
