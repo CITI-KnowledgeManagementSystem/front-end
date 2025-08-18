@@ -20,6 +20,8 @@ interface Props {
   variant: string;
   message: string;
   sourceDocs?: DocumentProps[]; // Assuming sourceDocs is an array of DocumentProps
+  onSourceClick: (doc: DocumentProps) => void;
+  onShowScores: () => void;
   user: UserProfileProps | null;
   liked?: boolean;
   disliked?: boolean;
@@ -28,7 +30,10 @@ interface Props {
   handleDislike: () => void;
   handleRating: (value: number, i: number) => void;
   handleUpdateMisc?: () => void;
+  handleEvaluate: () => void;
   id: number;
+  faithfulness?: number | null; // <-- Added property
+  isEvaluating?: boolean;
 }
 
 const ChatBox = ({
@@ -44,6 +49,13 @@ const ChatBox = ({
   handleDislike,
   handleRating,
   handleUpdateMisc,
+  handleEvaluate,
+  onSourceClick,
+  faithfulness,
+  isEvaluating, // <-- Tambahin prop isEvaluating
+  
+  // answer_relevancy,
+  onShowScores,
 }: Props) => {
   if (variant === "request") {
     return (
@@ -64,6 +76,8 @@ const ChatBox = ({
       </div>
     );
   }
+
+  const hasScores = faithfulness !== null && faithfulness !== undefined;
 
   return (
     <div className="w-full my-1">
@@ -113,15 +127,14 @@ const ChatBox = ({
         </h4>
         <div className="flex flex-wrap gap-2">
           {sourceDocs.map((doc) => (
-            <div 
-              key={doc.id} 
-              className="text-xs bg-slate-100 dark:bg-gray-700 text-slate-700 dark:text-gray-300 px-2 py-1 rounded-full"
-              title={`Topic: ${doc.topic || 'N/A'}`}
+            <button 
+              key={doc.document_id}
+              onClick={() => onSourceClick(doc)} // <-- Panggil fungsi dari props
+              className="text-xs bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-slate-700 dark:text-gray-300 px-2.5 py-1 rounded-full text-left"
+              title={doc.document_name}
             >
-              {doc.title}
-              <br />
-              {doc.original_name}
-            </div>
+              {doc.document_name}
+            </button>
           ))}
         </div>
       </div>
@@ -172,13 +185,46 @@ const ChatBox = ({
         >
           Update
         </Button>
+
+
+
+
+      {isEvaluating && (
+        <Button variant="ghost" disabled className="mx-[5px] h-[35px] text-gray-500">
+          {/* Ganti ini pake ikon spinner dari library lo, misal lucide-react */}
+          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Evaluating...
+        </Button>
+      )}
+
+      {/* STATE 2: Kalo GAK lagi loading DAN SUDAH ada skor, tampilin tombol "Eval Results" */}
+      {!isEvaluating && hasScores && (
+        <Button
+          variant="outline"
+          className="mx-[5px] h-[35px] dark:text-gray-300"
+          onClick={onShowScores}
+        >
+          Eval Results
+        </Button>
+      )}
+
+      {/* STATE 3: Kalo GAK lagi loading DAN BELUM ada skor, tampilin tombol "Evaluate" */}
+      {!isEvaluating && !hasScores && (
         <Button
           variant="ghost"
           className="mx-[5px] h-[35px] dark:text-gray-300"
-          onClick={() => alert("awkoawkowakowakowakoawk")}
+          onClick={handleEvaluate}
         >
           Evaluate
         </Button>
+      )}
+
+
+
+
       </div>
     </div>
   );

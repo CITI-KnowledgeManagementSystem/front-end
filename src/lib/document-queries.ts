@@ -38,8 +38,7 @@ export async function numberOfDocuments(id: string) {
   }
 }
 
-  export async function getDocumentsByIds(ids: number[]): Promise<DocumentProps[]> {
-  // Kalo list ID-nya kosong, balikin array kosong biar gak usah nanya ke DB
+export async function getDocumentsByIds(ids: number[]): Promise<DocumentProps[]> {
   if (!ids || ids.length === 0) {
     return [];
   }
@@ -48,22 +47,20 @@ export async function numberOfDocuments(id: string) {
     const documents = await prisma.document.findMany({
       where: {
         id: {
-          in: ids, // Cari semua dokumen yang ID-nya ada di dalam list
+          in: ids,
         },
       },
-      // Ambil hanya kolom yang kita butuhkan
       select: {
         id: true,
         original_name: true,
-        title: true,
         topic: true,
+        // tambahin kolom lain kalo perlu
       },
     });
     // @ts-ignore
-    // console.log("Documents fetched:", documents);
     return documents;
   } catch (error) {
     console.error("Gagal fetch detail dokumen:", error);
-    return []; // Kalo error, balikin array kosong
+    return [];
   }
 }

@@ -17,6 +17,10 @@ import SessionDialog from "@/components/session_dialog";
 import { toast } from "sonner";
 import { useTheme } from "@/hooks/useTheme";
 
+// import { DocumentProps } from "@/types";
+import SourceDetailModal from "@/components/prompt/source-detail-modal";
+import EvalResultModal from "@/components/prompt/eval-result-modal";
+
 type Props = {
   user: UserProfileProps | null;
   conversations: MessageProps[];
@@ -80,6 +84,13 @@ const PromptPage = ({ user, conversations }: Props) => {
       scrollDown();
     }
   }, [data, enableScroll]);
+
+  useEffect(() => {
+  // Setiap kali 'conversations' (prop dari server) berubah,
+  // paksa 'data' (state lokal) buat ikut berubah.
+  setData(conversations);
+  setEvaluatingMessageId(null); 
+}, [conversations]);
 
   const handleSendPrompt = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -198,128 +209,6 @@ const PromptPage = ({ user, conversations }: Props) => {
       }
   };
 
-  // const handleSendPrompt = async (e: React.FormEvent<HTMLFormElement>) => {
-  //   e.preventDefault();
-  //   if (!prompt.trim()) return;
-
-  //   const userMessageText = prompt;
-  //   setPrompt("");
-  //   setIsPrompting(false); // Reset input field
-
-  //   // 1. Siapkan pesan user dan placeholder untuk AI di UI
-  //   const tempUserMessage: MessageProps = {
-  //       type: "request",
-  //       message: userMessageText,
-  //   };
-
-  //   const tempAiMessage: MessageProps = {
-  //       type: "response",
-  //       message: "", // Mulai dengan pesan kosong
-  //       message_id: `ai-${Date.now()}`, // ID sementara yang unik
-  //       sourceDocs: [],
-  //   };
-
-  //   // Langsung update UI dengan pesan user dan placeholder AI
-  //   const newData = [...data, tempUserMessage, tempAiMessage];
-  //   setData(newData);
-  //   setIsLoading(true); // Tampilkan loading spinner lama jika perlu
-
-  //   try {
-  //       const response = await fetch('http://localhost:5000/llm/chat_with_llm', {
-  //           method: 'POST',
-  //           headers: { 'Content-Type': 'application/json' },
-  //           body: JSON.stringify({
-  //               question: userMessageText,
-  //               userId: user?.id || "",
-  //               conversation_history: data, // Kirim riwayat chat yang sudah ada
-  //               hyde: isHydeChecked.toString(),
-  //               reranking: isRerankingChecked.toString()
-  //           }),
-  //       });
-
-  //       setIsLoading(false); // Sembunyikan loading spinner lama setelah stream dimulai
-  //       if (!response.body) throw new Error("Response body is null");
-
-  //       const reader = response.body.getReader();
-  //       const decoder = new TextDecoder();
-  //       let fullResponse = "";
-  //       let retrievedDocIds: string[] = [];
-
-  //       // 2. Loop untuk membaca stream
-  //       while (true) {
-  //           const { value, done } = await reader.read();
-  //           if (done) break;
-
-  //           const chunk = decoder.decode(value);
-  //           const lines = chunk.split('\n\n').filter(line => line.trim());
-
-  //           for (const line of lines) {
-  //               if (line.startsWith('data: ')) {
-  //                   const dataStr = line.substring(6);
-  //                   if (dataStr === '[DONE]') {
-  //                       // 3. Setelah stream selesai, jalankan logika penyimpanan
-  //                       if (!slug) {
-  //                           await handleNewChatBox(userMessageText, fullResponse, retrievedDocIds);
-  //                       } else {
-  //                           await handleSaveResponse(userMessageText, fullResponse, retrievedDocIds, slug[0]);
-  //                       }
-  //                       return; // Keluar dari fungsi
-  //                   }
-
-  //                   try {
-  //                       const data = JSON.parse(dataStr);
-
-  //                       if (data.answer_token) {
-  //                           for (const char of data.answer_token) {
-  //                               fullResponse += char;
-  //                               setData(currentData =>
-  //                                   currentData.map(msg =>
-  //                                       msg.message_id === tempAiMessage.message_id
-  //                                           ? { ...msg, message: fullResponse }
-  //                                           : msg
-  //                                   )
-  //                               );
-  //                               await sleep(10); // Atur kecepatan ketikan di sini
-  //                           }
-  //                       } else if (data.retrieved_doc_ids) {
-  //                             retrievedDocIds = data.retrieved_doc_ids;
-  //                             if (retrievedDocIds && retrievedDocIds.length > 0) {
-  //                                 // Ambil detail dokumen sumber
-  //                                 const params = new URLSearchParams();
-  //                                 retrievedDocIds.forEach(id => params.append('ids', id));
-  //                                 const docResponse = await fetch(`/api/retrievedocs?${params.toString()}`);
-  //                                 if (docResponse.ok) {
-  //                                     const docs: DocumentProps[] = await docResponse.json();
-  //                                     setData(currentData =>
-  //                                         currentData.map(msg =>
-  //                                             msg.message_id === tempAiMessage.message_id
-  //                                                 ? { ...msg, sourceDocs: docs }
-  //                                                 : msg
-  //                                         )
-  //                                     );
-  //                                 }
-  //                             }
-  //                         }
-  //                   } catch (e) {
-  //                       console.error("Failed to parse JSON from stream", e);
-  //                   }
-  //               }
-  //           }
-  //       }
-  //   } catch (error) {
-  //       console.error('Failed to stream message:', error);
-  //       setData(currentData =>
-  //           currentData.map(msg =>
-  //               msg.message_id === tempAiMessage.message_id
-  //                   ? { ...msg, message: "Sorry, an error occurred during streaming." }
-  //                   : msg
-  //           )
-  //       );
-  //   } finally {
-  //       setIsLoading(false);
-  //   }
-  // };
-
   const handleRating = (value: number, i: number) => {
     setEnableScroll(false);
     const newData = [...data];
@@ -409,7 +298,7 @@ const PromptPage = ({ user, conversations }: Props) => {
     const newResponse: MessageProps = {
       type: "response",
       message: res.answer,
-      retrieved_doc_ids: res.retrieved_doc_ids || [],
+      retrieved_docs: res.retrieved_docs || [],
     };
     console.log("Response received:", newResponse);
     return newResponse;
@@ -418,16 +307,16 @@ const PromptPage = ({ user, conversations }: Props) => {
   const handleSaveResponse = async (
     request: string,
     response: string,
-    retrievedDocIds: string[] | undefined,
+    retrievedDoc: string[] | undefined,
     chatBoxId: string
   ) => {
     const formData = new FormData();
     formData.append("request", request);
     formData.append("userId", user?.id || "");
     formData.append("response", response);
-    if (retrievedDocIds) {
-      // console.log("Retrieved Document IDs:", retrievedDocIds);
-      formData.append("retrievedDocIds", JSON.stringify(retrievedDocIds));
+    if (retrievedDoc) {
+      // console.log("Retrieved Document IDs:", retrievedDoc);
+      formData.append("retrievedDocIds", JSON.stringify(retrievedDoc));
     }
     formData.append("chatBoxId", chatBoxId);
     formData.append("responseTime", responseTime.toString());
@@ -466,6 +355,88 @@ const PromptPage = ({ user, conversations }: Props) => {
     }
   };
 
+const handleEvaluate = async (messageToEvaluate: MessageProps) => {
+  console.log("Evaluating message:", messageToEvaluate);
+  if (!messageToEvaluate || !messageToEvaluate.message_id) {
+    toast.error("Message ID tidak ditemukan, tidak bisa evaluasi.");
+    return;
+  }
+
+  // 1. Kumpulin semua data yang dibutuhkan
+  // Cari pertanyaan yang relevan untuk jawaban ini
+  const requestMessage = data.find((msg, index) => data[index + 1] === messageToEvaluate);
+  
+  if (!requestMessage) {
+    toast.error("Pertanyaan asli tidak ditemukan.");
+    return;
+  }
+  
+  const payload = {
+    messageId: messageToEvaluate.message_id,
+    question: requestMessage.message,
+    answer: messageToEvaluate.message,
+    contexts: (messageToEvaluate.sourceDocs || []).map(doc => doc.content),
+  };
+
+  console.log("Mengirim data untuk evaluasi:", payload);
+  setEvaluatingMessageId(messageToEvaluate.message_id);
+  // 2. Tembak ke endpoint 'jembatan' di Next.js
+  const promise = fetch('/api/evaluate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  }).then(res => {
+    if (!res.ok) throw new Error("Gagal memulai evaluasi.");
+    return "Evaluasi berhasil dijadwalkan!";
+  }).catch((err) => {
+      // Kalo gagal, matiin lagi saklarnya
+      setEvaluatingMessageId(null);
+      throw err; // Lempar errornya biar toast.promise nangkep
+    });
+
+  // 3. Tampilkan notifikasi ke user
+  toast.promise(promise, {
+    loading: "Memulai evaluasi...",
+    success: () => {
+      startPollingForScores(messageToEvaluate.message_id!);
+      return "Evaluasi berhasil dijadwalkan!";
+    },
+    error: (err) => err.toString(),
+  });
+};
+
+const startPollingForScores = (messageId: string) => {
+    const intervalId = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/message/status/${messageId}`);
+        const data = await response.json();
+
+        if (data.status === "complete") {
+          console.log("Evaluasi selesai! Refreshing data...");
+          clearInterval(intervalId); // <-- BERHENTI NANYA
+          toast.success("Skor evaluasi berhasil diterima!");
+          router.refresh(); // <-- REFRESH TAMPILAN
+        } else {
+          console.log("Status evaluasi masih 'pending', menunggu...");
+        }
+      } catch (error) {
+        console.error("Gagal ngecek status, polling dihentikan.");
+        clearInterval(intervalId);
+      }
+    }, 2000); // <-- Nanya setiap 2 detik
+
+    // Buat pengaman, hentikan polling setelah 2 menit kalo gak ada hasil
+    setTimeout(() => {
+      clearInterval(intervalId);
+      setEvaluatingMessageId(null);
+      console.log("Polling dihentikan karena timeout.");
+    }, 120000); // 2 menit
+  };
+
+const [selectedDoc, setSelectedDoc] = useState<DocumentProps | null>(null);
+const [selectedScores, setSelectedScores] = useState<MessageProps | null>(null);
+const [evaluatingMessageId, setEvaluatingMessageId] = useState<string | null>(null);
+// console.log("PROPS 'conversations' YANG DITERIMA PROMPTPAGE:", conversations);
   return (
     <div className={`flex flex-col w-full h-full p-4 relative`}>
       <SessionDialog />
@@ -548,6 +519,14 @@ const PromptPage = ({ user, conversations }: Props) => {
                 handleDislike={() => handleDislike(i)}
                 handleRating={(value) => handleRating(value, i)}
                 handleUpdateMisc={() => handleUpdateMisc(i)}
+                handleEvaluate={() => handleEvaluate(item)}
+                onSourceClick={(doc) => setSelectedDoc(doc)}
+                onShowScores={() => setSelectedScores(item)}
+                faithfulness={item.faithfulness}
+                answer_relevancy={item.answer_relevancy}
+                context_precision={item.context_precision}
+                context_relevance={item.context_relevance}
+                isEvaluating={evaluatingMessageId === item.message_id}
               />
             ))}
             {isLoading && (
@@ -583,7 +562,7 @@ const PromptPage = ({ user, conversations }: Props) => {
     >
       <div
         ref={divRef}
-        contentEditable
+        contentEditable={!isLoading}
         className="w-full h-fit bg-transparent outline-none whitespace-pre-line text-gray-800 dark:text-white"
         role="textbox"
         onInput={(e) => setPrompt(e.currentTarget.textContent || "")}
@@ -592,12 +571,21 @@ const PromptPage = ({ user, conversations }: Props) => {
         aria-multiline="true"
       ></div>
     </div>
-    <Button disabled={prompt.length === 0} className="bg-blue-700 hover:bg-blue-500">
+    <Button disabled={prompt.length === 0 || isLoading} className="bg-blue-700 hover:bg-blue-500">
       <LuSendHorizontal size={20} />
     </Button>
   </form>
 </div>
-
+ <SourceDetailModal 
+        doc={selectedDoc} 
+        isOpen={!!selectedDoc} 
+        onClose={() => setSelectedDoc(null)} 
+      />
+      <EvalResultModal 
+        scores={selectedScores} 
+        isOpen={!!selectedScores} 
+        onClose={() => setSelectedScores(null)} 
+      />
     </div>
   );
 };

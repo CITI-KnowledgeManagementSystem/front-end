@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
@@ -27,10 +27,14 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { NotebookAPI, PodcastResponse } from '@/lib/api'
 import { useAuth } from '@clerk/nextjs'
+import useMindMapStore from './markmap'
+import { Markmap } from 'markmap-view';
+import { Transformer } from 'markmap-lib';
+import { Toolbar } from 'markmap-toolbar';
 
 interface StudyTool {
   id: string
-  type: 'audio-overview' | 'study-guide' | 'timeline' | 'faq' | 'briefing-doc'
+  type: 'audio-overview' | 'study-guide' | 'timeline' | 'faq' | 'briefing-doc' | 'mind-map'
   title: string
   description: string
   status: 'ready' | 'generating' | 'error'
@@ -40,6 +44,23 @@ interface StudyTool {
 
 interface StudioPanelProps {
   selectedSources: string[]
+}
+
+function renderToolbar(mm: Markmap, wrapper: HTMLElement) {
+  while (wrapper?.firstChild) wrapper.firstChild.remove();
+  if (mm && wrapper) {
+    const toolbar = new Toolbar();
+    toolbar.attach(mm);
+    // Register custom buttons
+    toolbar.register({
+      id: 'alert',
+      title: 'Click to show an alert',
+      content: 'Alert',
+      onClick: () => alert('You made it!'),
+    });
+    toolbar.setItems([...Toolbar.defaultItems, 'alert']);
+    wrapper.append(toolbar.render());
+  }
 }
 
 export function StudioPanel({ selectedSources }: StudioPanelProps) {
@@ -101,6 +122,8 @@ export function StudioPanel({ selectedSources }: StudioPanelProps) {
         return <Brain className="w-5 h-5" />
       case 'briefing-doc':
         return <FileText className="w-5 h-5" />
+      case 'mind-map':
+        return <Brain className="w-5 h-5" />
       default:
         return <FileText className="w-5 h-5" />
     }
@@ -213,6 +236,78 @@ export function StudioPanel({ selectedSources }: StudioPanelProps) {
   }
 
   const canGenerate = selectedSources.length > 0
+
+  const transformer = new Transformer();
+
+  const { mindMapData, setMindMapData, isLoadingMindMap, setIsLoadingMindMap } = useMindMapStore(); 
+  const [ showMindMap, setShowMindMap ] = useState(false);
+
+  const refSvg = useRef<SVGSVGElement>();
+  // Ref for markmap object
+  const refMm = useRef<Markmap>();
+  // Ref for toolbar wrapper
+  const refToolbar = useRef<HTMLDivElement>();
+
+  // useEffect(() => {
+  //   // Create markmap and save to refMm
+  //   if (refMm.current) return;
+  //       const mm = Markmap.create(refSvg.current, {
+  //     // Options for markmap
+  //     autoFit: true,
+  //     initialExpandLevel: 0,
+  //   });
+  //   console.log('create', refSvg.current);
+  //   refMm.current = mm;
+  //   renderToolbar(refMm.current, refToolbar.current);
+  // }, [showMindMap, refSvg.current]);
+
+  // console.log('mindMapData', mindMapData);
+
+  // useEffect(() => {;
+  //   // Update data for markmap once value is changed
+  //   const mm = refMm.current;
+  //   if (!mm) return;
+  //   const { root } = transformer.transform(mindMapData);
+  //   mm.setData(root).then(() => {
+  //     mm.fit();
+  //   });
+  // }, [refMm.current, mindMapData]);
+
+  useEffect(() => {
+  // Kalo salah satu dari ini ga terpenuhi, langsung stop. Gak usah kerja.
+  // 1. Modal harus lagi kebuka (showMindMap === true)
+  // 2. Datanya harus ada (mindMapData bukan null/undefined)
+  // 3. Kanvas SVG-nya harus udah siap di layar (refSvg.current ada isinya)
+  if (!showMindMap || !mindMapData || !refSvg.current) {
+    return;
+  }
+
+  // Transform data dari markdown/text jadi format yang dimengerti Markmap
+  const { root } = transformer.transform(mindMapData);
+
+  // Bikin instance Markmap baru. Kita langsung taro di variabel mm
+  const mm = Markmap.create(refSvg.current, {
+    autoFit: true,
+    initialExpandLevel: 0,
+  });
+
+  mm.setData(root);
+
+  refMm.current = mm;
+  console.log('Markmap created and data loaded!', refSvg.current);
+
+
+
+  return () => {
+    // Kalo ada instance Markmap yang aktif, ancurin dulu
+    if (refMm.current) {
+      console.log('Destroying previous Markmap instance...');
+      refMm.current.destroy();
+      refMm.current = null; // Kosongin lagi ref-nya, siap buat instance baru nanti
+    }
+  };
+}, [showMindMap, mindMapData]);
+
 
   return (
     <div className="h-full flex flex-col dark:bg-gray-700 bg-white">
@@ -468,9 +563,80 @@ export function StudioPanel({ selectedSources }: StudioPanelProps) {
                 )}
               </div>
             ))}
+
+            {/* Mind Map Section */}
+
+              {mindMapData && (<div
+                className="p-3 rounded-lg border transition-colors cursor-pointer border-gray-200 hover:border-gray-300"
+                onClick={() => setShowMindMap(true)}
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="text-gray-600">
+                      {getToolIcon('mind-map')}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="text-sm font-medium truncate text-gray-900">
+                          Mind Map
+                        </h4>
+                        {getStatusBadge('ready')}
+                      </div>
+                      <p className={"text-xs line-clamp-2 text-gray-600"}>
+                        Visual representation of your documents' structure and relationships.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+              </div>)}
+
           </div>
         </ScrollArea>
       </div>
+
+          {/* Mind Map Modal */}
+          {showMindMap && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+              <div className="bg-white rounded-lg shadow-lg w-full h-fit max-w-7xl relative p-6 flex flex-col">
+              <button
+                className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+                onClick={() => setShowMindMap(false)}
+                aria-label="Close"
+              >
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+                <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+              </button>
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Brain className="w-5 h-5" /> Mind Map
+              </h3>
+              <div className="relative w-full flex-1 flex justify-center items-center min-h-0">
+                <svg
+                ref={refSvg}
+                width="100%"
+                height="100%"
+                style={{
+                  display: mindMapData ? 'block' : 'none',
+                  background: '#fff',
+                  borderRadius: '12px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                  minHeight: '320px',
+                  maxWidth: '100%',
+                  height: '100%',
+                  // overflow: 'visible',
+                }}
+                className="w-full h-full transition-all"
+                />
+                <div
+                ref={refToolbar}
+                className="absolute top-2 right-2 z-10"
+                />
+              </div>
+              </div>
+            </div>
+          )}
+
     </div>
   )
 } 

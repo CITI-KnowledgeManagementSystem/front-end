@@ -79,7 +79,7 @@ export const getChatMessages = async (id: string, token: string | null) => {
   }
 
   try {
-    const response = await fetch(`http://localhost:3000/api/chatbox/${id}`, {
+    const response = await fetch(`/api/chatbox/${id}`, {
       credentials: 'include',
       method: "GET",
       headers: {
@@ -91,8 +91,8 @@ export const getChatMessages = async (id: string, token: string | null) => {
     if (!response.ok) {
       throw new Error(`Error: ${response.status} ${response.statusText}`);
     }
-    else console.log("Chat messages fetched successfully");
-    // console.log("----------------------INI DARI UTILS GETCHATMESSAGES ----------------------");
+    // else console.log("Chat messages fetched successfully");
+    //  console.log("----------------------INI DARI UTILS GETCHATMESSAGES ----------------------");
     const data = await response.json();
     // console.log("Data:", data);
     return sortMessageProps(data);
@@ -123,7 +123,11 @@ function sortMessageProps(response: any) {
       liked: data[i].liked,
       disliked: data[i].disliked,
       rating: data[i].rating,
-      sourceDocs: data[i].sourceDocs
+      sourceDocs: data[i].sourceDocs,
+      faithfulness: data[i].faithfulness,
+      answer_relevancy: data[i].answer_relevancy,
+      context_precision: data[i].context_precision,
+      context_relevance: data[i].context_relevance,
     });
   }
   return messages;
