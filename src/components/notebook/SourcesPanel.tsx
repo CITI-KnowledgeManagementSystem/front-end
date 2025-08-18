@@ -210,8 +210,8 @@ export function SourcesPanel({
                 key={source.id}
                 className={`p-3 rounded-lg border transition-colors ${
                   selectedSources.includes(source.id)
-                    ? 'border-blue-200 bg-blue-50' 
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-blue-200 bg-blue-50 dark:bg-slate-800 dark:border-gray-600 dark:hover:border-gray-500' 
+                    : 'border-gray-200 hover:border-gray-300 dark:border-gray-600 dark:hover:border-gray-500'
                 }`}
               >
                 <div className="flex items-start justify-between mb-2">
@@ -224,7 +224,7 @@ export function SourcesPanel({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <FileText className="w-4 h-4 text-red-500 flex-shrink-0" />
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-xs dark:bg-gray-600 dark:text-gray-200">
                           {getFileExtension(source.original_name).toUpperCase()}
                         </Badge>
                         {source.public && (
@@ -233,13 +233,13 @@ export function SourcesPanel({
                           </Badge>
                         )}
                       </div>
-                      <h3 className="text-sm font-medium text-gray-900 line-clamp-2 mb-1">
+                      <h3 className="text-sm font-medium text-gray-900 line-clamp-2 mb-1 dark:text-gray-200 dark:hover:text-white">
                         {source.title}
                       </h3>
-                      <p className="text-xs text-gray-600 mb-1">
+                      <p className="text-xs text-gray-600 mb-1 dark:text-gray-200">
                         Topic: {source.topic}
                       </p>
-                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-200">
                         <span>{source.file_size_formatted}</span>
                         <span>•</span>
                         <span>{new Date(source.createdAt).toLocaleDateString()}</span>
@@ -249,7 +249,7 @@ export function SourcesPanel({
                   
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0 dark:hover:bg-gray-600">
                         <MoreVertical className="w-3 h-3" />
                       </Button>
                     </DropdownMenuTrigger>

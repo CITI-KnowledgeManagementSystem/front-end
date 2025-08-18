@@ -26,6 +26,8 @@ type Props = {
   conversations: MessageProps[];
 };
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 const PromptPage = ({ user, conversations }: Props) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -91,78 +93,120 @@ const PromptPage = ({ user, conversations }: Props) => {
 }, [conversations]);
 
   const handleSendPrompt = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+      e.preventDefault();
+      if (!prompt.trim()) return;
 
-    const newMessage = {
-      type: "request",
-      message: prompt,
-    };
+      const userMessageText = prompt;
+      setPrompt("");
+      if (divRef.current) divRef.current.innerText = ""; // Membersihkan input contentEditable
+      setIsPrompting(false);
 
-    const newData = [...data, newMessage];
-    setData(newData);
-    setIsLoading(true);
-    setEnableScroll(true);
-    const currentPrompt = prompt
-    setPrompt("");
-    if (divRef.current) {
-      divRef.current.innerText = "";
-    }
-  
-    // TAMBAHKAN BLOK INI
-  try {
-    // Langkah 1: Ambil jawaban dari LLM (via Next.js -> Python)
-    const res = await handleGetResponse();
-    if (!res) {
-      throw new Error("Gak dapet balasan dari server.");
-    }
+      // --- Langkah 1: Update UI secara instan ---
+      // Siapkan pesan user dan placeholder untuk AI agar UI terasa responsif.
+      const tempUserMessage: MessageProps = {
+          type: "request",
+          message: userMessageText,
+          message_id: `user-${Date.now()}`
+      };
+      const tempAiMessage: MessageProps = {
+          type: "response",
+          message: "", // Mulai dengan pesan kosong
+          message_id: `ai-${Date.now()}`, // ID sementara yang unik
+          sourceDocs: [],
+      };
 
-    // Langkah 2: Simpen ke DB buat dapet ID asli
-    // Kita asumsikan handleSaveResponse/handleNewChatBox balikin ID
-    let responseMessageId: string | null = null;
-    if (!slug) {
-      // Lo mungkin perlu ngemodif handleNewChatBox biar balikin ID juga
-      const id = await handleNewChatBox(currentPrompt, res.message, res.retrieved_docs);
-      // responseMessageId = id ? id.toString() : null;
-    } else {
-      const id = await handleSaveResponse(currentPrompt, res.message, res.retrieved_docs, slug[0]);
-      responseMessageId = id ? id.toString() : null;
-    }
-    
-    // Langkah 3: Update Tampilan Pertama (Jawaban Teks)
-    const newResponseForUI: MessageProps = {
-      type: "response",
-      message: res.message,
-      message_id: responseMessageId ?? undefined, // <-- Pake ID asli dari DB, null diganti undefined
-      retrieved_docs: res.retrieved_docs,
-      sourceDocs: [], // "Ransel" masih kosong
-    };
-    setData(currentData => [...currentData, newResponseForUI]);
+      setData(currentData => [...currentData, tempUserMessage, tempAiMessage]);
 
-    // Langkah 4: Ambil Detail Dokumen
-    if (responseMessageId) {
-      const docResponse = await fetch(`/api/retrievedocs/${responseMessageId}`);
-      if (docResponse.ok) {
-        const docs = await docResponse.json();
-        console.log("Retrieved Docs:", docs);
-        // Langkah 5: Update Tampilan Kedua (Sumber Dokumen)
-        setData(currentData =>
-          currentData.map(msg =>
-            msg.message_id === responseMessageId ? { ...msg, sourceDocs: docs } : msg
-          )
-        );
+      // --- Langkah 2: Mulai proses streaming dari backend ---
+      try {
+          const response = await fetch('http://localhost:5000/llm/chat_with_llm', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  question: userMessageText,
+                  userId: user?.id || "",
+                  conversation_history: data,
+                  hyde: isHydeChecked.toString(),
+                  reranking: isRerankingChecked.toString()
+              }),
+          });
+
+          if (!response.body) throw new Error("Response body is null");
+
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let fullResponse = "";
+          let retrievedDocIds: string[] = [];
+
+          // Loop untuk membaca setiap potongan data dari stream
+          while (true) {
+              const { value, done } = await reader.read();
+              if (done) break;
+
+              const chunk = decoder.decode(value);
+              const lines = chunk.split('\n\n').filter(line => line.trim());
+
+              for (const line of lines) {
+                  if (line.startsWith('data: ')) {
+                      const dataStr = line.substring(6);
+
+                      // Jika stream selesai, simpan hasilnya ke database
+                      if (dataStr.trim() === '[DONE]') {
+                          if (!slug) {
+                              await handleNewChatBox(userMessageText, fullResponse, retrievedDocIds);
+                          } else {
+                              await handleSaveResponse(userMessageText, fullResponse, retrievedDocIds, slug[0]);
+                          }
+                          return; // Keluar dari fungsi setelah semuanya selesai
+                      }
+
+                      const parsedData = JSON.parse(dataStr);
+
+                      // Event 1: Menerima token jawaban, update teks AI
+                      if (parsedData.answer_token) {
+                          fullResponse += parsedData.answer_token;
+                          setData(currentData =>
+                              currentData.map(msg =>
+                                  msg.message_id === tempAiMessage.message_id
+                                      ? { ...msg, message: fullResponse }
+                                      // Tidak perlu loop per karakter, update sekaligus per token
+                                      : msg
+                              )
+                          );
+                      }
+
+                      // Event 2: Menerima ID dokumen, fetch detailnya
+                      if (parsedData.retrieved_doc_ids) {
+                          retrievedDocIds = parsedData.retrieved_doc_ids;
+                          if (retrievedDocIds && retrievedDocIds.length > 0) {
+                              const params = new URLSearchParams();
+                              retrievedDocIds.forEach(id => params.append('ids', id));
+                              const docResponse = await fetch(`/api/retrievedocs?${params.toString()}`);
+                              if (docResponse.ok) {
+                                  const docs: DocumentProps[] = await docResponse.json();
+                                  setData(currentData =>
+                                      currentData.map(msg =>
+                                          msg.message_id === tempAiMessage.message_id
+                                              ? { ...msg, sourceDocs: docs }
+                                              : msg
+                                      )
+                                  );
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+      } catch (error) {
+          console.error('Failed to stream message:', error);
+          setData(currentData =>
+              currentData.map(msg =>
+                  msg.message_id === tempAiMessage.message_id
+                      ? { ...msg, message: "Sorry, an error occurred during streaming." }
+                      : msg
+              )
+          );
       }
-    }
-
-  } catch (error: any) {
-    console.error("Error di handleSendPrompt:", error);
-    toast.error(error.message || "Terjadi kesalahan");
-  } finally {
-    // Ini blok "bersih-bersih" yang PASTI jalan, mau error atau enggak
-    setIsLoading(false);
-    scrollDown();
-    setPrompt("");
-    setIsPrompting(false);
-  }
   };
 
   const handleRating = (value: number, i: number) => {

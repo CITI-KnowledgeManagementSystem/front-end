@@ -127,14 +127,16 @@ const DocTable = () => {
 
   useEffect(() => {
     if (editingCell !== "-1") {
-      tableContents.map((item) => {
-        if (editingCell === item.id) {
-          setInputTitle(item.title);
-          setInputTopic(item.topic);
-        }
-      });
+      // 1. Use .find() to efficiently locate the item
+      const itemToEdit = tableContents.find((item) => item.id === editingCell);
+
+      // 2. Update the state if the item is found
+      if (itemToEdit) {
+        setInputTitle(itemToEdit.title);
+        setInputTopic(itemToEdit.topic);
+      }
     }
-  }, [editingCell, tableContents]);
+  }, [editingCell]);
 
   if (isLoading) {
     return (

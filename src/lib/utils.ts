@@ -97,6 +97,7 @@ export const getChatMessages = async (id: string, token: string | null) => {
     // console.log("Data:", data);
     return sortMessageProps(data);
   } catch (error) {
+    //console.error("error utils");
     console.error("Failed to fetch chat messages:", error);
     return null; // or handle error as needed
   }
