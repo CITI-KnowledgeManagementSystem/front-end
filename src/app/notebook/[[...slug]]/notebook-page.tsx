@@ -149,6 +149,12 @@ const NotebookPage = ({ user, mode, notebookId, token }: NotebookPageProps) => {
             <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
               Citi Knowledge Management System
             </h1>
+            <Button
+              onClick={() => window.location.href = "/prompt"}
+              className="h-fit p-2 rounded-xl border bg-white text-gray-700 hover:bg-white shadow-none hover:shadow-blue-200 hover:shadow dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+            >
+              Go to Prompt!
+            </Button>
             {mode !== 'default' && (
               <span className="text-sm text-gray-500 capitalize">
                 • {mode} {notebookId ? `#${notebookId}` : ''}

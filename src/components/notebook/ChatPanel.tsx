@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -11,6 +11,14 @@ import { useNotebookAPI, Document, Message } from '@/lib/api'
 import { getChatMessages } from '@/lib/utils'
 import { MessageProps } from '@/types'
 import { toast } from 'sonner'
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+import { Markmap } from 'markmap-view';
+// import { transformer } from './markmap';
+import { Toolbar } from 'markmap-toolbar';
+import 'markmap-toolbar/dist/style.css';
+import { Transformer } from 'markmap-lib';
+import useMindMapStore from './markmap'
 
 interface ChatPanelProps {
   sources: Document[]
@@ -18,6 +26,24 @@ interface ChatPanelProps {
   currentChatBoxId: string
   onChatBoxCreate: (chatBoxId: string) => void
 }
+
+function renderToolbar(mm: Markmap, wrapper: HTMLElement) {
+  while (wrapper?.firstChild) wrapper.firstChild.remove();
+  if (mm && wrapper) {
+    const toolbar = new Toolbar();
+    toolbar.attach(mm);
+    // Register custom buttons
+    toolbar.register({
+      id: 'alert',
+      title: 'Click to show an alert',
+      content: 'Alert',
+      onClick: () => alert('You made it!'),
+    });
+    toolbar.setItems([...Toolbar.defaultItems, 'alert']);
+    wrapper.append(toolbar.render());
+  }
+}
+
 
 export function ChatPanel({ 
   sources, 
@@ -33,8 +59,13 @@ export function ChatPanel({
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [chatBoxName, setChatBoxName] = useState('')
-
+  const [error, setError] = useState(null);
+  // const [mindMapData, setMindMapData] = useState('');
+  // const [isLoadingMindMap, setIsLoadingMindMap] = useState(false);
+  const { mindMapData, setMindMapData, isLoadingMindMap, setIsLoadingMindMap } = useMindMapStore(); 
   const selectedSourcesData = sources.filter(s => selectedSources.includes(s.id))
+
+  const transformer = new Transformer();
 
   // Load conversation history when chatbox changes
   useEffect(() => {
@@ -65,9 +96,9 @@ export function ChatPanel({
       return;
     }
 
-    
+      console.log("Calling getChatMessages with ID:", currentChatBoxId); 
       const history = await getChatMessages(currentChatBoxId, token)
-      setConversationHistory(history ?? [])
+      setConversationHistory(history ?? []) 
       
       if(!history || history.length === 0) {
         setMessages([])
@@ -121,87 +152,139 @@ export function ChatPanel({
     }
   }
 
+  
+
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || !userId || !currentChatBoxId) return
+    if (!inputValue.trim() || !userId || !currentChatBoxId) return;
 
-    const userMessage = inputValue
-    setInputValue('')
-    setIsLoading(true)
+    const userMessage = inputValue;
+    setInputValue('');
 
-    // Add user message to UI immediately
-    const tempUserMessage: Message = {
-      id: Date.now(),
-      request: userMessage,
-      response: '',
-      userId,
-      chatBoxId: parseInt(currentChatBoxId),
-      createdAt: new Date(),
-    }
+    // Buat pesan pengguna dan pesan AI yang masih kosong
+    const tempUserMessageId = Date.now();
+    const tempAiMessageId = tempUserMessageId + 1;
 
-    setMessages(prev => [...prev, tempUserMessage])
+    setMessages(prev => [
+        ...prev,
+        {
+            id: tempUserMessageId,
+            request: userMessage,
+            response: '',
+            userId,
+            chatBoxId: parseInt(currentChatBoxId),
+            createdAt: new Date(),
+        },
+        {
+            id: tempAiMessageId,
+            request: '', // AI response tidak punya request
+            response: '', // Tampilkan indikator loading awal
+            userId,
+            chatBoxId: parseInt(currentChatBoxId),
+            createdAt: new Date(),
+        }
+    ]);
 
     try {
-      // Query the LLM server with the selected documents and conversation history
-      const selectedDocIds = selectedSources.map(id => 
-        sources.find(s => s.id === id)?.id
-      ).filter((id): id is string => id !== undefined)
+        const response = await fetch('http://localhost:5000/llm/chat_with_llm', { // URL endpoint kamu
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                question: userMessage,
+                userId,
+                conversation_history: conversationHistory,
+                hyde: 'true', // sesuaikan dengan logikamu
+                reranking: 'true'
+            }),
+        });
 
-      const llmResponse = await api.queryLLM(
-        [userMessage],
-        userId,
-        selectedDocIds,
-        true, // hyde
-        true, // reranking
-        "Llama 3 8B - 4 bit quantization" // selectedModel
-      )
+        if (!response.body) throw new Error("Response body is null");
 
-      const aiResponseText = typeof llmResponse.answer === 'string' 
-        ? llmResponse.answer
-        : 'I apologize, but I encountered an error processing your request. Please try again.'
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullResponse = "";
 
-      // Save the message to the database
-      const startTime = Date.now()
-      const messageResponse = await api.createMessage({
-        request: userMessage,
-        userId,
-        chatBoxId: currentChatBoxId,
-        response: aiResponseText,
-        responseTime: Date.now() - startTime,
-      })
+        // Loop untuk membaca stream
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
 
-      // Update the message with the actual response
-      const completeMessage: Message = {
-        id: messageResponse.id,
-        request: userMessage,
-        response: aiResponseText,
-        userId,
-        chatBoxId: parseInt(currentChatBoxId),
-        createdAt: new Date(),
-        responseTime: Date.now() - startTime,
-      }
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n\n').filter(line => line.trim());
 
-      setMessages(prev => [
-        ...prev.filter(m => m.id !== tempUserMessage.id),
-        completeMessage
-      ])
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    const dataStr = line.substring(6);
+                    if (dataStr === '[DONE]') {
+                        // Simpan jawaban lengkap ke database setelah selesai
+                        // api.createMessage({ ... , response: fullResponse });
+                        return;
+                    }
+                    
+                    try {
+                        const data = JSON.parse(dataStr);
 
-             // Update conversation history for next query
-       setConversationHistory(prev => [
-         ...prev,
-         { type: "request", message: userMessage },
-         { type: "response", message: aiResponseText, message_id: messageResponse.id.toString() }
-       ])
+                        // Cek apakah ini data token jawaban atau ID dokumen
+                        if (data.answer_token) {
+                            for (const char of data.answer_token) {
+                              // Tambahkan satu karakter ke state
+                              setMessages(prev =>
+                                  prev.map(msg =>
+                                      msg.id === tempAiMessageId
+                                          ? { ...msg, response: msg.response + char }
+                                          : msg
+                                  )
+                              );
+                              // Beri jeda singkat sebelum karakter berikutnya
+                              await sleep(5); // <-- Sesuaikan angka ini (dalam milidetik)
+                            }
+                        } else if (data.retrieved_doc_ids) {
+                            console.log("Retrieved document IDs:", data.retrieved_doc_ids);
+                            // Kamu bisa simpan ID ini di state terpisah jika perlu
+                        }
 
+                    } catch(e) {
+                         console.error("Failed to parse JSON from stream", e);
+                    }
+                }
+            }
+        }
     } catch (error) {
-      console.error('Failed to send message:', error)
-      toast.error('Failed to send message')
-      
-      // Remove the temporary message on error
-      setMessages(prev => prev.filter(m => m.id !== tempUserMessage.id))
-    } finally {
-      setIsLoading(false)
+        console.error('Failed to stream message:', error);
+        setMessages(prev => prev.map(msg => 
+            msg.id === tempAiMessageId ? {...msg, response: "Sorry, an error occurred."} : msg
+        ));
     }
-  }
+  };
+
+  const handleMindMap = async () => {
+    // Kalo lagi loading, jangan jalanin fungsi lagi
+    if (isLoadingMindMap) return;
+
+    setIsLoadingMindMap(true); // Mulai loading
+    // setMindMapData(''); // Bersihin data mind map lama
+
+    try {
+
+      const mindMap = await api.generateMindMap(
+        'private',
+        selectedSources[0],
+        sources.find(s => s.id === selectedSources[0])?.tag || ''
+      );
+
+      console.log('Data mind map:', mindMap);
+      
+      // Simpan data mind map ke state
+      setMindMapData(mindMap);
+      // console.log('Sukses dapet data mind map:', data);
+
+    } catch (err) {
+      // Kalo ada error di try block (masalah network atau dari throw di atas)
+      console.error('Gagal fetch mind map:', err);
+    } finally {
+      // Apapun yang terjadi (sukses atau gagal), loading selesai
+      setIsLoadingMindMap(false);
+    }
+  };
 
   const handleMessageFeedback = async (messageId: number, type: 'like' | 'dislike') => {
     try {
@@ -289,12 +372,13 @@ export function ChatPanel({
           {messages.map((message) => (
             <div key={message.id} className="space-y-3">
               {/* User Message */}
+              { message.request &&(
               <div className="flex justify-end">
                 <div className="bg-blue-600 text-white rounded-2xl px-4 py-3 max-w-lg">
                   <p className="text-sm">{message.request}</p>
                 </div>
               </div>
-
+              )}
               {/* AI Response */}
               {message.response && (
                 <div className="space-y-3">
@@ -385,6 +469,48 @@ export function ChatPanel({
               </p>
             </div>
           )}
+
+            {selectedSources.length > 0 && selectedSources.length < 2 && (
+            <div className="flex justify-start mb-3">
+              <Button
+              type="button"
+              variant="outline"
+              className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50 hover:border-blue-600 transition"
+              onClick={handleMindMap}
+              disabled={isLoading || selectedSources.length === 0 || isLoadingMindMap}
+              >
+              {isLoadingMindMap ? (
+                <span className="inline-flex items-center">
+                <span className="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent mr-2"></span>
+                Loading...
+                </span>
+              ) : (
+                <>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <circle cx="12" cy="12" r="3" strokeWidth="2" />
+                  <circle cx="5" cy="7" r="2" strokeWidth="2" />
+                  <circle cx="19" cy="7" r="2" strokeWidth="2" />
+                  <circle cx="5" cy="17" r="2" strokeWidth="2" />
+                  <circle cx="19" cy="17" r="2" strokeWidth="2" />
+                  <line x1="7" y1="7" x2="11" y2="11" strokeWidth="2" />
+                  <line x1="17" y1="7" x2="13" y2="11" strokeWidth="2" />
+                  <line x1="7" y1="17" x2="11" y2="13" strokeWidth="2" />
+                  <line x1="17" y1="17" x2="13" y2="13" strokeWidth="2" />
+                </svg>
+                Mindmap
+                </>
+              )}
+              </Button>
+            </div>
+            )}
+
+
           
           <div className="relative">
             <Textarea

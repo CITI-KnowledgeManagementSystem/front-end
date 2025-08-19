@@ -281,7 +281,35 @@ export class NotebookAPI {
     }
     return response.blob()
   }
+
+  static async generateMindMap(
+    collection_name: string,
+    document_id: string,
+    tag: string
+
+  ): Promise<any> {
+    const formData = new FormData()
+    formData.append("collection_name", collection_name)
+    formData.append("document_id", document_id)
+    formData.append("tag", tag)
+
+    const response = await fetch('/api/mind_map', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (!response.ok) {
+      throw new Error(`Mind map generation failed: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+
+    console.log('Mind map response dari api.ts:', data)
+
+    return data.message
+  }
 }
+
 
 // Custom hooks for API integration
 export function useNotebookAPI() {

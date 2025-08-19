@@ -90,6 +90,7 @@
     --border: 217.2 32.6% 17.5%; /* Dark mode border: Dark gray */
     --input: 217.2 32.6% 17.5%; /* Dark mode input border: Dark gray */
     --ring: 212.7 26.8% 83.9%;
+    --button: 198 93% 60%; /* Sky-400 */
   }
   
   /* Base styles */

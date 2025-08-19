@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { BsPencilSquare, BsLayoutSidebarInset, BsMoon, BsSun } from "react-icons/bs"; // Importing the icons
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../../components/ui/hover-card";
-import { LuSendHorizontal } from "react-icons/lu";
+import { LuSendHorizontal, LuNotebookText } from "react-icons/lu";
 import { Button } from "@/components/ui/button";
 import { MessageProps, DocumentProps } from "@/types";
 import Link from "next/link";
@@ -20,11 +20,13 @@ import { useTheme } from "@/hooks/useTheme";
 // import { DocumentProps } from "@/types";
 import SourceDetailModal from "@/components/prompt/source-detail-modal";
 import EvalResultModal from "@/components/prompt/eval-result-modal";
+import { Doc } from "zod/v4/core";
 
 type Props = {
   user: UserProfileProps | null;
   conversations: MessageProps[];
 };
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const PromptPage = ({ user, conversations }: Props) => {
   const router = useRouter();
@@ -91,71 +93,123 @@ const PromptPage = ({ user, conversations }: Props) => {
 }, [conversations]);
 
   const handleSendPrompt = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+          e.preventDefault();
+      if (!prompt.trim()) return;
 
-    const newMessage = {
-      type: "request",
-      message: prompt,
-    };
+      const userMessageText = prompt;
+      setPrompt("");
+      if (divRef.current) divRef.current.innerText = ""; // Membersihkan input contentEditable
+      setIsPrompting(false);
 
-    const newData = [...data, newMessage];
-    setData(newData);
-    setIsLoading(true);
-    setEnableScroll(true);
-    const currentPrompt = prompt
-    setPrompt("");
-    if (divRef.current) {
-      divRef.current.innerText = "";
-    }
-  
-    // TAMBAHKAN BLOK INI
-  try {
-    // Langkah 1: Ambil jawaban dari LLM (via Next.js -> Python)
-    const res = await handleGetResponse();
-    if (!res) {
-      throw new Error("Gak dapet balasan dari server.");
-    }
+      // --- Langkah 1: Update UI secara instan ---
+      // Siapkan pesan user dan placeholder untuk AI agar UI terasa responsif.
+      const tempUserMessage: MessageProps = {
+          type: "request",
+          message: userMessageText,
+          message_id: `user-${Date.now()}`
+      };
+      const tempAiMessage: MessageProps = {
+          type: "response",
+          message: "", 
+          message_id: `ai-${Date.now()}`,
+          sourceDocs: [],
+      };
 
-    // Langkah 2: Simpen ke DB buat dapet ID asli
-    // Kita asumsikan handleSaveResponse/handleNewChatBox balikin ID
-    let responseMessageId: string | null = null;
-    if (!slug) {
-      // Lo mungkin perlu ngemodif handleNewChatBox biar balikin ID juga
-      const id = await handleNewChatBox(currentPrompt, res.message, res.retrieved_docs);
-      // responseMessageId = id ? id.toString() : null;
-    } else {
-      const id = await handleSaveResponse(currentPrompt, res.message, res.retrieved_docs, slug[0]);
-      responseMessageId = id ? id.toString() : null;
-    }
-    
-    // Langkah 3: Update Tampilan Pertama (Jawaban Teks)
-    const newResponseForUI: MessageProps = {
-      type: "response",
-      message: res.message,
-      message_id: responseMessageId ?? undefined, // <-- Pake ID asli dari DB, null diganti undefined
-      retrieved_docs: res.retrieved_docs,
-      sourceDocs: [], // "Ransel" masih kosong
-    };
-    setData(currentData => [...currentData, newResponseForUI]);
+      setData(currentData => [...currentData, tempUserMessage, tempAiMessage]);
 
-    // Langkah 4: Ambil Detail Dokumen
-    if (responseMessageId) {
-      const docResponse = await fetch(`/api/retrievedocs/${responseMessageId}`);
-      if (docResponse.ok) {
-        const docs = await docResponse.json();
-        console.log("Retrieved Docs:", docs);
-        // Langkah 5: Update Tampilan Kedua (Sumber Dokumen)
-        setData(currentData =>
-          currentData.map(msg =>
-            msg.message_id === responseMessageId ? { ...msg, sourceDocs: docs } : msg
-          )
-        );
-      }
-    }
+      // --- Langkah 2: Mulai proses streaming dari backend ---
+      try {
+          const response = await fetch('http://localhost:5000/llm/chat_with_llm', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  question: userMessageText,
+                  userId: user?.id || "",
+                  conversation_history: data,
+                  hyde: isHydeChecked.toString(),
+                  reranking: isRerankingChecked.toString()
+              }),
+          });
 
-  } catch (error: any) {
-    console.error("Error di handleSendPrompt:", error);
-    toast.error(error.message || "Terjadi kesalahan");
+          if (!response.body) throw new Error("Response body is null");
+
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let fullResponse = "";
+          let retrievedDocsData: DocumentProps[] = [];
+
+          // Loop untuk membaca setiap potongan data dari stream
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break; // Kalo koneksi selesai, keluar dari loop
+
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n\n').filter(line => line.trim());
+
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    const dataStr = line.substring(6).trim();
+
+                    // PENTING: Cek [DONE] di sini cuma buat nge-skip, JANGAN return/break
+                    if (!dataStr) {
+                        continue; // Lanjut ke line berikutnya kalo ada
+                    }
+
+                    if (dataStr === '[DONE]') {
+                        continue;
+                    }
+
+                    const parsedData = JSON.parse(dataStr);
+
+                    if (parsedData.answer_token) {
+                        fullResponse += parsedData.answer_token;
+                        setData(currentData =>
+                            currentData.map(msg =>
+                                msg.message_id === tempAiMessage.message_id
+                                    ? { ...msg, message: fullResponse }
+                                    : msg
+                            )
+                        );
+                    }
+
+                    if (parsedData.retrieved_doc) {
+                        retrievedDocsData.push(parsedData.retrieved_doc);
+                        setData(currentData =>
+                            currentData.map(msg =>
+                                msg.message_id === tempAiMessage.message_id
+                                    ? { ...msg, sourceDocs: [...retrievedDocsData] }
+                                    : msg
+                            )
+                        );
+                    }
+                }
+            }
+          } 
+          let realMessageId: string | undefined;
+          if (!slug) {
+              realMessageId = await handleNewChatBox(userMessageText, fullResponse, retrievedDocsData);
+          } else {
+              realMessageId = await handleSaveResponse(userMessageText, fullResponse, retrievedDocsData, slug[0]);
+          }
+          if (realMessageId) {
+            // Update the AI message with the real message ID
+            setData(currentData =>
+                currentData.map(msg =>
+                    msg.message_id === tempAiMessage.message_id
+                        ? { ...msg, message_id: realMessageId }
+                        : msg
+                )
+            );
+          }
+      } catch (error) {
+          console.error('Failed to stream message:', error);
+          setData(currentData =>
+              currentData.map(msg =>
+                  msg.message_id === tempAiMessage.message_id
+                      ? { ...msg, message: "Sorry, an error occurred during streaming." }
+                      : msg
+              )
+          );
   } finally {
     // Ini blok "bersih-bersih" yang PASTI jalan, mau error atau enggak
     setIsLoading(false);
@@ -163,7 +217,7 @@ const PromptPage = ({ user, conversations }: Props) => {
     setPrompt("");
     setIsPrompting(false);
   }
-  };
+};
 
   const handleRating = (value: number, i: number) => {
     setEnableScroll(false);
@@ -263,7 +317,7 @@ const PromptPage = ({ user, conversations }: Props) => {
   const handleSaveResponse = async (
     request: string,
     response: string,
-    retrievedDoc: string[] | undefined,
+    retrievedDoc: DocumentProps[] | undefined,
     chatBoxId: string
   ) => {
     const formData = new FormData();
@@ -290,7 +344,7 @@ const PromptPage = ({ user, conversations }: Props) => {
     return data.id;
   };
 
-  const handleNewChatBox = async (request: string, response: string, retrieved_doc_ids: string[] | undefined) => {
+  const handleNewChatBox = async (request: string, response: string, retrievedDocs: DocumentProps[]| undefined) => {
     const formData = new FormData();
     formData.append("name", "New Chat Box");
     formData.append("userId", user?.id || "");
@@ -304,10 +358,11 @@ const PromptPage = ({ user, conversations }: Props) => {
     else {
       const { id: chatId } = await res.json();
       triggerFunction();
-      await handleSaveResponse(request, response, retrieved_doc_ids ,chatId);
+      const messageId = await handleSaveResponse(request, response, retrievedDocs ,chatId);
       router.push(
         `/prompt/${chatId}?selected_model=${selectedModel}&hyde=${isHydeChecked}&reranking=${isRerankingChecked}&temperature=${temperatures}`
       );
+      return messageId;
     }
   };
 
@@ -436,6 +491,12 @@ const [evaluatingMessageId, setEvaluatingMessageId] = useState<string | null>(nu
     temperatures={temperatures}
     setTemperature={setTemperature}
   />
+  <Button
+    onClick={() => window.location.href = "/notebook"}
+    className="h-fit p-2 rounded-xl border bg-white text-blue-700 hover:bg-white shadow-none hover:shadow-blue-200 hover:shadow dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+  >
+    Go to Notebook!
+  </Button>
 </div>
       {/* Dark Mode Toggle Button */}
       <button
