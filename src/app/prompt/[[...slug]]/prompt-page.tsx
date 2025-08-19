@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { BsPencilSquare, BsLayoutSidebarInset, BsMoon, BsSun } from "react-icons/bs"; // Importing the icons
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../../components/ui/hover-card";
-import { LuSendHorizontal } from "react-icons/lu";
+import { LuSendHorizontal, LuNotebookText } from "react-icons/lu";
 import { Button } from "@/components/ui/button";
 import { MessageProps, DocumentProps } from "@/types";
 import Link from "next/link";
@@ -20,11 +20,13 @@ import { useTheme } from "@/hooks/useTheme";
 // import { DocumentProps } from "@/types";
 import SourceDetailModal from "@/components/prompt/source-detail-modal";
 import EvalResultModal from "@/components/prompt/eval-result-modal";
+import { Doc } from "zod/v4/core";
 
 type Props = {
   user: UserProfileProps | null;
   conversations: MessageProps[];
 };
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -93,7 +95,9 @@ const PromptPage = ({ user, conversations }: Props) => {
 }, [conversations]);
 
   const handleSendPrompt = async (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
+
+          e.preventDefault();
+
       if (!prompt.trim()) return;
 
       const userMessageText = prompt;
@@ -110,8 +114,10 @@ const PromptPage = ({ user, conversations }: Props) => {
       };
       const tempAiMessage: MessageProps = {
           type: "response",
-          message: "", // Mulai dengan pesan kosong
-          message_id: `ai-${Date.now()}`, // ID sementara yang unik
+
+          message: "", 
+          message_id: `ai-${Date.now()}`,
+
           sourceDocs: [],
       };
 
@@ -136,66 +142,72 @@ const PromptPage = ({ user, conversations }: Props) => {
           const reader = response.body.getReader();
           const decoder = new TextDecoder();
           let fullResponse = "";
-          let retrievedDocIds: string[] = [];
+
+          let retrievedDocsData: DocumentProps[] = [];
 
           // Loop untuk membaca setiap potongan data dari stream
           while (true) {
-              const { value, done } = await reader.read();
-              if (done) break;
+            const { value, done } = await reader.read();
+            if (done) break; // Kalo koneksi selesai, keluar dari loop
 
-              const chunk = decoder.decode(value);
-              const lines = chunk.split('\n\n').filter(line => line.trim());
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n\n').filter(line => line.trim());
 
-              for (const line of lines) {
-                  if (line.startsWith('data: ')) {
-                      const dataStr = line.substring(6);
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    const dataStr = line.substring(6).trim();
 
-                      // Jika stream selesai, simpan hasilnya ke database
-                      if (dataStr.trim() === '[DONE]') {
-                          if (!slug) {
-                              await handleNewChatBox(userMessageText, fullResponse, retrievedDocIds);
-                          } else {
-                              await handleSaveResponse(userMessageText, fullResponse, retrievedDocIds, slug[0]);
-                          }
-                          return; // Keluar dari fungsi setelah semuanya selesai
-                      }
+                    // PENTING: Cek [DONE] di sini cuma buat nge-skip, JANGAN return/break
+                    if (!dataStr) {
+                        continue; // Lanjut ke line berikutnya kalo ada
+                    }
 
-                      const parsedData = JSON.parse(dataStr);
+                    if (dataStr === '[DONE]') {
+                        continue;
+                    }
 
-                      // Event 1: Menerima token jawaban, update teks AI
-                      if (parsedData.answer_token) {
-                          fullResponse += parsedData.answer_token;
-                          setData(currentData =>
-                              currentData.map(msg =>
-                                  msg.message_id === tempAiMessage.message_id
-                                      ? { ...msg, message: fullResponse }
-                                      // Tidak perlu loop per karakter, update sekaligus per token
-                                      : msg
-                              )
-                          );
-                      }
+                    const parsedData = JSON.parse(dataStr);
 
-                      // Event 2: Menerima ID dokumen, fetch detailnya
-                      if (parsedData.retrieved_doc_ids) {
-                          retrievedDocIds = parsedData.retrieved_doc_ids;
-                          if (retrievedDocIds && retrievedDocIds.length > 0) {
-                              const params = new URLSearchParams();
-                              retrievedDocIds.forEach(id => params.append('ids', id));
-                              const docResponse = await fetch(`/api/retrievedocs?${params.toString()}`);
-                              if (docResponse.ok) {
-                                  const docs: DocumentProps[] = await docResponse.json();
-                                  setData(currentData =>
-                                      currentData.map(msg =>
-                                          msg.message_id === tempAiMessage.message_id
-                                              ? { ...msg, sourceDocs: docs }
-                                              : msg
-                                      )
-                                  );
-                              }
-                          }
-                      }
-                  }
-              }
+                    if (parsedData.answer_token) {
+                        fullResponse += parsedData.answer_token;
+                        setData(currentData =>
+                            currentData.map(msg =>
+                                msg.message_id === tempAiMessage.message_id
+                                    ? { ...msg, message: fullResponse }
+                                    : msg
+                            )
+                        );
+                    }
+
+                    if (parsedData.retrieved_doc) {
+                        retrievedDocsData.push(parsedData.retrieved_doc);
+                        setData(currentData =>
+                            currentData.map(msg =>
+                                msg.message_id === tempAiMessage.message_id
+                                    ? { ...msg, sourceDocs: [...retrievedDocsData] }
+                                    : msg
+                            )
+                        );
+                    }
+                }
+            }
+          } 
+          let realMessageId: string | undefined;
+          if (!slug) {
+              realMessageId = await handleNewChatBox(userMessageText, fullResponse, retrievedDocsData);
+          } else {
+              realMessageId = await handleSaveResponse(userMessageText, fullResponse, retrievedDocsData, slug[0]);
+          }
+          if (realMessageId) {
+            // Update the AI message with the real message ID
+            setData(currentData =>
+                currentData.map(msg =>
+                    msg.message_id === tempAiMessage.message_id
+                        ? { ...msg, message_id: realMessageId }
+                        : msg
+                )
+            );
+
           }
       } catch (error) {
           console.error('Failed to stream message:', error);
@@ -206,8 +218,16 @@ const PromptPage = ({ user, conversations }: Props) => {
                       : msg
               )
           );
-      }
-  };
+
+  } finally {
+    // Ini blok "bersih-bersih" yang PASTI jalan, mau error atau enggak
+    setIsLoading(false);
+    scrollDown();
+    setPrompt("");
+    setIsPrompting(false);
+  }
+};
+
 
   const handleRating = (value: number, i: number) => {
     setEnableScroll(false);
@@ -307,7 +327,7 @@ const PromptPage = ({ user, conversations }: Props) => {
   const handleSaveResponse = async (
     request: string,
     response: string,
-    retrievedDoc: string[] | undefined,
+    retrievedDoc: DocumentProps[] | undefined,
     chatBoxId: string
   ) => {
     const formData = new FormData();
@@ -334,7 +354,7 @@ const PromptPage = ({ user, conversations }: Props) => {
     return data.id;
   };
 
-  const handleNewChatBox = async (request: string, response: string, retrieved_doc_ids: string[] | undefined) => {
+  const handleNewChatBox = async (request: string, response: string, retrievedDocs: DocumentProps[]| undefined) => {
     const formData = new FormData();
     formData.append("name", "New Chat Box");
     formData.append("userId", user?.id || "");
@@ -348,10 +368,11 @@ const PromptPage = ({ user, conversations }: Props) => {
     else {
       const { id: chatId } = await res.json();
       triggerFunction();
-      await handleSaveResponse(request, response, retrieved_doc_ids ,chatId);
+      const messageId = await handleSaveResponse(request, response, retrievedDocs ,chatId);
       router.push(
         `/prompt/${chatId}?selected_model=${selectedModel}&hyde=${isHydeChecked}&reranking=${isRerankingChecked}&temperature=${temperatures}`
       );
+      return messageId;
     }
   };
 
@@ -480,6 +501,12 @@ const [evaluatingMessageId, setEvaluatingMessageId] = useState<string | null>(nu
     temperatures={temperatures}
     setTemperature={setTemperature}
   />
+  <Button
+    onClick={() => window.location.href = "/notebook"}
+    className="h-fit p-2 rounded-xl border bg-white text-blue-700 hover:bg-white shadow-none hover:shadow-blue-200 hover:shadow dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+  >
+    Go to Notebook!
+  </Button>
 </div>
       {/* Dark Mode Toggle Button */}
       <button

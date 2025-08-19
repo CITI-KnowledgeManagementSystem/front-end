@@ -126,9 +126,9 @@ const ChatBox = ({
           Documents Source:
         </h4>
         <div className="flex flex-wrap gap-2">
-          {sourceDocs.map((doc) => (
+          {sourceDocs.map((doc, index) => (
             <button 
-              key={doc.document_id}
+              key={`${doc.document_id}-${index}`}
               onClick={() => onSourceClick(doc)} // <-- Panggil fungsi dari props
               className="text-xs bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-slate-700 dark:text-gray-300 px-2.5 py-1 rounded-full text-left"
               title={doc.document_name}
@@ -217,6 +217,7 @@ const ChatBox = ({
           variant="ghost"
           className="mx-[5px] h-[35px] dark:text-gray-300"
           onClick={handleEvaluate}
+          // disabled={item.message_id.startsWith('ai-')}
         >
           Evaluate
         </Button>

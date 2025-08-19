@@ -21,7 +21,7 @@ const EvalResultModal = ({ isOpen, onClose, scores }: Props) => {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Hasil Evaluasi</DialogTitle>
+          <DialogTitle>Evaluation Results</DialogTitle>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-4 py-4">
           <div className="font-semibold">Faithfulness:</div>
