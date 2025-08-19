@@ -28,6 +28,8 @@ type Props = {
 };
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 const PromptPage = ({ user, conversations }: Props) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -93,7 +95,9 @@ const PromptPage = ({ user, conversations }: Props) => {
 }, [conversations]);
 
   const handleSendPrompt = async (e: React.FormEvent<HTMLFormElement>) => {
+
           e.preventDefault();
+
       if (!prompt.trim()) return;
 
       const userMessageText = prompt;
@@ -110,8 +114,10 @@ const PromptPage = ({ user, conversations }: Props) => {
       };
       const tempAiMessage: MessageProps = {
           type: "response",
+
           message: "", 
           message_id: `ai-${Date.now()}`,
+
           sourceDocs: [],
       };
 
@@ -136,6 +142,7 @@ const PromptPage = ({ user, conversations }: Props) => {
           const reader = response.body.getReader();
           const decoder = new TextDecoder();
           let fullResponse = "";
+
           let retrievedDocsData: DocumentProps[] = [];
 
           // Loop untuk membaca setiap potongan data dari stream
@@ -200,6 +207,7 @@ const PromptPage = ({ user, conversations }: Props) => {
                         : msg
                 )
             );
+
           }
       } catch (error) {
           console.error('Failed to stream message:', error);
@@ -210,6 +218,7 @@ const PromptPage = ({ user, conversations }: Props) => {
                       : msg
               )
           );
+
   } finally {
     // Ini blok "bersih-bersih" yang PASTI jalan, mau error atau enggak
     setIsLoading(false);
@@ -218,6 +227,7 @@ const PromptPage = ({ user, conversations }: Props) => {
     setIsPrompting(false);
   }
 };
+
 
   const handleRating = (value: number, i: number) => {
     setEnableScroll(false);
