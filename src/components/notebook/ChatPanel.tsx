@@ -19,6 +19,7 @@ import { Toolbar } from 'markmap-toolbar';
 import 'markmap-toolbar/dist/style.css';
 import { Transformer } from 'markmap-lib';
 import useMindMapStore from './markmap'
+import { set } from 'react-hook-form'
 
 interface ChatPanelProps {
   sources: Document[]
@@ -62,7 +63,7 @@ export function ChatPanel({
   const [error, setError] = useState(null);
   // const [mindMapData, setMindMapData] = useState('');
   // const [isLoadingMindMap, setIsLoadingMindMap] = useState(false);
-  const { mindMapData, setMindMapData, isLoadingMindMap, setIsLoadingMindMap } = useMindMapStore(); 
+  const { mindMapData, setMindMapData, isLoadingMindMap, setIsLoadingMindMap, mindMapDocumentId, setMindMapDocumentId } = useMindMapStore(); 
   const selectedSourcesData = sources.filter(s => selectedSources.includes(s.id))
 
   const transformer = new Transformer();
@@ -154,11 +155,12 @@ export function ChatPanel({
 
   
 
-  const handleSendMessage = async () => {
-    if (!inputValue.trim() || !userId || !currentChatBoxId) return;
+  const handleSendMessage = async (messageSend: string) => {
+    if (!messageSend.trim() || !userId || !currentChatBoxId) return;
 
-    const userMessage = inputValue;
+    const userMessage = messageSend;
     setInputValue('');
+    setIsLoading(true)
 
     // Buat pesan pengguna dan pesan AI yang masih kosong
     const tempUserMessageId = Date.now();
@@ -202,6 +204,8 @@ export function ChatPanel({
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let fullResponse = "";
+
+        setIsLoading(false);
 
         // Loop untuk membaca stream
         while (true) {
@@ -253,8 +257,26 @@ export function ChatPanel({
         setMessages(prev => prev.map(msg => 
             msg.id === tempAiMessageId ? {...msg, response: "Sorry, an error occurred."} : msg
         ));
-    }
+    } 
   };
+
+  useEffect(() => {
+    const handleMindMapClick = (event: CustomEvent<string>) => {
+      
+      const nodeText = event.detail;
+      const docName = sources.find(s => s.id === selectedSources[0])?.title || 'Document';
+
+      const prompt = `Discuss what the source explains about ${nodeText}, in the context of ${docName} document`;
+
+      handleSendMessage(prompt);
+    };
+
+    window.addEventListener('mindmapNodeClick', handleMindMapClick as EventListener);
+
+    return () => {
+      window.removeEventListener('mindmapNodeClick', handleMindMapClick as EventListener);
+    };
+  }, [handleSendMessage]);
 
   const handleMindMap = async () => {
     // Kalo lagi loading, jangan jalanin fungsi lagi
@@ -264,6 +286,8 @@ export function ChatPanel({
     // setMindMapData(''); // Bersihin data mind map lama
 
     try {
+
+      setMindMapDocumentId(selectedSources[0]);
 
       const mindMap = await api.generateMindMap(
         'private',
@@ -312,7 +336,7 @@ export function ChatPanel({
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      handleSendMessage()
+      handleSendMessage(inputValue)
     }
   }
 
@@ -526,7 +550,7 @@ export function ChatPanel({
               disabled={selectedSources.length === 0 || isLoading}
             />
             <Button
-              onClick={handleSendMessage}
+              onClick={() => handleSendMessage(inputValue)}
               disabled={!inputValue.trim() || selectedSources.length === 0 || isLoading}
               size="sm"
               className="absolute right-2 bottom-2 h-8 w-8 p-0 dark:text-gray-200 dark:hover:text-white"

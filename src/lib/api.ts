@@ -307,7 +307,7 @@ export class NotebookAPI {
     console.log('Mind map response dari api.ts:', data)
 
     return data.message
-  }
+  } 
 
 }
 

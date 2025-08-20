@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
@@ -31,6 +31,7 @@ import useMindMapStore from './markmap'
 import { Markmap } from 'markmap-view';
 import { Transformer } from 'markmap-lib';
 import { Toolbar } from 'markmap-toolbar';
+import { ChatPanel } from './ChatPanel'
 
 interface StudyTool {
   id: string
@@ -61,6 +62,10 @@ function renderToolbar(mm: Markmap, wrapper: HTMLElement) {
     toolbar.setItems([...Toolbar.defaultItems, 'alert']);
     wrapper.append(toolbar.render());
   }
+}
+
+interface Props {
+  onNodeClick: (text: string) => void;
 }
 
 export function StudioPanel({ selectedSources }: StudioPanelProps) {
@@ -235,6 +240,17 @@ export function StudioPanel({ selectedSources }: StudioPanelProps) {
     }
   }
 
+  const handleNodeClick = useCallback((nodeText: string) => {
+    // Ini adalah fungsi yang bakal jalan pas node di-klik
+
+    const event = new CustomEvent('mindmapNodeClick', { detail: nodeText });
+
+    setShowMindMap(false); // Tutup mind map modal
+
+    // 2. Teriak ke "toa" global (window)
+    window.dispatchEvent(event);
+  }, []); 
+
   const canGenerate = selectedSources.length > 0
 
   const transformer = new Transformer();
@@ -248,65 +264,61 @@ export function StudioPanel({ selectedSources }: StudioPanelProps) {
   // Ref for toolbar wrapper
   const refToolbar = useRef<HTMLDivElement>();
 
-  // useEffect(() => {
-  //   // Create markmap and save to refMm
-  //   if (refMm.current) return;
-  //       const mm = Markmap.create(refSvg.current, {
-  //     // Options for markmap
-  //     autoFit: true,
-  //     initialExpandLevel: 0,
-  //   });
-  //   console.log('create', refSvg.current);
-  //   refMm.current = mm;
-  //   renderToolbar(refMm.current, refToolbar.current);
-  // }, [showMindMap, refSvg.current]);
 
-  // console.log('mindMapData', mindMapData);
-
-  // useEffect(() => {;
-  //   // Update data for markmap once value is changed
-  //   const mm = refMm.current;
-  //   if (!mm) return;
-  //   const { root } = transformer.transform(mindMapData);
-  //   mm.setData(root).then(() => {
-  //     mm.fit();
-  //   });
-  // }, [refMm.current, mindMapData]);
-
-  useEffect(() => {
-  // Kalo salah satu dari ini ga terpenuhi, langsung stop. Gak usah kerja.
-  // 1. Modal harus lagi kebuka (showMindMap === true)
-  // 2. Datanya harus ada (mindMapData bukan null/undefined)
-  // 3. Kanvas SVG-nya harus udah siap di layar (refSvg.current ada isinya)
+useEffect(() => {
   if (!showMindMap || !mindMapData || !refSvg.current) {
     return;
   }
 
-  // Transform data dari markdown/text jadi format yang dimengerti Markmap
+  const transformer = new Transformer();
   const { root } = transformer.transform(mindMapData);
 
-  // Bikin instance Markmap baru. Kita langsung taro di variabel mm
-  const mm = Markmap.create(refSvg.current, {
-    autoFit: true,
-    initialExpandLevel: 0,
-  });
+  const svgEl = refSvg.current;
 
+  const mm = Markmap.create(svgEl, { autoFit: true, initialExpandLevel: 0 });
+  refMm.current = mm; 
+  
   mm.setData(root);
+  mm.fit();
 
-  refMm.current = mm;
-  console.log('Markmap created and data loaded!', refSvg.current);
+  const attachListeners = () => {
+    const nodeGroups = svgEl.querySelectorAll<SVGGElement>('g.markmap-node');
+    
+    nodeGroups.forEach(group => {
+      if (group.dataset.nodeListener === 'true') return;
+      group.dataset.nodeListener = 'true';
+      group.style.cursor = 'pointer';
 
+      group.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const textContainer = group.querySelector('foreignObject > div > div');
+        const nodeText = textContainer?.textContent?.trim();
 
+        if (nodeText) {
+          handleNodeClick(nodeText);
+        }
+      });
+    });
+
+    const circles = svgEl.querySelectorAll<SVGCircleElement>('g.markmap-node circle');
+    circles.forEach(circle => {
+      if (circle.dataset.circleListener === 'true') return;
+      circle.dataset.circleListener = 'true';
+
+      circle.addEventListener('click', (event) => {
+        event.stopPropagation();
+        setTimeout(attachListeners, 0); 
+      });
+    });
+  };
+
+  attachListeners();
 
   return () => {
-    // Kalo ada instance Markmap yang aktif, ancurin dulu
-    if (refMm.current) {
-      console.log('Destroying previous Markmap instance...');
-      refMm.current.destroy();
-      refMm.current = null; // Kosongin lagi ref-nya, siap buat instance baru nanti
-    }
+    refMm.current?.destroy();
   };
-}, [showMindMap, mindMapData]);
+
+}, [showMindMap, mindMapData, handleNodeClick]);
 
 
   return (
