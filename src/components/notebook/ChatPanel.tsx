@@ -264,9 +264,25 @@ export function ChatPanel({
     const handleMindMapClick = (event: CustomEvent<string>) => {
       
       const nodeText = event.detail;
-      const docName = sources.find(s => s.id === selectedSources[0])?.title || 'Document';
+      // console.log('Node clicked:', nodeText);
+      
+      let parsed = JSON.parse(nodeText);
 
-      const prompt = `Discuss what the source explains about ${nodeText}, in the context of ${docName} document`;
+      let node = '';
+      let parent = '';
+      let prompt = '';
+      let docName = sources.find(s => s.id === selectedSources[0])?.title || 'Document';
+
+      try {
+        if (!parsed.parentText) {
+          prompt = `Discuss what the source explains about ${parsed.nodeText}, in the context of ${docName} document`;
+        } else {
+          prompt = `Discuss what the source explains about ${parsed.nodeText}, in the context of ${parsed.parentText} in ${docName} document`;
+        }
+      } catch (e) {
+        node = nodeText;
+        parent = '';
+      }
 
       handleSendMessage(prompt);
     };

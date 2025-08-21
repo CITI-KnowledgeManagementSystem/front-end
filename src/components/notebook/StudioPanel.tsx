@@ -240,20 +240,30 @@ export function StudioPanel({ selectedSources }: StudioPanelProps) {
     }
   }
 
-  const handleNodeClick = useCallback((nodeText: string) => {
+  const handleNodeClick = useCallback((nodeText: string, parentText?: string) => {
     // Ini adalah fungsi yang bakal jalan pas node di-klik
 
-    const event = new CustomEvent('mindmapNodeClick', { detail: nodeText });
+    let nodeInfo;
+
+    if(!parentText) {
+      // Kalo gak ada konteks bapak, langsung kirim nodeText aja
+      nodeInfo = JSON.stringify({ nodeText });
+    } else {
+      // Kalo ada konteks bapak, gabungin konteksnya
+      nodeInfo = JSON.stringify({ nodeText, parentText });
+    }
+
+    const event = new CustomEvent('mindmapNodeClick', { detail: nodeInfo });
 
     setShowMindMap(false); // Tutup mind map modal
 
     // 2. Teriak ke "toa" global (window)
     window.dispatchEvent(event);
-  }, []); 
+  }, []);
 
   const canGenerate = selectedSources.length > 0
 
-  const transformer = new Transformer();
+  // const transformer = new Transformer();
 
   const { mindMapData, setMindMapData, isLoadingMindMap, setIsLoadingMindMap } = useMindMapStore(); 
   const [ showMindMap, setShowMindMap ] = useState(false);
@@ -275,6 +285,7 @@ useEffect(() => {
 
   const svgEl = refSvg.current;
 
+  // Instance Markmap selalu dibuat baru biar fresh
   const mm = Markmap.create(svgEl, { autoFit: true, initialExpandLevel: 0 });
   refMm.current = mm; 
   
@@ -285,18 +296,50 @@ useEffect(() => {
     const nodeGroups = svgEl.querySelectorAll<SVGGElement>('g.markmap-node');
     
     nodeGroups.forEach(group => {
+      // Pake dataset buat nandain, biar gak dobel listener
       if (group.dataset.nodeListener === 'true') return;
       group.dataset.nodeListener = 'true';
       group.style.cursor = 'pointer';
 
+      // ==========================================================
+      // FOKUS UTAMA PERUBAHAN ADA DI SINI
+      // ==========================================================
       group.addEventListener('click', (event) => {
         event.stopPropagation();
-        const textContainer = group.querySelector('foreignObject > div > div');
-        const nodeText = textContainer?.textContent?.trim();
+        
+        // 1. Ambil info si anak (node yang diklik)
+        const childTextContainer = group.querySelector('foreignObject > div > div');
+        const childText = childTextContainer?.textContent?.trim();
+        const childPath = group.dataset.path;
 
-        if (nodeText) {
-          handleNodeClick(nodeText);
+        if (!childText || !childPath) return;
+
+        let fullQuery = childText; // Default query
+        let parentText = '';
+
+        // 2. Cek & cari bapaknya kalo ada
+        if (childPath.includes('.')) {
+          const parentPath = childPath.split('.').slice(0, -1).join('.');
+          
+          // Cari elemen si bapak di seluruh SVG
+          const parentEl = svgEl.querySelector<SVGGElement>(`g.markmap-node[data-path="${parentPath}"]`);
+          
+          if (parentEl) {
+            const parentTextContainer = parentEl.querySelector('foreignObject > div > div');
+            parentText = parentTextContainer?.textContent?.trim() || '';
+          }
         }
+
+        // 3. Gabungin konteks bapak & anak
+        if (parentText) {
+          fullQuery = `${parentText}: ${childText}`;
+          handleNodeClick(childText, parentText); // Kirim query yang udah lengkap
+        } else {
+          handleNodeClick(childText); // Kirim query anak aja
+        }
+
+        // console.log(`🚀 Query Lengkap dengan Konteks: "${fullQuery}"`);
+        
       });
     });
 
@@ -314,6 +357,7 @@ useEffect(() => {
 
   attachListeners();
 
+  // Cleanup function, ini udah bener
   return () => {
     refMm.current?.destroy();
   };
