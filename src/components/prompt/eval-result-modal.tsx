@@ -5,6 +5,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { MessageProps } from "@/types";
 
@@ -17,24 +18,59 @@ interface Props {
 const EvalResultModal = ({ isOpen, onClose, scores }: Props) => {
   if (!scores) return null;
 
-  return (
+    return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Evaluation Results</DialogTitle>
         </DialogHeader>
-        <div className="grid grid-cols-2 gap-4 py-4">
-          <div className="font-semibold">Faithfulness:</div>
-          <div>{scores.faithfulness?.toFixed(4) || 'N/A'}</div>
+        
+        <div className="space-y-4 py-2">
 
-          <div className="font-semibold">Answer Relevancy:</div>
-          <div>{scores.answer_relevancy?.toFixed(4) || 'N/A'}</div>
+          {/* -- Faithfulness -- */}
+          <div>
+            <div className="flex justify-between items-center">
+              <dt className="font-semibold">Faithfulness</dt>
+              <dd className="font-mono text-sm">{scores.faithfulness?.toFixed(4) || 'N/A'}</dd>
+            </div>
+            <DialogDescription className="text-xs">
+              How faithful is the answer to the provided sources? (Anti-hallucination score)
+            </DialogDescription>
+          </div>
 
-          <div className="font-semibold">Context Precision:</div>
-          <div>{scores.context_precision?.toFixed(4) || 'N/A'}</div>
+          {/* -- Answer Relevancy -- */}
+          <div>
+            <div className="flex justify-between items-center">
+              <dt className="font-semibold">Answer Relevancy</dt>
+              <dd className="font-mono text-sm">{scores.answer_relevancy?.toFixed(4) || 'N/A'}</dd>
+            </div>
+            <DialogDescription className="text-xs">
+              Is the answer relevant and directly address the question?
+            </DialogDescription>
+          </div>
+          
+          {/* -- Context Precision -- */}
+          <div>
+            <div className="flex justify-between items-center">
+              <dt className="font-semibold">Context Precision</dt>
+              <dd className="font-mono text-sm">{scores.context_precision?.toFixed(4) || 'N/A'}</dd>
+            </div>
+            <DialogDescription className="text-xs">
+              Were all of the retrieved sources actually useful for the answer? (Signal-to-noise score)
+            </DialogDescription>
+          </div>
 
-          <div className="font-semibold">Context Relevance:</div>
-          <div>{scores.context_relevance?.toFixed(4) || 'N/A'}</div>
+          {/* -- Context Relevance -- */}
+          <div>
+            <div className="flex justify-between items-center">
+              <dt className="font-semibold">Context Relevance</dt>
+              <dd className="font-mono text-sm">{scores.context_relevance?.toFixed(4) || 'N/A'}</dd>
+            </div>
+            <DialogDescription className="text-xs">
+              How relevant are the retrieved sources to the question?
+            </DialogDescription>
+          </div>
+
         </div>
       </DialogContent>
     </Dialog>
