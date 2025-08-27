@@ -78,7 +78,9 @@ const ChatBox = ({
   }
 
   const hasScores = faithfulness !== null && faithfulness !== undefined;
-
+  const uniqueDocs = (sourceDocs ?? []).filter((doc, index, self) =>
+    index === self.findIndex((d) => d.document_id === doc.document_id)
+  );
   return (
     <div className="w-full my-1">
       <div className="flex items-center gap-x-2">
@@ -126,9 +128,9 @@ const ChatBox = ({
           Documents Source:
         </h4>
         <div className="flex flex-wrap gap-2">
-          {sourceDocs.map((doc) => (
-            <button 
-              key={doc.document_id}
+          {uniqueDocs.map((doc, index) => (
+            <button
+              key={`${doc.document_id}-${index}`}
               onClick={() => onSourceClick(doc)} // <-- Panggil fungsi dari props
               className="text-xs bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-slate-700 dark:text-gray-300 px-2.5 py-1 rounded-full text-left"
               title={doc.document_name}
@@ -203,7 +205,7 @@ const ChatBox = ({
       {/* STATE 2: Kalo GAK lagi loading DAN SUDAH ada skor, tampilin tombol "Eval Results" */}
       {!isEvaluating && hasScores && (
         <Button
-          variant="outline"
+          variant="ghost"
           className="mx-[5px] h-[35px] dark:text-gray-300"
           onClick={onShowScores}
         >
@@ -217,8 +219,9 @@ const ChatBox = ({
           variant="ghost"
           className="mx-[5px] h-[35px] dark:text-gray-300"
           onClick={handleEvaluate}
+          // disabled={item.message_id.startsWith('ai-')}
         >
-          Evaluate
+          Evaluate Docs Retrieval
         </Button>
       )}
 

@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { BsPencilSquare, BsLayoutSidebarInset, BsMoon, BsSun } from "react-icons/bs"; // Importing the icons
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../../components/ui/hover-card";
-import { LuSendHorizontal } from "react-icons/lu";
+import { LuSendHorizontal, LuNotebookText } from "react-icons/lu";
 import { Button } from "@/components/ui/button";
 import { MessageProps, DocumentProps } from "@/types";
 import Link from "next/link";
@@ -20,6 +20,7 @@ import { useTheme } from "@/hooks/useTheme";
 // import { DocumentProps } from "@/types";
 import SourceDetailModal from "@/components/prompt/source-detail-modal";
 import EvalResultModal from "@/components/prompt/eval-result-modal";
+import { Doc } from "zod/v4/core";
 
 type Props = {
   user: UserProfileProps | null;
@@ -92,122 +93,140 @@ const PromptPage = ({ user, conversations }: Props) => {
   setEvaluatingMessageId(null); 
 }, [conversations]);
 
-  const handleSendPrompt = async (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      if (!prompt.trim()) return;
+const handleSendPrompt = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
 
-      const userMessageText = prompt;
-      setPrompt("");
-      if (divRef.current) divRef.current.innerText = ""; // Membersihkan input contentEditable
-      setIsPrompting(false);
+    if (!prompt.trim()) return;
 
-      // --- Langkah 1: Update UI secara instan ---
-      // Siapkan pesan user dan placeholder untuk AI agar UI terasa responsif.
-      const tempUserMessage: MessageProps = {
-          type: "request",
-          message: userMessageText,
-          message_id: `user-${Date.now()}`
-      };
-      const tempAiMessage: MessageProps = {
-          type: "response",
-          message: "", // Mulai dengan pesan kosong
-          message_id: `ai-${Date.now()}`, // ID sementara yang unik
-          sourceDocs: [],
-      };
+    const userMessageText = prompt;
+    setPrompt("");
+    if (divRef.current) divRef.current.innerText = "";
+    setIsPrompting(false);
 
-      setData(currentData => [...currentData, tempUserMessage, tempAiMessage]);
+    // --- Langkah 1: Update UI secara instan ---
+    const tempUserMessage: MessageProps = {
+        type: "request",
+        message: userMessageText,
+        message_id: `user-${Date.now()}`
+    };
+    const tempAiMessage: MessageProps = {
+        type: "response",
+        message: "",
+        message_id: `ai-${Date.now()}`,
+        sourceDocs: [],
+    };
 
-      // --- Langkah 2: Mulai proses streaming dari backend ---
-      try {
-          const response = await fetch('http://localhost:5000/llm/chat_with_llm', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                  question: userMessageText,
-                  userId: user?.id || "",
-                  conversation_history: data,
-                  hyde: isHydeChecked.toString(),
-                  reranking: isRerankingChecked.toString()
-              }),
-          });
+    setData(currentData => [...currentData, tempUserMessage, tempAiMessage]);
 
-          if (!response.body) throw new Error("Response body is null");
+    // --- Langkah 2: Mulai proses streaming dari backend ---
+    try {
+        const response = await fetch('http://localhost:5000/llm/chat_with_llm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                question: userMessageText,
+                userId: user?.id || "",
+                conversation_history: data,
+                hyde: isHydeChecked.toString(),
+                reranking: isRerankingChecked.toString()
+            }),
+        });
 
-          const reader = response.body.getReader();
-          const decoder = new TextDecoder();
-          let fullResponse = "";
-          let retrievedDocIds: string[] = [];
+        if (!response.body) throw new Error("Response body is null");
 
-          // Loop untuk membaca setiap potongan data dari stream
-          while (true) {
-              const { value, done } = await reader.read();
-              if (done) break;
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullResponse = "";
+        let retrievedDocsData: DocumentProps[] = [];
+        
+        // ==========================================================
+        // BAGIAN YANG DIPERBAIKI: Menggunakan Buffer untuk Streaming
+        // ==========================================================
+        let buffer = ""; // Ini penampungan sementara kita
 
-              const chunk = decoder.decode(value);
-              const lines = chunk.split('\n\n').filter(line => line.trim());
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
 
-              for (const line of lines) {
-                  if (line.startsWith('data: ')) {
-                      const dataStr = line.substring(6);
+            buffer += decoder.decode(value, { stream: true });
+            let boundary = buffer.indexOf('\n\n');
 
-                      // Jika stream selesai, simpan hasilnya ke database
-                      if (dataStr.trim() === '[DONE]') {
-                          if (!slug) {
-                              await handleNewChatBox(userMessageText, fullResponse, retrievedDocIds);
-                          } else {
-                              await handleSaveResponse(userMessageText, fullResponse, retrievedDocIds, slug[0]);
-                          }
-                          return; // Keluar dari fungsi setelah semuanya selesai
-                      }
+            while (boundary !== -1) {
+                const message = buffer.substring(0, boundary);
+                buffer = buffer.substring(boundary + 2);
 
-                      const parsedData = JSON.parse(dataStr);
+                if (message.startsWith('data: ')) {
+                    const dataStr = message.substring(6).trim();
 
-                      // Event 1: Menerima token jawaban, update teks AI
-                      if (parsedData.answer_token) {
-                          fullResponse += parsedData.answer_token;
-                          setData(currentData =>
-                              currentData.map(msg =>
-                                  msg.message_id === tempAiMessage.message_id
-                                      ? { ...msg, message: fullResponse }
-                                      // Tidak perlu loop per karakter, update sekaligus per token
-                                      : msg
-                              )
-                          );
-                      }
+                    if (dataStr && dataStr !== '[DONE]') {
+                        try {
+                            const parsedData = JSON.parse(dataStr);
 
-                      // Event 2: Menerima ID dokumen, fetch detailnya
-                      if (parsedData.retrieved_doc_ids) {
-                          retrievedDocIds = parsedData.retrieved_doc_ids;
-                          if (retrievedDocIds && retrievedDocIds.length > 0) {
-                              const params = new URLSearchParams();
-                              retrievedDocIds.forEach(id => params.append('ids', id));
-                              const docResponse = await fetch(`/api/retrievedocs?${params.toString()}`);
-                              if (docResponse.ok) {
-                                  const docs: DocumentProps[] = await docResponse.json();
-                                  setData(currentData =>
-                                      currentData.map(msg =>
-                                          msg.message_id === tempAiMessage.message_id
-                                              ? { ...msg, sourceDocs: docs }
-                                              : msg
-                                      )
-                                  );
-                              }
-                          }
-                      }
-                  }
-              }
-          }
-      } catch (error) {
-          console.error('Failed to stream message:', error);
-          setData(currentData =>
-              currentData.map(msg =>
-                  msg.message_id === tempAiMessage.message_id
-                      ? { ...msg, message: "Sorry, an error occurred during streaming." }
-                      : msg
-              )
-          );
-      }
-  };
+                            if (parsedData.answer_token) {
+                                fullResponse += parsedData.answer_token;
+                                setData(currentData =>
+                                    currentData.map(msg =>
+                                        msg.message_id === tempAiMessage.message_id
+                                            ? { ...msg, message: fullResponse }
+                                            : msg
+                                    )
+                                );
+                            }
+
+                            if (parsedData.retrieved_doc) {
+                                retrievedDocsData.push(parsedData.retrieved_doc);
+                                setData(currentData =>
+                                    currentData.map(msg =>
+                                        msg.message_id === tempAiMessage.message_id
+                                            ? { ...msg, sourceDocs: [...retrievedDocsData] }
+                                            : msg
+                                    )
+                                );
+                            }
+                        } catch (e) {
+                            console.error("Gagal parse JSON dari potongan data:", dataStr, e);
+                        }
+                    }
+                }
+                boundary = buffer.indexOf('\n\n');
+            }
+        }
+        // ==========================================================
+        // AKHIR BAGIAN YANG DIPERBAIKI
+        // ==========================================================
+
+        let realMessageId: string | undefined;
+        if (!slug) {
+            realMessageId = await handleNewChatBox(userMessageText, fullResponse, retrievedDocsData);
+        } else {
+            realMessageId = await handleSaveResponse(userMessageText, fullResponse, retrievedDocsData, slug[0]);
+        }
+        if (realMessageId) {
+            setData(currentData =>
+                currentData.map(msg =>
+                    msg.message_id === tempAiMessage.message_id
+                        ? { ...msg, message_id: realMessageId }
+                        : msg
+                )
+            );
+        }
+    } catch (error) {
+        console.error('Failed to stream message:', error);
+        setData(currentData =>
+            currentData.map(msg =>
+                msg.message_id === tempAiMessage.message_id
+                    ? { ...msg, message: "Sorry, an error occurred during streaming." }
+                    : msg
+            )
+        );
+    } finally {
+        setIsLoading(false);
+        scrollDown();
+        setPrompt("");
+        setIsPrompting(false);
+    }
+};
+
 
   const handleRating = (value: number, i: number) => {
     setEnableScroll(false);
@@ -307,7 +326,7 @@ const PromptPage = ({ user, conversations }: Props) => {
   const handleSaveResponse = async (
     request: string,
     response: string,
-    retrievedDoc: string[] | undefined,
+    retrievedDoc: DocumentProps[] | undefined,
     chatBoxId: string
   ) => {
     const formData = new FormData();
@@ -334,7 +353,7 @@ const PromptPage = ({ user, conversations }: Props) => {
     return data.id;
   };
 
-  const handleNewChatBox = async (request: string, response: string, retrieved_doc_ids: string[] | undefined) => {
+  const handleNewChatBox = async (request: string, response: string, retrievedDocs: DocumentProps[]| undefined) => {
     const formData = new FormData();
     formData.append("name", "New Chat Box");
     formData.append("userId", user?.id || "");
@@ -348,10 +367,11 @@ const PromptPage = ({ user, conversations }: Props) => {
     else {
       const { id: chatId } = await res.json();
       triggerFunction();
-      await handleSaveResponse(request, response, retrieved_doc_ids ,chatId);
+      const messageId = await handleSaveResponse(request, response, retrievedDocs ,chatId);
       router.push(
         `/prompt/${chatId}?selected_model=${selectedModel}&hyde=${isHydeChecked}&reranking=${isRerankingChecked}&temperature=${temperatures}`
       );
+      return messageId;
     }
   };
 
@@ -480,6 +500,12 @@ const [evaluatingMessageId, setEvaluatingMessageId] = useState<string | null>(nu
     temperatures={temperatures}
     setTemperature={setTemperature}
   />
+  <Button
+    onClick={() => window.location.href = "/notebook"}
+    className="h-fit p-2 rounded-xl border bg-white text-blue-700 hover:bg-white shadow-none hover:shadow-blue-200 hover:shadow dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+  >
+    Go to Notebook!
+  </Button>
 </div>
       {/* Dark Mode Toggle Button */}
       <button
@@ -523,9 +549,9 @@ const [evaluatingMessageId, setEvaluatingMessageId] = useState<string | null>(nu
                 onSourceClick={(doc) => setSelectedDoc(doc)}
                 onShowScores={() => setSelectedScores(item)}
                 faithfulness={item.faithfulness}
-                answer_relevancy={item.answer_relevancy}
-                context_precision={item.context_precision}
-                context_relevance={item.context_relevance}
+                // answer_relevancy={item.answer_relevancy}
+                // context_precision={item.context_precision}
+                // context_relevance={item.context_relevance}
                 isEvaluating={evaluatingMessageId === item.message_id}
               />
             ))}

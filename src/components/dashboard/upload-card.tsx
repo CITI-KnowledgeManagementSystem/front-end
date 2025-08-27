@@ -44,6 +44,7 @@ const UploadCard = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const { userId } = useAuth();
+  const [selectedParser, setSelectedParser] = useState<string>("pymu");
 
   const showToast = (promise: Promise<string>) => {
     toast.promise(promise, {
@@ -75,6 +76,7 @@ const UploadCard = () => {
     formData.append("title", title);
     formData.append("topic", topic);
     formData.append("user_id", userId || "");
+    formData.append("parser", selectedParser);
 
     const upload = async () => {
       try {
@@ -97,6 +99,7 @@ const UploadCard = () => {
     setSelectedFile(null);
     setTitle("");
     setTopic("");
+    setSelectedParser("pymu");
   };
 
   return (
@@ -143,6 +146,19 @@ const UploadCard = () => {
                     type="text"
                     placeholder="Topic of your document"
                   ></Input>
+                </div>
+                <div className="flex flex-col space-y-1.5">
+                  <Label htmlFor="parser">Document Parser</Label>
+                  <select
+                    id="parser"
+                    value={selectedParser}
+                    onChange={(e) => setSelectedParser(e.target.value)}
+                    className="h-10 px-3 py-2 text-sm border rounded-md bg-white dark:bg-zinc-900 text-black dark:text-white"
+                  >
+                    <option value="pymu">PyMu (Default)</option>
+                    <option value="docling">Docling</option>
+                    <option value="mineru">MinerU</option>
+                  </select>
                 </div>
               </div>
               <p className="text-xs text-red-500 mt-2">{error}</p>
