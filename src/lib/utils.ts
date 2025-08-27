@@ -79,7 +79,7 @@ export const getChatMessages = async (id: string, token: string | null) => {
   }
 
   try {
-    const response = await fetch(`/api/chatbox/${id}`, {
+    const response = await fetch(`${process.env.HOST_URL}/api/chatbox/${id}`, {
       credentials: 'include',
       method: "GET",
       headers: {
