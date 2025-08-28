@@ -27,6 +27,15 @@ interface ChatPanelProps {
   onChatBoxCreate: (chatBoxId: string) => void
 }
 
+interface ChatRequestBody {
+    question: string;
+    userId: string;
+    conversation_history: any[];
+    hyde: string;
+    reranking: string;
+    document_ids?: string[];
+}
+
 function renderToolbar(mm: Markmap, wrapper: HTMLElement) {
   while (wrapper?.firstChild) wrapper.firstChild.remove();
   if (mm && wrapper) {
@@ -183,18 +192,26 @@ export function ChatPanel({
             createdAt: new Date(),
         }
     ]);
+      const requestBody: ChatRequestBody = {
+          question: userMessage,
+          userId,
+          conversation_history: conversationHistory,
+          hyde: 'true',
+          reranking: 'true',
+      };
+      
+      // Pake `selectedSources` yang isinya list of IDs
+      if (selectedSources && selectedSources.length > 0) {
+          const idsToSend = selectedSources.map(id => String(id)); 
+         requestBody.document_ids = idsToSend;
+      }
 
+      console.log("Request body for LLM:", requestBody);
     try {
-        const response = await fetch('http://localhost:5000/llm/chat_with_llm', { // URL endpoint kamu
+        const response = await fetch(process.env.LLM_SERVER_URL + "/llm/chat_with_llm", { // URL endpoint kamu
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                question: userMessage,
-                userId,
-                conversation_history: conversationHistory,
-                hyde: 'true', // sesuaikan dengan logikamu
-                reranking: 'true'
-            }),
+            body: JSON.stringify(requestBody),
         });
 
         if (!response.body) throw new Error("Response body is null");
