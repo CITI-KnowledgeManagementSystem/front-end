@@ -170,7 +170,7 @@ export const deleteDocumentFromVDB = async (
   collectionName: string
 ) => {
   const res = await fetch(
-    `${process.env.LLM_SERVER_URL}/document/delete?document_id=${documentId}&collection_name=${collectionName}`,
+    `${process.env.NEXT_PUBLIC_LLM_SERVER_URL}/document/delete?document_id=${documentId}&collection_name=${collectionName}`,
     {
       method: "DELETE",
       headers: {
@@ -200,7 +200,7 @@ export const insertDocumentToVDB = async (
   };
 
   const res = await fetch(
-    `${process.env.LLM_SERVER_URL}/document/insert`,
+    `${process.env.NEXT_PUBLIC_LLM_SERVER_URL}/document/insert`,
     {
       method: "POST",
       headers: {

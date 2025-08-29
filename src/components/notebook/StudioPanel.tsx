@@ -237,51 +237,20 @@ export function StudioPanel({ selectedSources }: StudioPanelProps) {
 
   const canGenerate = selectedSources.length > 0
 
-  const transformer = new Transformer();
-
   const { mindMapData, setMindMapData, isLoadingMindMap, setIsLoadingMindMap } = useMindMapStore(); 
   const [ showMindMap, setShowMindMap ] = useState(false);
 
-  const refSvg = useRef<SVGSVGElement>();
-  // Ref for markmap object
-  const refMm = useRef<Markmap>();
-  // Ref for toolbar wrapper
-  const refToolbar = useRef<HTMLDivElement>();
+const refSvg = useRef<SVGSVGElement | null>(null);
+const refMm = useRef<Markmap | null>(null);
+const refToolbar = useRef<HTMLDivElement | null>(null);
 
-  // useEffect(() => {
-  //   // Create markmap and save to refMm
-  //   if (refMm.current) return;
-  //       const mm = Markmap.create(refSvg.current, {
-  //     // Options for markmap
-  //     autoFit: true,
-  //     initialExpandLevel: 0,
-  //   });
-  //   console.log('create', refSvg.current);
-  //   refMm.current = mm;
-  //   renderToolbar(refMm.current, refToolbar.current);
-  // }, [showMindMap, refSvg.current]);
-
-  // console.log('mindMapData', mindMapData);
-
-  // useEffect(() => {;
-  //   // Update data for markmap once value is changed
-  //   const mm = refMm.current;
-  //   if (!mm) return;
-  //   const { root } = transformer.transform(mindMapData);
-  //   mm.setData(root).then(() => {
-  //     mm.fit();
-  //   });
-  // }, [refMm.current, mindMapData]);
 
   useEffect(() => {
-  // Kalo salah satu dari ini ga terpenuhi, langsung stop. Gak usah kerja.
-  // 1. Modal harus lagi kebuka (showMindMap === true)
-  // 2. Datanya harus ada (mindMapData bukan null/undefined)
-  // 3. Kanvas SVG-nya harus udah siap di layar (refSvg.current ada isinya)
+ 
   if (!showMindMap || !mindMapData || !refSvg.current) {
     return;
   }
-
+  const transformer = new Transformer();
   // Transform data dari markdown/text jadi format yang dimengerti Markmap
   const { root } = transformer.transform(mindMapData);
 
@@ -583,7 +552,7 @@ export function StudioPanel({ selectedSources }: StudioPanelProps) {
                         {getStatusBadge('ready')}
                       </div>
                       <p className={"text-xs line-clamp-2 text-gray-600"}>
-                        Visual representation of your documents' structure and relationships.
+                        Visual representation of your documents structure and relationships.
                       </p>
                     </div>
                   </div>

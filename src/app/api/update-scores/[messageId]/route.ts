@@ -3,7 +3,7 @@ import { prisma } from "@/db";
 
 export async function PATCH(
   request: NextRequest,
-  context: { params: { messageId: string } }
+  context: { params: Promise<{ messageId: string }> }
 ) {
 
   // 1. Proteksi endpoint
@@ -13,10 +13,9 @@ export async function PATCH(
   }
 
   try {
-    const { params } = context;
-    const awaitedParams = await params;
-    const messageId = parseInt(awaitedParams.messageId);
-    if (isNaN(messageId)) {
+    const { messageId } = await context.params;
+    const messageIdNum = parseInt(messageId);
+    if (isNaN(messageIdNum)) {
       return NextResponse.json({ message: "Invalid Message ID" }, { status: 400 });
     }
 
@@ -25,7 +24,7 @@ export async function PATCH(
 
     // 3. Update ke database Prisma
     await prisma.message.update({
-      where: { id: messageId },
+      where: { id: messageIdNum },
       data: {
         faithfulness: scores.faithfulness,
         answer_relevancy: scores.answer_relevancy,

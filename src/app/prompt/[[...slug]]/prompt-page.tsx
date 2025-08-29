@@ -120,7 +120,7 @@ const handleSendPrompt = async (e: React.FormEvent<HTMLFormElement>) => {
 
     // --- Langkah 2: Mulai proses streaming dari backend ---
     try {
-        const response = await fetch(process.env.LLM_SERVER_URL + "/llm/chat_with_llm", {
+        const response = await fetch(process.env.NEXT_PUBLIC_LLM_SERVER_URL + "/llm/chat_with_llm", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

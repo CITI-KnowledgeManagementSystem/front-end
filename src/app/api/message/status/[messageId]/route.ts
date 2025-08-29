@@ -3,20 +3,21 @@ import { prisma } from "@/db";
 import { auth } from "@clerk/nextjs/server";
 
 export async function GET(
-  request: Request,
-  context: { params: { messageId: string } }
+  _request: Request,
+  context: { params: Promise<{ messageId: string }> }
 ) {
   try {
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
-    const { params } = context;
-    const awaitedParams = await params;
-    const messageId = parseInt(awaitedParams.messageId);
+    
+    const { messageId } = await context.params;
+    const messageIdNum = parseInt(messageId);
+    
 
     const message = await prisma.message.findUnique({
-      where: { id: messageId, userId: userId },
+      where: { id: messageIdNum, userId: userId },
       select: { faithfulness: true }, // Kita cuma butuh satu kolom skor buat ngecek
     });
 

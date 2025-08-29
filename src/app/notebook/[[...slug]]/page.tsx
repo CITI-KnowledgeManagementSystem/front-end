@@ -5,7 +5,7 @@ import { getUserInfo } from "@/lib/user-queries";
 import { checkIfUserExistInDb, registerUser } from "@/lib/user-queries";
 import { redirect } from "next/navigation";
 
-const Page = async ({ params }: { params: { slug?: string[] } }) => {
+const Page = async ({ params }: { params: Promise<{ slug?: string[] }> }) => {
   const { userId, getToken } = await auth();
 
   if (!userId) {
@@ -33,15 +33,17 @@ const Page = async ({ params }: { params: { slug?: string[] } }) => {
   let notebookMode = "default";
   let notebookId = null;
 
-  if (params.slug && params.slug.length > 0) {
+  const { slug } = await params;
+
+  if (slug && slug.length > 0) {
     // Handle different notebook routes
     // e.g., /notebook/session/123 or /notebook/document/456
-    if (params.slug[0] === "session" && params.slug[1]) {
+    if (slug[0] === "session" && slug[1]) {
       notebookMode = "session";
-      notebookId = params.slug[1];
-    } else if (params.slug[0] === "document" && params.slug[1]) {
+      notebookId = slug[1];
+    } else if (slug[0] === "document" && slug[1]) {
       notebookMode = "document";
-      notebookId = params.slug[1];
+      notebookId = slug[1];
     }
   }
 

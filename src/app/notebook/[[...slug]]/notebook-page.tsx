@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { SourcesPanel } from '@/components/notebook/SourcesPanel'
 import { ChatPanel } from '@/components/notebook/ChatPanel'
 import { StudioPanel } from '@/components/notebook/StudioPanel'
@@ -42,12 +42,28 @@ const NotebookPage = ({ user, mode, notebookId, token }: NotebookPageProps) => {
   const [isLoadingSources, setIsLoadingSources] = useState(false)
   const [currentChatBoxId, setCurrentChatBoxId] = useState<string>(notebookId || '')
 
+  const loadUserDocuments = useCallback(async () => {
+  // Pindahin `if` guard ke dalem sini, lebih aman
+  if (!user?.id) return; 
+  
+  try {
+    setIsLoadingSources(true);
+    const response = await api.getDocuments({ userId: user.id, page: 0, n: 100 });
+    setSources(response.data?.list || []);
+  } catch (error) {
+    console.error('Failed to load documents:', error);
+    toast.error('Failed to load your documents');
+  } finally {
+    setIsLoadingSources(false);
+  }
+}, [user?.id, setIsLoadingSources, setSources, api]);
+
   // Load user's documents when component mounts
   useEffect(() => {
     if (user?.id) {
       loadUserDocuments()
     }
-  }, [user?.id])
+  }, [loadUserDocuments, user?.id]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -62,6 +78,15 @@ const NotebookPage = ({ user, mode, notebookId, token }: NotebookPageProps) => {
     };
   }, [settingsRef]);
 
+  useEffect(() => {
+    if (mode === 'session' && notebookId) {
+      setCurrentChatBoxId(notebookId)
+    } else if (mode === 'document' && notebookId) {
+      // Auto-select a specific document if navigating to /notebook/document/123
+      setSelectedSources([notebookId])
+    }
+  }, [mode, notebookId, setCurrentChatBoxId, setSelectedSources])
+
   if (!user) {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-50">
@@ -74,29 +99,9 @@ const NotebookPage = ({ user, mode, notebookId, token }: NotebookPageProps) => {
   }
 
   // Handle different modes
-  useEffect(() => {
-    if (mode === 'session' && notebookId) {
-      setCurrentChatBoxId(notebookId)
-    } else if (mode === 'document' && notebookId) {
-      // Auto-select a specific document if navigating to /notebook/document/123
-      setSelectedSources([notebookId])
-    }
-  }, [mode, notebookId])
 
-  const loadUserDocuments = async () => {
-    if (!user?.id) return
-    
-    try {
-      setIsLoadingSources(true)
-      const response = await api.getDocuments({ userId: user.id, page: 0, n: 100 })
-      setSources(response.data?.list || [])
-    } catch (error) {
-      console.error('Failed to load documents:', error)
-      toast.error('Failed to load your documents')
-    } finally {
-      setIsLoadingSources(false)
-    }
-  }
+
+
 
   const handleSourceSelection = (sourceIds: string[]) => {
     setSelectedSources(sourceIds)
