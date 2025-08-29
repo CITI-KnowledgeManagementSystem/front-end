@@ -22,6 +22,7 @@ const config = {
       fontFamily: {
         sans: ["var(--font-sans)", ...fontFamily.sans],
       },
+
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -89,6 +90,10 @@ const config = {
           "0%": { opacity: "0" },
           "100%": { opacity: "1" },
         },
+        "shimmer": {
+          "0%": { backgroundPosition: "200% 0" },
+          "100%": { backgroundPosition: "-200% 0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.5s ease-out",
@@ -96,6 +101,7 @@ const config = {
         "slide-in": "slide-in 1s ease-in-out",
         "slide-in-right": "slide-in-right 1s ease-in-out",
         "fade-in": "fade-in 0.3s ease-out",
+        "shimmer": "shimmer 3s linear infinite",
       },
     },
   },

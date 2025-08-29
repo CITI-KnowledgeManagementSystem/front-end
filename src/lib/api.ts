@@ -309,6 +309,29 @@ export class NotebookAPI {
     return data.message
   } 
 
+  static async regenerateMindMap(
+    question: string
+
+  ): Promise<any> {
+    const formData = new FormData()
+    formData.append("question", question)
+
+    const response = await fetch('/api/regenerate_mind_map', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (!response.ok) {
+      throw new Error(`Mind map regeneration failed: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+
+    console.log('Regenerated mind map response dari api.ts:', data.message)
+
+    return data.message
+  }
+
 
 }
 

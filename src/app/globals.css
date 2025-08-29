@@ -147,3 +147,13 @@
     -webkit-line-clamp: 3;
   }
 }
+
+/* Bikin transisi buat si background tombol */
+.interactive-button-rect {
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Biar teksnya gak tiba-tiba ilang/muncul, kasih efek fade dikit */
+.interactive-button-container text {
+  transition: opacity 0.2s ease-in-out;
+}
