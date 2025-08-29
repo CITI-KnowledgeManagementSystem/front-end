@@ -93,6 +93,7 @@ const PromptPage = ({ user, conversations }: Props) => {
   setEvaluatingMessageId(null); 
 }, [conversations]);
 
+
 const handleSendPrompt = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -329,6 +330,10 @@ const handleSendPrompt = async (e: React.FormEvent<HTMLFormElement>) => {
     retrievedDoc: DocumentProps[] | undefined,
     chatBoxId: string
   ) => {
+    if (!user?.id) {
+      toast.error("User session is not ready. Cannot save response.");
+      return null;
+    }
     const formData = new FormData();
     formData.append("request", request);
     formData.append("userId", user?.id || "");
@@ -354,8 +359,10 @@ const handleSendPrompt = async (e: React.FormEvent<HTMLFormElement>) => {
   };
 
   const handleNewChatBox = async (request: string, response: string, retrievedDocs: DocumentProps[]| undefined) => {
+    const dynamicChatName = await getChatTitle(request);
     const formData = new FormData();
-    formData.append("name", "New Chat Box");
+    
+    formData.append("name", dynamicChatName);
     formData.append("userId", user?.id || "");
 
     const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API}/chatbox`, {
@@ -374,6 +381,29 @@ const handleSendPrompt = async (e: React.FormEvent<HTMLFormElement>) => {
       return messageId;
     }
   };
+
+  const getChatTitle = async (request: string): Promise<string> => {
+  try {
+    const res = await fetch(`/api/generate-title`, { // Panggil proxy Next.js yang baru dibuat
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ prompt: request }),
+    });
+
+    if (!res.ok) {
+      return request.substring(0, 30) + "..."; // Fallback
+    }
+
+    const { title } = await res.json();
+    return title || request.substring(0, 30) + "..."; // Fallback
+
+  } catch (error) {
+    console.error("Failed to fetch chat title:", error);
+    return request.substring(0, 30) + "..."; // Fallback
+  }
+};
 
 const handleEvaluate = async (messageToEvaluate: MessageProps) => {
   console.log("Evaluating message:", messageToEvaluate);
@@ -588,7 +618,7 @@ const [evaluatingMessageId, setEvaluatingMessageId] = useState<string | null>(nu
     >
       <div
         ref={divRef}
-        contentEditable={!isLoading}
+        contentEditable={!isLoading && !!user}
         className="w-full h-fit bg-transparent outline-none whitespace-pre-line text-gray-800 dark:text-white"
         role="textbox"
         onInput={(e) => setPrompt(e.currentTarget.textContent || "")}
@@ -597,7 +627,7 @@ const [evaluatingMessageId, setEvaluatingMessageId] = useState<string | null>(nu
         aria-multiline="true"
       ></div>
     </div>
-    <Button disabled={prompt.length === 0 || isLoading} className="bg-blue-700 hover:bg-blue-500">
+    <Button disabled={prompt.length === 0 || isLoading || !user} className="bg-blue-700 hover:bg-blue-500">
       <LuSendHorizontal size={20} />
     </Button>
   </form>
