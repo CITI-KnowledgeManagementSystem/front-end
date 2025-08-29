@@ -27,6 +27,7 @@ import {
 } from "@/lib/utils";
 import useClickOutside from "@/lib/useClickOutside";
 import { Input } from "@/components/ui/input";
+import { table } from "console";
 
 const DocTable = () => {
   const [tableContents, setTableContents] = useState<TableContentProps[]>([]);
@@ -48,12 +49,12 @@ const DocTable = () => {
   const targetRef2 = useRef<HTMLDivElement>(null);
   const targetRef3 = useRef<HTMLDivElement>(null);
 
-  useClickOutside(
-    () => setEditingCell("-1"),
-    targetRef,
-    targetRef2,
-    targetRef3
-  );
+useClickOutside(
+  () => setEditingCell("-1"),
+  targetRef as React.RefObject<HTMLElement>,
+  targetRef2 as React.RefObject<HTMLElement>,
+  targetRef3 as React.RefObject<HTMLElement>
+);
 
   const handleUpdateMisc = (documentId: string) => {
     const newContents = tableContents.map((item) =>
@@ -136,7 +137,7 @@ const DocTable = () => {
         setInputTopic(itemToEdit.topic);
       }
     }
-  }, [editingCell]);
+  }, [editingCell, tableContents]);
 
   if (isLoading) {
     return (

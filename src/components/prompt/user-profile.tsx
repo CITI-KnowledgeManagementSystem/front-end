@@ -23,7 +23,7 @@ const UserProfile = () => {
       setUser(res);
       setIsLoading(false);
     });
-  }, []);
+  }, [userId]);
 
   if (isLoading)
     return (

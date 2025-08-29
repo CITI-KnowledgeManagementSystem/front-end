@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -25,6 +25,15 @@ interface ChatPanelProps {
   selectedSources: string[]
   currentChatBoxId: string
   onChatBoxCreate: (chatBoxId: string) => void
+}
+
+interface ChatRequestBody {
+    question: string;
+    userId: string;
+    conversation_history: any[];
+    hyde: string;
+    reranking: string;
+    document_ids?: string[];
 }
 
 function renderToolbar(mm: Markmap, wrapper: HTMLElement) {
@@ -67,6 +76,75 @@ export function ChatPanel({
 
   const transformer = new Transformer();
 
+    const loadConversationHistory = useCallback(async () => {
+      if (!currentChatBoxId) return
+
+      try {
+        const token = await getToken(); //TOKEN AUTHENTICATION
+
+        if (!token) {
+          // Handle kasus kalo user tiba-tiba logout
+          toast.error("Your session has expired. Please log in again.");
+          return;
+        }
+
+        console.log("Calling getChatMessages with ID:", currentChatBoxId); 
+        const history = await getChatMessages(currentChatBoxId, token)
+        setConversationHistory(history ?? []) 
+        
+        if(!history || history.length === 0) {
+          setMessages([])
+          return
+        }
+        // Convert MessageProps to Message format for display
+        const displayMessages: Message[] = []
+        for (let i = 0; i < history.length; i += 2) {
+          const request = history[i]
+          const response = history[i + 1]
+          
+          if (request && response) {
+            displayMessages.push({
+              id: parseInt(response.message_id || Date.now().toString()),
+              request: request.message,
+              response: response.message,
+              userId: userId || '',
+              chatBoxId: parseInt(currentChatBoxId),
+              createdAt: new Date(),
+              liked: response.liked,
+              disliked: response.disliked,
+              rating: response.rating,
+            })
+          }
+        }
+        setMessages(displayMessages)
+      } catch (error) {
+        console.error('Failed to load conversation history:', error)
+        toast.error('Failed to load conversation history')
+      }
+    }, [currentChatBoxId, getToken, userId]);
+
+    const createNewChatBox = useCallback(async () => {
+      if (!userId) return
+
+      const name = selectedSourcesData.length > 0 
+        ? `Chat with ${selectedSourcesData[0].title}${selectedSourcesData.length > 1 ? ` and ${selectedSourcesData.length - 1} more` : ''}`
+        : 'New Chat'
+
+      try {
+        const response = await api.createChatBox({
+          userId,
+          name,
+        })
+        onChatBoxCreate(response.id)
+        setChatBoxName(name)
+      } catch (error) {
+        console.error('Failed to create chat box:', error)
+        toast.error('Failed to create chat session')
+      }
+    }, [userId, selectedSourcesData, api, onChatBoxCreate])
+
+
+
   // Load conversation history when chatbox changes
   useEffect(() => {
     if (currentChatBoxId) {
@@ -75,82 +153,21 @@ export function ChatPanel({
       setMessages([])
       setConversationHistory([])
     }
-  }, [currentChatBoxId])
+  }, [currentChatBoxId, loadConversationHistory])
+
+ 
 
   // Create a new chat box if none exists and we have selected sources
   useEffect(() => {
     if (!currentChatBoxId && selectedSources.length > 0 && userId) {
       createNewChatBox()
     }
-  }, [selectedSources, userId, currentChatBoxId])
-
-  const loadConversationHistory = async () => {
-    if (!currentChatBoxId) return
-    
-    try {
-    const token = await getToken(); //TOKEN AUTHENTICATION
-
-    if (!token) {
-      // Handle kasus kalo user tiba-tiba logout
-      toast.error("Your session has expired. Please log in again.");
-      return;
-    }
-
-      console.log("Calling getChatMessages with ID:", currentChatBoxId); 
-      const history = await getChatMessages(currentChatBoxId, token)
-      setConversationHistory(history ?? []) 
-      
-      if(!history || history.length === 0) {
-        setMessages([])
-        return
-      }
-      // Convert MessageProps to Message format for display
-      const displayMessages: Message[] = []
-      for (let i = 0; i < history.length; i += 2) {
-        const request = history[i]
-        const response = history[i + 1]
-        
-        if (request && response) {
-                     displayMessages.push({
-             id: parseInt(response.message_id || Date.now().toString()),
-             request: request.message,
-             response: response.message,
-             userId: userId || '',
-             chatBoxId: parseInt(currentChatBoxId),
-             createdAt: new Date(),
-             liked: response.liked,
-             disliked: response.disliked,
-             rating: response.rating,
-           })
-        }
-      }
-      setMessages(displayMessages)
-    } catch (error) {
-      console.error('Failed to load conversation history:', error)
-      toast.error('Failed to load conversation history')
-    }
-  }
+  }, [selectedSources, userId, currentChatBoxId, createNewChatBox])
 
 
-  const createNewChatBox = async () => {
-    if (!userId) return
 
-    const name = selectedSourcesData.length > 0 
-      ? `Chat with ${selectedSourcesData[0].title}${selectedSourcesData.length > 1 ? ` and ${selectedSourcesData.length - 1} more` : ''}`
-      : 'New Chat'
 
-    try {
-      const response = await api.createChatBox({
-        userId,
-        name,
-      })
-      onChatBoxCreate(response.id)
-      setChatBoxName(name)
-    } catch (error) {
-      console.error('Failed to create chat box:', error)
-      toast.error('Failed to create chat session')
-    }
-  }
+
 
   
 
@@ -183,18 +200,26 @@ export function ChatPanel({
             createdAt: new Date(),
         }
     ]);
+      const requestBody: ChatRequestBody = {
+          question: userMessage,
+          userId,
+          conversation_history: conversationHistory,
+          hyde: 'true',
+          reranking: 'true',
+      };
+      
+      // Pake `selectedSources` yang isinya list of IDs
+      if (selectedSources && selectedSources.length > 0) {
+          const idsToSend = selectedSources.map(id => String(id)); 
+         requestBody.document_ids = idsToSend;
+      }
 
+      console.log("Request body for LLM:", requestBody);
     try {
-        const response = await fetch('http://localhost:5000/llm/chat_with_llm', { // URL endpoint kamu
+        const response = await fetch(process.env.NEXT_PUBLIC_LLM_SERVER_URL + "/llm/chat_with_llm", { // URL endpoint kamu
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                question: userMessage,
-                userId,
-                conversation_history: conversationHistory,
-                hyde: 'true', // sesuaikan dengan logikamu
-                reranking: 'true'
-            }),
+            body: JSON.stringify(requestBody),
         });
 
         if (!response.body) throw new Error("Response body is null");

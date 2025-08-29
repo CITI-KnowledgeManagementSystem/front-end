@@ -62,6 +62,7 @@ export async function POST(req: NextRequest) {
   const title = formData.get("title");
   const topic = formData.get("topic");
   const user_id = formData.get("user_id");
+  const parser = formData.get("parser");
 
   if (!title || !topic || !user_id) {
     return NextResponse.json(
@@ -148,25 +149,30 @@ export async function POST(req: NextRequest) {
 
     // const { getToken } = auth();
     // const token = await getToken();
+    
+    const bodyData = JSON.stringify({
+      user_id: user_id,
+      collection_name: "private",
+      document_id: `${docs_id}`,
+      tag: format,
+      original_filename: filename,
+      parser: parser,
+    });
+
+    console.log("Sending to LLM backend:");
+    console.log(bodyData);
 
     const res = await fetch(
-      `${process.env.LLM_SERVER_URL}/document/insert`,
+      `${process.env.NEXT_PUBLIC_LLM_SERVER_URL}/document/insert`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           // Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          user_id: user_id,
-          collection_name: "private",
-          document_id: `${docs_id}`,
-          tag: format,
-          original_filename: filename,
-        }),
+        body: bodyData,
       }
     );
-
     if (!res.ok) {
       return NextResponse.json(
         { message: "Error inserting to VDB" },
@@ -233,7 +239,7 @@ export async function DELETE(request: NextRequest) {
 
   try {
     const res = await fetch(
-      `${process.env.LLM_SERVER_URL}/document/delete?document_id=${id}&collection_name=private`,
+      `${process.env.NEXT_PUBLIC_LLM_SERVER_URL}/document/delete?document_id=${id}&collection_name=private`,
       {
         method: "DELETE",
         headers: {

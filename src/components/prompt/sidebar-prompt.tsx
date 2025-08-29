@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "../ui/button";
@@ -68,7 +68,7 @@ const SidebarPrompt = () => {
 
   const setFunction = useStore((state) => state.setFunction);
 
-  const getChatBox = async () => {
+  const getChatBox = useCallback(async () => {
     console.log("Fetching chatbox data...");
     console.log("User ID:", userId);
     const response = await fetch(
@@ -78,15 +78,15 @@ const SidebarPrompt = () => {
     setChatBox(data.data as ChatBoxGroup);
     let sortedKeys = sortChatBox(data.data as ChatBoxGroup);
     setSortedKeys(sortedKeys);
-  };
+  }, [userId]);
 
   useEffect(() => {
     setFunction(getChatBox);
-  }, [setFunction]);
+  }, [setFunction, getChatBox]);
 
   useEffect(() => {
     getChatBox().then().catch().finally(() => setIsLoading(false));
-  }, []);
+  }, [getChatBox]);
 
   return (
     <aside className="h-screen">

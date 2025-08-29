@@ -93,112 +93,116 @@ const PromptPage = ({ user, conversations }: Props) => {
   setEvaluatingMessageId(null); 
 }, [conversations]);
 
-  const handleSendPrompt = async (e: React.FormEvent<HTMLFormElement>) => {
 
-      e.preventDefault();
+const handleSendPrompt = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
 
-      if (!prompt.trim()) return;
+    if (!prompt.trim()) return;
 
-      const userMessageText = prompt;
-      setPrompt("");
-      if (divRef.current) divRef.current.innerText = ""; // Membersihkan input contentEditable
-      setIsPrompting(false);
+    const userMessageText = prompt;
+    setPrompt("");
+    if (divRef.current) divRef.current.innerText = "";
+    setIsPrompting(false);
 
-      // --- Langkah 1: Update UI secara instan ---
-      // Siapkan pesan user dan placeholder untuk AI agar UI terasa responsif.
-      const tempUserMessage: MessageProps = {
-          type: "request",
-          message: userMessageText,
-          message_id: `user-${Date.now()}`
-      };
-      const tempAiMessage: MessageProps = {
-          type: "response",
+    // --- Langkah 1: Update UI secara instan ---
+    const tempUserMessage: MessageProps = {
+        type: "request",
+        message: userMessageText,
+        message_id: `user-${Date.now()}`
+    };
+    const tempAiMessage: MessageProps = {
+        type: "response",
+        message: "",
+        message_id: `ai-${Date.now()}`,
+        sourceDocs: [],
+    };
 
-          message: "", 
-          message_id: `ai-${Date.now()}`,
+    setData(currentData => [...currentData, tempUserMessage, tempAiMessage]);
 
-          sourceDocs: [],
-      };
+    // --- Langkah 2: Mulai proses streaming dari backend ---
+    try {
+        const response = await fetch(process.env.NEXT_PUBLIC_LLM_SERVER_URL + "/llm/chat_with_llm", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                question: userMessageText,
+                userId: user?.id || "",
+                conversation_history: data,
+                hyde: isHydeChecked.toString(),
+                reranking: isRerankingChecked.toString()
+            }),
+        });
 
-      setData(currentData => [...currentData, tempUserMessage, tempAiMessage]);
+        if (!response.body) throw new Error("Response body is null");
 
-      // --- Langkah 2: Mulai proses streaming dari backend ---
-      try {
-          const response = await fetch('http://localhost:5000/llm/chat_with_llm', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                  question: userMessageText,
-                  userId: user?.id || "",
-                  conversation_history: data,
-                  hyde: isHydeChecked.toString(),
-                  reranking: isRerankingChecked.toString()
-              }),
-          });
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullResponse = "";
+        let retrievedDocsData: DocumentProps[] = [];
+        
+        // ==========================================================
+        // BAGIAN YANG DIPERBAIKI: Menggunakan Buffer untuk Streaming
+        // ==========================================================
+        let buffer = ""; // Ini penampungan sementara kita
 
-          if (!response.body) throw new Error("Response body is null");
-
-          const reader = response.body.getReader();
-          const decoder = new TextDecoder();
-          let fullResponse = "";
-
-          let retrievedDocsData: DocumentProps[] = [];
-
-          // Loop untuk membaca setiap potongan data dari stream
-          while (true) {
+        while (true) {
             const { value, done } = await reader.read();
-            if (done) break; // Kalo koneksi selesai, keluar dari loop
+            if (done) break;
 
-            const chunk = decoder.decode(value);
-            const lines = chunk.split('\n\n').filter(line => line.trim());
+            buffer += decoder.decode(value, { stream: true });
+            let boundary = buffer.indexOf('\n\n');
 
-            for (const line of lines) {
-                if (line.startsWith('data: ')) {
-                    const dataStr = line.substring(6).trim();
+            while (boundary !== -1) {
+                const message = buffer.substring(0, boundary);
+                buffer = buffer.substring(boundary + 2);
 
-                    // PENTING: Cek [DONE] di sini cuma buat nge-skip, JANGAN return/break
-                    if (!dataStr) {
-                        continue; // Lanjut ke line berikutnya kalo ada
-                    }
+                if (message.startsWith('data: ')) {
+                    const dataStr = message.substring(6).trim();
 
-                    if (dataStr === '[DONE]') {
-                        continue;
-                    }
+                    if (dataStr && dataStr !== '[DONE]') {
+                        try {
+                            const parsedData = JSON.parse(dataStr);
 
-                    const parsedData = JSON.parse(dataStr);
+                            if (parsedData.answer_token) {
+                                fullResponse += parsedData.answer_token;
+                                setData(currentData =>
+                                    currentData.map(msg =>
+                                        msg.message_id === tempAiMessage.message_id
+                                            ? { ...msg, message: fullResponse }
+                                            : msg
+                                    )
+                                );
+                            }
 
-                    if (parsedData.answer_token) {
-                        fullResponse += parsedData.answer_token;
-                        setData(currentData =>
-                            currentData.map(msg =>
-                                msg.message_id === tempAiMessage.message_id
-                                    ? { ...msg, message: fullResponse }
-                                    : msg
-                            )
-                        );
-                    }
-
-                    if (parsedData.retrieved_docs) {
-                        retrievedDocsData.push(...parsedData.retrieved_docs);
-                        setData(currentData =>
-                            currentData.map(msg =>
-                                msg.message_id === tempAiMessage.message_id
-                                    ? { ...msg, sourceDocs: [...retrievedDocsData] }
-                                    : msg
-                            )
-                        );
+                            if (parsedData.retrieved_doc) {
+                                retrievedDocsData.push(parsedData.retrieved_doc);
+                                setData(currentData =>
+                                    currentData.map(msg =>
+                                        msg.message_id === tempAiMessage.message_id
+                                            ? { ...msg, sourceDocs: [...retrievedDocsData] }
+                                            : msg
+                                    )
+                                );
+                            }
+                        } catch (e) {
+                            console.error("Gagal parse JSON dari potongan data:", dataStr, e);
+                        }
                     }
                 }
+                boundary = buffer.indexOf('\n\n');
             }
-          } 
-          let realMessageId: string | undefined;
-          if (!slug) {
-              realMessageId = await handleNewChatBox(userMessageText, fullResponse, retrievedDocsData);
-          } else {
-              realMessageId = await handleSaveResponse(userMessageText, fullResponse, retrievedDocsData, slug[0]);
-          }
-          if (realMessageId) {
-            // Update the AI message with the real message ID
+        }
+        // ==========================================================
+        // AKHIR BAGIAN YANG DIPERBAIKI
+        // ==========================================================
+
+        let realMessageId: string | undefined;
+        if (!slug) {
+            realMessageId = await handleNewChatBox(userMessageText, fullResponse, retrievedDocsData);
+        } else {
+            realMessageId = await handleSaveResponse(userMessageText, fullResponse, retrievedDocsData, slug[0]);
+        }
+        if (realMessageId) {
             setData(currentData =>
                 currentData.map(msg =>
                     msg.message_id === tempAiMessage.message_id
@@ -206,25 +210,22 @@ const PromptPage = ({ user, conversations }: Props) => {
                         : msg
                 )
             );
-
-          }
-      } catch (error) {
-          console.error('Failed to stream message:', error);
-          setData(currentData =>
-              currentData.map(msg =>
-                  msg.message_id === tempAiMessage.message_id
-                      ? { ...msg, message: "Sorry, an error occurred during streaming." }
-                      : msg
-              )
-          );
-
-  } finally {
-    // Ini blok "bersih-bersih" yang PASTI jalan, mau error atau enggak
-    setIsLoading(false);
-    scrollDown();
-    setPrompt("");
-    setIsPrompting(false);
-  }
+        }
+    } catch (error) {
+        console.error('Failed to stream message:', error);
+        setData(currentData =>
+            currentData.map(msg =>
+                msg.message_id === tempAiMessage.message_id
+                    ? { ...msg, message: "Sorry, an error occurred during streaming." }
+                    : msg
+            )
+        );
+    } finally {
+        setIsLoading(false);
+        scrollDown();
+        setPrompt("");
+        setIsPrompting(false);
+    }
 };
 
 
@@ -578,9 +579,9 @@ const [evaluatingMessageId, setEvaluatingMessageId] = useState<string | null>(nu
                 onSourceClick={(doc) => setSelectedDoc(doc)}
                 onShowScores={() => setSelectedScores(item)}
                 faithfulness={item.faithfulness}
-                answer_relevancy={item.answer_relevancy}
-                context_precision={item.context_precision}
-                context_relevance={item.context_relevance}
+                // answer_relevancy={item.answer_relevancy}
+                // context_precision={item.context_precision}
+                // context_relevance={item.context_relevance}
                 isEvaluating={evaluatingMessageId === item.message_id}
               />
             ))}
