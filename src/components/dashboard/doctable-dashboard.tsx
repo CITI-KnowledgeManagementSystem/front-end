@@ -56,6 +56,43 @@ useClickOutside(
   targetRef3 as React.RefObject<HTMLElement>
 );
 
+  useEffect(() => {
+    if (!userId) {
+    return; // Keluar dari useEffect kalo userId belum siap
+   }
+    setIsLoading(true);
+    fetch(
+      generateDashboardDocumentsLink(
+        "be",
+        userId,
+        paginationIndex * rowsPerPage,
+        rowsPerPage,
+        searchTerm,
+        tags
+      )
+    ).then(async (res) => {
+      if (!res.ok) {
+        setError("An error has occured when fetching the data");
+      }
+      const newData = await res.json();
+      setTableContents(newData.data.list);
+      setTotalItems(newData.data.docCounts);
+    }).finally(() => setIsLoading(false));
+  }, [paginationIndex, rowsPerPage, searchTerm, tags, userId]);
+
+  useEffect(() => {
+    if (editingCell !== "-1") {
+      // 1. Use .find() to efficiently locate the item
+      const itemToEdit = tableContents.find((item) => item.id === editingCell);
+
+      // 2. Update the state if the item is found
+      if (itemToEdit) {
+        setInputTitle(itemToEdit.title);
+        setInputTopic(itemToEdit.topic);
+      }
+    }
+  }, [editingCell, tableContents]);
+
   const handleUpdateMisc = (documentId: string) => {
     const newContents = tableContents.map((item) =>
       item.id === documentId
@@ -105,39 +142,6 @@ useClickOutside(
     }
   };
 
-  useEffect(() => {
-    setIsLoading(true);
-    fetch(
-      generateDashboardDocumentsLink(
-        "be",
-        userId || "",
-        paginationIndex * rowsPerPage,
-        rowsPerPage,
-        searchTerm,
-        tags
-      )
-    ).then(async (res) => {
-      if (!res.ok) {
-        setError("An error has occured when fetching the data");
-      }
-      const newData = await res.json();
-      setTableContents(newData.data.list);
-      setTotalItems(newData.data.docCounts);
-    }).finally(() => setIsLoading(false));
-  }, [paginationIndex, rowsPerPage, searchTerm, tags, userId]);
-
-  useEffect(() => {
-    if (editingCell !== "-1") {
-      // 1. Use .find() to efficiently locate the item
-      const itemToEdit = tableContents.find((item) => item.id === editingCell);
-
-      // 2. Update the state if the item is found
-      if (itemToEdit) {
-        setInputTitle(itemToEdit.title);
-        setInputTopic(itemToEdit.topic);
-      }
-    }
-  }, [editingCell, tableContents]);
 
   if (isLoading) {
     return (
