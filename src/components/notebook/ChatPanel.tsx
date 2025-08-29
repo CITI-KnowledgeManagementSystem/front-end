@@ -172,56 +172,57 @@ export function ChatPanel({
 
   
 
-  const handleSendMessage = async (messageSend: string) => {
-    if (!messageSend.trim() || !userId || !currentChatBoxId) return;
+  const handleSendMessage = useCallback(
+    async (messageSend: string) => {
+      if (!messageSend.trim() || !userId || !currentChatBoxId) return;
 
-    const userMessage = messageSend;
-    setInputValue('');
-    setIsLoading(true)
+      const userMessage = messageSend;
+      setInputValue('');
+      setIsLoading(true);
 
-    // Buat pesan pengguna dan pesan AI yang masih kosong
-    const tempUserMessageId = Date.now();
-    const tempAiMessageId = tempUserMessageId + 1;
+      // Buat pesan pengguna dan pesan AI yang masih kosong
+      const tempUserMessageId = Date.now();
+      const tempAiMessageId = tempUserMessageId + 1;
 
-    setMessages(prev => [
+      setMessages(prev => [
         ...prev,
         {
-            id: tempUserMessageId,
-            request: userMessage,
-            response: '',
-            userId,
-            chatBoxId: parseInt(currentChatBoxId),
-            createdAt: new Date(),
+          id: tempUserMessageId,
+          request: userMessage,
+          response: '',
+          userId,
+          chatBoxId: parseInt(currentChatBoxId),
+          createdAt: new Date(),
         },
         {
-            id: tempAiMessageId,
-            request: '', // AI response tidak punya request
-            response: '', // Tampilkan indikator loading awal
-            userId,
-            chatBoxId: parseInt(currentChatBoxId),
-            createdAt: new Date(),
-        }
-    ]);
-      const requestBody: ChatRequestBody = {
-          question: userMessage,
+          id: tempAiMessageId,
+          request: '', // AI response tidak punya request
+          response: '', // Tampilkan indikator loading awal
           userId,
-          conversation_history: conversationHistory,
-          hyde: 'true',
-          reranking: 'true',
+          chatBoxId: parseInt(currentChatBoxId),
+          createdAt: new Date(),
+        }
+      ]);
+      const requestBody: ChatRequestBody = {
+        question: userMessage,
+        userId,
+        conversation_history: conversationHistory,
+        hyde: 'true',
+        reranking: 'true',
       };
-      
+
       // Pake `selectedSources` yang isinya list of IDs
       if (selectedSources && selectedSources.length > 0) {
-          const idsToSend = selectedSources.map(id => String(id)); 
-         requestBody.document_ids = idsToSend;
+        const idsToSend = selectedSources.map(id => String(id));
+        requestBody.document_ids = idsToSend;
       }
 
       console.log("Request body for LLM:", requestBody);
-    try {
+      try {
         const response = await fetch(process.env.NEXT_PUBLIC_LLM_SERVER_URL + "/llm/chat_with_llm", { // URL endpoint kamu
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody),
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
         });
 
         if (!response.body) throw new Error("Response body is null");
@@ -234,56 +235,58 @@ export function ChatPanel({
 
         // Loop untuk membaca stream
         while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
+          const { value, done } = await reader.read();
+          if (done) break;
 
-            const chunk = decoder.decode(value);
-            const lines = chunk.split('\n\n').filter(line => line.trim());
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n\n').filter(line => line.trim());
 
-            for (const line of lines) {
-                if (line.startsWith('data: ')) {
-                    const dataStr = line.substring(6);
-                    if (dataStr === '[DONE]') {
-                        // Simpan jawaban lengkap ke database setelah selesai
-                        // api.createMessage({ ... , response: fullResponse });
-                        return;
-                    }
-                    
-                    try {
-                        const data = JSON.parse(dataStr);
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const dataStr = line.substring(6);
+              if (dataStr === '[DONE]') {
+                // Simpan jawaban lengkap ke database setelah selesai
+                // api.createMessage({ ... , response: fullResponse });
+                return;
+              }
 
-                        // Cek apakah ini data token jawaban atau ID dokumen
-                        if (data.answer_token) {
-                            for (const char of data.answer_token) {
-                              // Tambahkan satu karakter ke state
-                              setMessages(prev =>
-                                  prev.map(msg =>
-                                      msg.id === tempAiMessageId
-                                          ? { ...msg, response: msg.response + char }
-                                          : msg
-                                  )
-                              );
-                              // Beri jeda singkat sebelum karakter berikutnya
-                              await sleep(5); // <-- Sesuaikan angka ini (dalam milidetik)
-                            }
-                        } else if (data.retrieved_doc_ids) {
-                            console.log("Retrieved document IDs:", data.retrieved_doc_ids);
-                            // Kamu bisa simpan ID ini di state terpisah jika perlu
-                        }
+              try {
+                const data = JSON.parse(dataStr);
 
-                    } catch(e) {
-                         console.error("Failed to parse JSON from stream", e);
-                    }
+                // Cek apakah ini data token jawaban atau ID dokumen
+                if (data.answer_token) {
+                  for (const char of data.answer_token) {
+                    // Tambahkan satu karakter ke state
+                    setMessages(prev =>
+                      prev.map(msg =>
+                        msg.id === tempAiMessageId
+                          ? { ...msg, response: msg.response + char }
+                          : msg
+                      )
+                    );
+                    // Beri jeda singkat sebelum karakter berikutnya
+                    await sleep(5); // <-- Sesuaikan angka ini (dalam milidetik)
+                  }
+                } else if (data.retrieved_doc_ids) {
+                  console.log("Retrieved document IDs:", data.retrieved_doc_ids);
+                  // Kamu bisa simpan ID ini di state terpisah jika perlu
                 }
+
+              } catch (e) {
+                console.error("Failed to parse JSON from stream", e);
+              }
             }
+          }
         }
-    } catch (error) {
+      } catch (error) {
         console.error('Failed to stream message:', error);
-        setMessages(prev => prev.map(msg => 
-            msg.id === tempAiMessageId ? {...msg, response: "Sorry, an error occurred."} : msg
+        setMessages(prev => prev.map(msg =>
+          msg.id === tempAiMessageId ? { ...msg, response: "Sorry, an error occurred." } : msg
         ));
-    } 
-  };
+      }
+    },
+    [userId, currentChatBoxId, conversationHistory, selectedSources, setMessages, setInputValue, setIsLoading]
+  );
 
   useEffect(() => {
     const handleMindMapClick = (event: CustomEvent<string>) => {
@@ -317,7 +320,7 @@ export function ChatPanel({
     return () => {
       window.removeEventListener('mindmapNodeClick', handleMindMapClick as EventListener);
     };
-  }, [handleSendMessage]);
+  }, [handleSendMessage, selectedSources, sources]);
 
   const handleMindMap = async () => {
     // Kalo lagi loading, jangan jalanin fungsi lagi

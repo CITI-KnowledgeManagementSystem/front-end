@@ -270,11 +270,41 @@ export function StudioPanel({ selectedSources }: StudioPanelProps) {
   const { mindMapData, setMindMapData, isLoadingMindMap, setIsLoadingMindMap } = useMindMapStore(); 
   const [ showMindMap, setShowMindMap ] = useState(false);
 
-  const refSvg = useRef<SVGSVGElement>();
+  const refSvg = useRef<SVGSVGElement>(null);
   // Ref for markmap object
-  const refMm = useRef<Markmap>();
+  const refMm = useRef<Markmap>(null);
   // Ref for toolbar wrapper
-  const refToolbar = useRef<HTMLDivElement>();
+  const refToolbar = useRef<HTMLDivElement>(null);
+
+  const handleGenerateNewMindmap = useCallback(async (query: any) => {
+    // 1. Kasih tau UI kalo lagi loading, biar user gak bingung
+    // setIsLoading(true);
+    console.log(`🚀 Nge-hit API dengan query: "${query}"`);
+    setIsLoadingRegenerateMindmap(true);
+
+    const question = `make a mindmap about ${query}`;
+
+    try {
+      const response = await api.regenerateMindMap(
+        question
+      );
+
+      // 3. Cek kalo request-nya gagal (misal server error 500)
+      console.log('Response dari handleGenerateNewMindmap:', response);
+
+      setMindMapData(response);
+
+    } catch (error) {
+      // 6. Kalo ada error di network atau dari 'throw' di atas, tangkep di sini
+      console.error('Anjir, gagal generate mind map baru:', error);
+      // Di sini lo bisa nampilin notif error ke user
+      
+    } finally {
+      // 7. Apapun yang terjadi (sukses atau gagal), matiin loading indicator
+      // setIsLoading(false);
+      setIsLoadingRegenerateMindmap(false);
+    }
+  }, [api, setMindMapData, setIsLoadingRegenerateMindmap]);
 
 
 useEffect(() => {
@@ -451,40 +481,7 @@ useEffect(() => {
     refMm.current?.destroy();
   };
 
-}, [showMindMap, mindMapData, handleNodeClick]);
-
-const handleGenerateNewMindmap = async (query: any) => {
-  // 1. Kasih tau UI kalo lagi loading, biar user gak bingung
-  // setIsLoading(true);
-  console.log(`🚀 Nge-hit API dengan query: "${query}"`);
-  setIsLoadingRegenerateMindmap(true);
-
-  const question = `make a mindmap about ${query}`;
-
-  try {
-
-    const response = await api.regenerateMindMap(
-      question
-    );
-
-    // 3. Cek kalo request-nya gagal (misal server error 500)
-
-    console.log('Response dari handleGenerateNewMindmap:', response);
-
-
-    setMindMapData(response);
-
-  } catch (error) {
-    // 6. Kalo ada error di network atau dari 'throw' di atas, tangkep di sini
-    console.error('Anjir, gagal generate mind map baru:', error);
-    // Di sini lo bisa nampilin notif error ke user
-    
-  } finally {
-    // 7. Apapun yang terjadi (sukses atau gagal), matiin loading indicator
-    // setIsLoading(false);
-    setIsLoadingRegenerateMindmap(false);
-  }
-};
+}, [showMindMap, mindMapData, handleNodeClick, handleGenerateNewMindmap]);
 
 
   return (
