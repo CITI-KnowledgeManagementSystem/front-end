@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
@@ -25,12 +25,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { NotebookAPI, PodcastResponse } from '@/lib/api'
+import { NotebookAPI, PodcastResponse, useNotebookAPI } from '@/lib/api'
 import { useAuth } from '@clerk/nextjs'
 import useMindMapStore from './markmap'
 import { Markmap } from 'markmap-view';
 import { Transformer } from 'markmap-lib';
 import { Toolbar } from 'markmap-toolbar';
+import { ChatPanel } from './ChatPanel'
 
 interface StudyTool {
   id: string
@@ -63,11 +64,17 @@ function renderToolbar(mm: Markmap, wrapper: HTMLElement) {
   }
 }
 
+interface Props {
+  onNodeClick: (text: string) => void;
+}
+
 export function StudioPanel({ selectedSources }: StudioPanelProps) {
   const { userId } = useAuth()
+  const { api } = useNotebookAPI()
   const [isPlaying, setIsPlaying] = useState(false)
   const [audioProgress, setAudioProgress] = useState(35)
   const [isGeneratingPodcast, setIsGeneratingPodcast] = useState(false)
+  const [isLoadingRegenerateMindmap, setIsLoadingRegenerateMindmap] = useState(false)
   const [podcastData, setPodcastData] = useState<PodcastResponse | null>(null)
   const [podcastError, setPodcastError] = useState<string | null>(null)
   const [studyTools, setStudyTools] = useState<StudyTool[]>([
@@ -235,288 +242,490 @@ export function StudioPanel({ selectedSources }: StudioPanelProps) {
     }
   }
 
+  const handleNodeClick = useCallback((nodeText: string, parentText?: string) => {
+    // Ini adalah fungsi yang bakal jalan pas node di-klik
+
+    let nodeInfo;
+
+    if(!parentText) {
+      // Kalo gak ada konteks bapak, langsung kirim nodeText aja
+      nodeInfo = JSON.stringify({ nodeText });
+    } else {
+      // Kalo ada konteks bapak, gabungin konteksnya
+      nodeInfo = JSON.stringify({ nodeText, parentText });
+    }
+
+    const event = new CustomEvent('mindmapNodeClick', { detail: nodeInfo });
+
+    setShowMindMap(false); // Tutup mind map modal
+
+    // 2. Teriak ke "toa" global (window)
+    window.dispatchEvent(event);
+  }, []);
+
   const canGenerate = selectedSources.length > 0
+
+  // const transformer = new Transformer();
 
   const { mindMapData, setMindMapData, isLoadingMindMap, setIsLoadingMindMap } = useMindMapStore(); 
   const [ showMindMap, setShowMindMap ] = useState(false);
 
-const refSvg = useRef<SVGSVGElement | null>(null);
-const refMm = useRef<Markmap | null>(null);
-const refToolbar = useRef<HTMLDivElement | null>(null);
+  const refSvg = useRef<SVGSVGElement>();
+  // Ref for markmap object
+  const refMm = useRef<Markmap>();
+  // Ref for toolbar wrapper
+  const refToolbar = useRef<HTMLDivElement>();
 
 
-  useEffect(() => {
- 
+useEffect(() => {
   if (!showMindMap || !mindMapData || !refSvg.current) {
     return;
   }
+
   const transformer = new Transformer();
-  // Transform data dari markdown/text jadi format yang dimengerti Markmap
+
   const { root } = transformer.transform(mindMapData);
 
-  // Bikin instance Markmap baru. Kita langsung taro di variabel mm
-  const mm = Markmap.create(refSvg.current, {
-    autoFit: true,
-    initialExpandLevel: 0,
-  });
+  const svgEl = refSvg.current;
 
+  // Instance Markmap selalu dibuat baru biar fresh
+  const mm = Markmap.create(svgEl, { autoFit: true, initialExpandLevel: 0 });
+  refMm.current = mm; 
+  
   mm.setData(root);
+  mm.fit();
 
-  refMm.current = mm;
-  console.log('Markmap created and data loaded!', refSvg.current);
+  const attachListeners = () => {
+    const nodeGroups = svgEl.querySelectorAll<SVGGElement>('g.markmap-node');
 
+    nodeGroups.forEach(group => {
+      // Pake dataset buat nandain, biar gak dobel listener
+      if (group.dataset.nodeListener === 'true') return;
+      group.dataset.nodeListener = 'true';
+      group.style.cursor = 'pointer';
 
+      // Cek apakah ini node terakhir (leaf node) dengan liat ada 'circle' atau nggak
+      const isLeafNode = !group.querySelector('circle');
 
-  return () => {
-    // Kalo ada instance Markmap yang aktif, ancurin dulu
-    if (refMm.current) {
-      console.log('Destroying previous Markmap instance...');
-      refMm.current.destroy();
-      refMm.current = null; // Kosongin lagi ref-nya, siap buat instance baru nanti
-    }
+      // ==========================================================
+      // INJEKSI FITUR BARU MULAI DARI SINI
+      // ==========================================================
+      if (isLeafNode) {
+        // Biar gak dobel-dobel bikin tombol kalo fungsi ini kepanggil lagi
+        if (group.querySelector('.interactive-button-container')) return;
+
+        // 1. Ambil ukuran & posisi kotak teks biar tombolnya presisi
+        const textBox = group.querySelector('foreignObject');
+        if (!textBox) return;
+        const textBoxRect = textBox.getBBox();
+
+        // 2. Bikin semua elemen SVG baru pake namespace yang bener
+        const ns = 'http://www.w3.org/2000/svg';
+        const buttonContainer = document.createElementNS(ns, 'g');
+        const buttonRect = document.createElementNS(ns, 'rect');
+        const buttonText = document.createElementNS(ns, 'text');
+        
+
+        // 3. Atur posisi container tombolnya
+        //    Posisinya di kanan kotak teks, tengah-tengah secara vertikal
+        const buttonX = textBoxRect.x + textBoxRect.width + 10; // 10px spasi
+        const buttonY = textBoxRect.y + textBoxRect.height / 2;
+        buttonContainer.setAttribute('transform', `translate(${buttonX}, ${buttonY})`);
+        buttonContainer.classList.add('interactive-button-container');
+        buttonContainer.style.cursor = 'pointer';
+
+        // 4. Styling & atribut si tombol (awalnya bulet)
+        buttonRect.setAttribute('x', '-10'); // Setengah dari width biar pusatnya di 0,0
+        buttonRect.setAttribute('y', '-10'); // Setengah dari height
+        buttonRect.setAttribute('width', '20');
+        buttonRect.setAttribute('height', '20');
+        buttonRect.setAttribute('rx', '10'); // rx=ry=setengah width/height -> jadi bulet
+        buttonRect.setAttribute('ry', '10');
+        buttonRect.setAttribute('fill', '#4A90E2'); // Warna biru, bebas ganti
+        buttonRect.classList.add('interactive-button-rect'); // Class buat transisi CSS
+
+        // 5. Styling & atribut teks '?' di dalem tombol
+        buttonText.textContent = '?';
+        buttonText.setAttribute('text-anchor', 'middle'); // Teks rata tengah horizontal
+        buttonText.setAttribute('dominant-baseline', 'central'); // Teks rata tengah vertikal
+        buttonText.setAttribute('fill', 'white');
+        buttonText.setAttribute('font-weight', 'bold');
+        buttonText.setAttribute('font-size', '14px');
+        buttonText.style.pointerEvents = 'none'; // Biar gak ngehalangin event di container
+
+        // 6. Gabungin semua elemen jadi satu
+        buttonContainer.appendChild(buttonRect);
+        buttonContainer.appendChild(buttonText);
+        group.appendChild(buttonContainer);
+
+        // 7. Magic-nya di sini: event hover!
+        buttonContainer.addEventListener('mouseenter', () => {
+          // Tambahkan class Tailwind untuk animasi & style
+          buttonRect.setAttribute('x', '-10');
+          buttonRect.setAttribute('width', '20');
+          buttonRect.setAttribute('rx', '10');
+          buttonText.textContent = '?';
+          buttonText.setAttribute('font-size', '14px');
+          buttonRect.setAttribute('fill', '#90cdf4'); // biru muda (Tailwind: blue-300)
+        });
+
+        buttonContainer.addEventListener('mouseleave', () => {
+          // Balikin ke bentuk & teks semula
+          buttonRect.setAttribute('x', '-10');
+          buttonRect.setAttribute('width', '20');
+          buttonRect.setAttribute('rx', '10');
+          buttonText.textContent = '?';
+          buttonText.setAttribute('font-size', '14px');
+          buttonRect.setAttribute('fill', '#4A90E2'); // Warna biru, bebas ganti
+        });
+          
+        buttonContainer.addEventListener('click', (event) => {
+            event.stopPropagation();
+            
+            // Ambil teks dari node yang diklik
+            const nodeText = group.querySelector('foreignObject > div > div')?.textContent?.trim();
+            
+            if (nodeText) {
+                // Panggil fungsi asinkron-nya di sini!
+                handleGenerateNewMindmap(nodeText);
+            }
+        });
+
+      }
+      // ==========================================================
+      // AKHIR DARI INJEKSI FITUR BARU
+      // ==========================================================
+
+      group.addEventListener('click', (event) => {
+        event.stopPropagation();
+
+        // 1. Ambil info si anak (node yang diklik)
+        const childTextContainer = group.querySelector('foreignObject > div > div');
+        const childText = childTextContainer?.textContent?.trim();
+        const childPath = group.dataset.path;
+
+        if (!childText || !childPath) return;
+
+        let fullQuery = childText; // Default query
+        let parentText = '';
+
+        // 2. Cek & cari bapaknya kalo ada
+        if (childPath.includes('.')) {
+          const parentPath = childPath.split('.').slice(0, -1).join('.');
+
+          // Cari elemen si bapak di seluruh SVG
+          const parentEl = svgEl.querySelector<SVGGElement>(`g.markmap-node[data-path="${parentPath}"]`);
+
+          if (parentEl) {
+            const parentTextContainer = parentEl.querySelector('foreignObject > div > div');
+            parentText = parentTextContainer?.textContent?.trim() || '';
+          }
+        }
+
+        // 3. Gabungin konteks bapak & anak
+        if (parentText) {
+          fullQuery = `${parentText}: ${childText}`;
+          handleNodeClick(childText, parentText); // Kirim query yang udah lengkap
+        } else {
+          handleNodeClick(childText); // Kirim query anak aja
+        }
+      });
+    });
+
+    const circles = svgEl.querySelectorAll<SVGCircleElement>('g.markmap-node circle');
+    circles.forEach(circle => {
+      if (circle.dataset.circleListener === 'true') return;
+      circle.dataset.circleListener = 'true';
+
+      circle.addEventListener('click', (event) => {
+        event.stopPropagation();
+        setTimeout(attachListeners, 0);
+      });
+    });
   };
-}, [showMindMap, mindMapData]);
+
+  attachListeners();
+
+  // Cleanup function, ini udah bener
+  return () => {
+    refMm.current?.destroy();
+  };
+
+}, [showMindMap, mindMapData, handleNodeClick]);
+
+const handleGenerateNewMindmap = async (query: any) => {
+  // 1. Kasih tau UI kalo lagi loading, biar user gak bingung
+  // setIsLoading(true);
+  console.log(`🚀 Nge-hit API dengan query: "${query}"`);
+  setIsLoadingRegenerateMindmap(true);
+
+  const question = `make a mindmap about ${query}`;
+
+  try {
+
+    const response = await api.regenerateMindMap(
+      question
+    );
+
+    // 3. Cek kalo request-nya gagal (misal server error 500)
+
+    console.log('Response dari handleGenerateNewMindmap:', response);
+
+
+    setMindMapData(response);
+
+  } catch (error) {
+    // 6. Kalo ada error di network atau dari 'throw' di atas, tangkep di sini
+    console.error('Anjir, gagal generate mind map baru:', error);
+    // Di sini lo bisa nampilin notif error ke user
+    
+  } finally {
+    // 7. Apapun yang terjadi (sukses atau gagal), matiin loading indicator
+    // setIsLoading(false);
+    setIsLoadingRegenerateMindmap(false);
+  }
+};
 
 
   return (
     <div className="h-full flex flex-col dark:bg-gray-700 bg-white">
       {/* Header */}
       <div className="p-4 border-b border-gray-200 dark:border-gray-600">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-200 dark:hover:text-white">Studio</h2>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button 
-                size="sm" 
-                variant="outline"
-                disabled={!canGenerate}
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                Create
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 ">
-              <DropdownMenuItem 
-                onClick={() => generateNewTool('audio-overview')}
-                disabled={!canGenerate}
-              >
-                <Headphones className="w-4 h-4 mr-2" />
-                Audio Overview
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => generateNewTool('study-guide')}
-                disabled={!canGenerate}
-              >
-                <BookOpen className="w-4 h-4 mr-2" />
-                Study Guide
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => generateNewTool('timeline')}
-                disabled={!canGenerate}
-              >
-                <Clock className="w-4 h-4 mr-2" />
-                Timeline
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => generateNewTool('faq')}
-                disabled={!canGenerate}
-              >
-                <Brain className="w-4 h-4 mr-2" />
-                FAQ
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => generateNewTool('briefing-doc')}
-                disabled={!canGenerate}
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                Briefing Doc
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-200 dark:hover:text-white">Studio</h2>
+        <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button 
+          size="sm" 
+          variant="outline"
+          disabled={!canGenerate}
+          >
+          <Plus className="w-4 h-4 mr-1" />
+          Create
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48 ">
+          <DropdownMenuItem 
+          onClick={() => generateNewTool('audio-overview')}
+          disabled={!canGenerate}
+          >
+          <Headphones className="w-4 h-4 mr-2" />
+          Audio Overview
+          </DropdownMenuItem>
+          <DropdownMenuItem 
+          onClick={() => generateNewTool('study-guide')}
+          disabled={!canGenerate}
+          >
+          <BookOpen className="w-4 h-4 mr-2" />
+          Study Guide
+          </DropdownMenuItem>
+          <DropdownMenuItem 
+          onClick={() => generateNewTool('timeline')}
+          disabled={!canGenerate}
+          >
+          <Clock className="w-4 h-4 mr-2" />
+          Timeline
+          </DropdownMenuItem>
+          <DropdownMenuItem 
+          onClick={() => generateNewTool('faq')}
+          disabled={!canGenerate}
+          >
+          <Brain className="w-4 h-4 mr-2" />
+          FAQ
+          </DropdownMenuItem>
+          <DropdownMenuItem 
+          onClick={() => generateNewTool('briefing-doc')}
+          disabled={!canGenerate}
+          >
+          <FileText className="w-4 h-4 mr-2" />
+          Briefing Doc
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      {!canGenerate && (
+        <div className="p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
+        Select sources to enable studio tools
         </div>
-        {!canGenerate && (
-          <div className="p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
-            Select sources to enable studio tools
-          </div>
-        )}
+      )}
       </div>
 
       {/* Audio Overview Section */}
       <div className="p-4 border-b border-gray-200 dark:border-gray-600 bg-orange-200 dark:bg-gray-700">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
-            <Headphones className="w-5 h-5 text-white" />
-          </div>
-          <div className="flex-1">
-            <h3 className="font-medium text-gray-900 dark:text-gray-200 dark:hover:text-white">Audio Overview</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-200 dark:hover:text-white">
-              {canGenerate 
-                ? `Create an Audio Overview from ${selectedSources.length} source${selectedSources.length !== 1 ? 's' : ''}!`
-                : 'Select sources to create an Audio Overview!'
-              }
-            </p>
-          </div>
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
+        <Headphones className="w-5 h-5 text-white" />
+        </div>
+        <div className="flex-1">
+        <h3 className="font-medium text-gray-900 dark:text-gray-200 dark:hover:text-white">Audio Overview</h3>
+        <p className="text-sm text-gray-600 dark:text-gray-200 dark:hover:text-white">
+          {canGenerate 
+          ? `Create an Audio Overview from ${selectedSources.length} source${selectedSources.length !== 1 ? 's' : ''}!`
+          : 'Select sources to create an Audio Overview!'
+          }
+        </p>
+        </div>
+      </div>
+      
+      <Button 
+        className="w-full mb-3 bg-orange-500 hover:bg-orange-600 text-white"
+        disabled={!canGenerate || isGeneratingPodcast}
+        onClick={generatePodcast}
+      >
+        {isGeneratingPodcast ? (
+        <>
+          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          Generating Podcast...
+        </>
+        ) : (
+        <>
+          <Play className="w-4 h-4 mr-2" />
+          Generate Audio Overview
+        </>
+        )}
+      </Button>
+      
+      {/* Error Message */}
+      {podcastError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
+        <p className="text-sm text-red-800">{podcastError}</p>
+        </div>
+      )}
+
+      {/* Audio Player (when generated) */}
+      {podcastData && (
+        <div className="bg-white rounded-lg p-4 border border-orange-200">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium text-gray-900">
+          Conversational Podcast ({podcastData.segment_count} segments)
+          </span>
+          <span className="text-xs text-gray-500">
+          {podcastData.segments.length} speakers
+          </span>
         </div>
         
-        <Button 
-          className="w-full mb-3 bg-orange-500 hover:bg-orange-600 text-white"
-          disabled={!canGenerate || isGeneratingPodcast}
-          onClick={generatePodcast}
-        >
-          {isGeneratingPodcast ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Generating Podcast...
-            </>
-          ) : (
-            <>
-              <Play className="w-4 h-4 mr-2" />
-              Generate Audio Overview
-            </>
-          )}
-        </Button>
+        <div className="mb-3">
+          <p className="text-xs text-gray-600 mb-2">
+          {podcastData.script.substring(0, 100)}...
+          </p>
+          <Progress value={100} className="mb-3" indicatorColor="bg-orange-500" />
+        </div>
         
-        {/* Error Message */}
-        {podcastError && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
-            <p className="text-sm text-red-800">{podcastError}</p>
-          </div>
-        )}
+        <div className="flex items-center justify-between">
+          <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setIsPlaying(!isPlaying)}
+          >
+          {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+          </Button>
+          <Button 
+          size="sm" 
+          variant="ghost"
+          onClick={downloadPodcast}
+          >
+          <Download className="w-4 h-4" />
+          </Button>
+        </div>
+        </div>
+      )}
 
-        {/* Audio Player (when generated) */}
-        {podcastData && (
-          <div className="bg-white rounded-lg p-4 border border-orange-200">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-900">
-                Conversational Podcast ({podcastData.segment_count} segments)
-              </span>
-              <span className="text-xs text-gray-500">
-                {podcastData.segments.length} speakers
-              </span>
-            </div>
-            
-            <div className="mb-3">
-              <p className="text-xs text-gray-600 mb-2">
-                {podcastData.script.substring(0, 100)}...
-              </p>
-              <Progress value={100} className="mb-3" indicatorColor="bg-orange-500" />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setIsPlaying(!isPlaying)}
-              >
-                {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-              </Button>
-              <Button 
-                size="sm" 
-                variant="ghost"
-                onClick={downloadPodcast}
-              >
-                <Download className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Generation Status */}
-        {isGeneratingPodcast && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-              <span className="text-sm font-medium text-blue-900">Generating Podcast</span>
-            </div>
-            <p className="text-xs text-blue-700">
-              Creating conversational audio overview from your selected documents...
-            </p>
-          </div>
-        )}
+      {/* Generation Status */}
+      {isGeneratingPodcast && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+          <span className="text-sm font-medium text-blue-900">Generating Podcast</span>
+        </div>
+        <p className="text-xs text-blue-700">
+          Creating conversational audio overview from your selected documents...
+        </p>
+        </div>
+      )}
       </div>
 
       {/* Notes Section */}
       <div className="p-4 border-b border-gray-200 dark:border-gray-600">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-medium text-gray-900 dark:text-gray-200 dark:hover:text-white">Notes</h3>
-          <Button size="sm" variant="ghost" disabled={!canGenerate}>
-            <Plus className="w-4 h-4" />
-          </Button>
-        </div>
-        <p className="text-sm text-gray-500 italic dark:text-gray-200 dark:hover:text-white">
-          {canGenerate 
-            ? 'Ready to take notes from your selected sources.'
-            : 'Select sources to enable note-taking.'
-          }
-        </p>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-medium text-gray-900 dark:text-gray-200 dark:hover:text-white">Notes</h3>
+        <Button size="sm" variant="ghost" disabled={!canGenerate}>
+        <Plus className="w-4 h-4" />
+        </Button>
+      </div>
+      <p className="text-sm text-gray-500 italic dark:text-gray-200 dark:hover:text-white">
+        {canGenerate 
+        ? 'Ready to take notes from your selected sources.'
+        : 'Select sources to enable note-taking.'
+        }
+      </p>
       </div>
 
       {/* Study Tools */}
       <div className="flex-1">
-        <ScrollArea className="h-full">
-          <div className="p-4 space-y-3">
-            {studyTools.map((tool) => (
-              <div
-                key={tool.id}
-                className={`p-3 rounded-lg border transition-colors cursor-pointer ${
-                  tool.status === 'error' 
-                    ? 'border-gray-200 bg-gray-50 opacity-60' 
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
+      <ScrollArea className="h-full">
+        <div className="p-4 space-y-3">
+        {studyTools.map((tool) => (
+          <div
+          key={tool.id}
+          className={`p-3 rounded-lg border transition-colors cursor-pointer ${
+            tool.status === 'error' 
+            ? 'border-gray-200 bg-gray-50 opacity-60' 
+            : 'border-gray-200 hover:border-gray-300'
+          }`}
+          >
+          <div className="flex items-start justify-between mb-2">
+            <div className="flex items-center gap-3 flex-1">
+            <div className={`${tool.status === 'error' ? 'text-gray-400' : 'text-gray-600'}`}>
+              {getToolIcon(tool.type)}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+              <h4 className={`text-sm font-medium truncate ${
+                tool.status === 'error' ? 'text-gray-400' : 'text-gray-900'
+              }`}>
+                {tool.title}
+              </h4>
+              {getStatusBadge(tool.status)}
+              </div>
+              <p className={`text-xs line-clamp-2 ${
+              tool.status === 'error' ? 'text-gray-400' : 'text-gray-600'
+              }`}>
+              {tool.description}
+              </p>
+              {tool.duration && tool.status !== 'error' && (
+              <p className="text-xs text-gray-500 mt-1">
+                {tool.duration}
+              </p>
+              )}
+            </div>
+            </div>
+            
+            <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-6 w-6 p-0"
+              disabled={tool.status === 'error'}
               >
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className={`${tool.status === 'error' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {getToolIcon(tool.type)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className={`text-sm font-medium truncate ${
-                          tool.status === 'error' ? 'text-gray-400' : 'text-gray-900'
-                        }`}>
-                          {tool.title}
-                        </h4>
-                        {getStatusBadge(tool.status)}
-                      </div>
-                      <p className={`text-xs line-clamp-2 ${
-                        tool.status === 'error' ? 'text-gray-400' : 'text-gray-600'
-                      }`}>
-                        {tool.description}
-                      </p>
-                      {tool.duration && tool.status !== 'error' && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          {tool.duration}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-6 w-6 p-0"
-                        disabled={tool.status === 'error'}
-                      >
-                        <MoreVertical className="w-3 h-3" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
-                        <Download className="w-4 h-4 mr-2" />
-                        Download
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <FileText className="w-4 h-4 mr-2" />
-                        View Details
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-                
-                {tool.status === 'generating' && tool.progress !== undefined && (
-                  <div className="space-y-1">
+              <MoreVertical className="w-3 h-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem>
+              <Download className="w-4 h-4 mr-2" />
+              Download
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+              <FileText className="w-4 h-4 mr-2" />
+              View Details
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          
+          {tool.status === 'generating' && tool.progress !== undefined && (
+            <div className="space-y-1">
                     <Progress value={tool.progress} className="h-1" indicatorColor="bg-blue-500" />
                     <p className="text-xs text-gray-500">
                       {Math.round(tool.progress)}% complete
@@ -581,6 +790,26 @@ const refToolbar = useRef<HTMLDivElement | null>(null);
                 <Brain className="w-5 h-5" /> Mind Map
               </h3>
               <div className="relative w-full flex-1 flex justify-center items-center min-h-0">
+                {isLoadingRegenerateMindmap && (
+                  // <div className="absolute inset-0 bg-white bg-opacity-70 flex flex-col items-center justify-center z-10">
+                  // <Loader2 className="w-8 h-8 mb-2 animate-spin text-gray-600" />
+                  // <p className="text-gray-600">Regenerating mind map...</p>
+                  // </div>
+                    <div className="absolute inset-0 bg-white bg-opacity-70 transition-[backdrop-filter] duration-300 backdrop-blur-sm flex flex-col items-center justify-center z-10">
+                    <h4 className="text-lg font-semibold text-gray-00">
+                      <span className="
+                        animate-shimmer 
+                        bg-gradient-to-r 
+                        from-gray-600 via-gray-300 to-gray-600 
+                        bg-[length:200%_100%] 
+                        bg-clip-text 
+                        text-transparent
+                      ">
+                        Regenerating Mindmap ...
+                      </span>
+                    </h4>
+                  </div>
+                )}
                 <svg
                 ref={refSvg}
                 width="100%"
@@ -590,7 +819,7 @@ const refToolbar = useRef<HTMLDivElement | null>(null);
                   background: '#fff',
                   borderRadius: '12px',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                  minHeight: '320px',
+                  minHeight: '50vh',
                   maxWidth: '100%',
                   height: '100%',
                   // overflow: 'visible',
@@ -605,6 +834,7 @@ const refToolbar = useRef<HTMLDivElement | null>(null);
               </div>
             </div>
           )}
+
 
     </div>
   )
