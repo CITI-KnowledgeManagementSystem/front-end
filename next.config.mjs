@@ -1,11 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: false,
-  webpack: (config, context) => {
-    config.module.rules.push({
-      test: /\.node$/,
-      loader: "node-loader",
-    });
+  // webpack: (config, context) => {
+  //   config.module.rules.push({
+  //     test: /\.node$/,
+  //     loader: "node-loader",
+  //   });
+  //   return config;
+  // },
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.externals.push('ssh2', 'cpu-features');
+    }
     return config;
   },
   async headers() {

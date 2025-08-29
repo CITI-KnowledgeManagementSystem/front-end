@@ -91,8 +91,6 @@ export const getChatMessages = async (id: string, token: string | null) => {
     if (!response.ok) {
       throw new Error(`Error: ${response.status} ${response.statusText}`);
     }
-    // else console.log("Chat messages fetched successfully");
-    //  console.log("----------------------INI DARI UTILS GETCHATMESSAGES ----------------------");
     const data = await response.json();
     // console.log("Data:", data);
     return sortMessageProps(data);
