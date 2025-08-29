@@ -20,9 +20,9 @@ export async function POST(request: NextRequest) {
   try {
     const { getToken } = await auth();
     const token = await getToken();
-    console.log(process.env.LLM_SERVER_URL + "/document/mind_map");
+    console.log(process.env.NEXT_PUBLIC_LLM_SERVER_URL + "/document/mind_map");
     const response = await fetch(
-      process.env.LLM_SERVER_URL + "/document/mind_map",
+      process.env.NEXT_PUBLIC_LLM_SERVER_URL + "/document/mind_map",
       {
         method: "POST",
         headers: {

@@ -91,8 +91,6 @@ export const getChatMessages = async (id: string, token: string | null) => {
     if (!response.ok) {
       throw new Error(`Error: ${response.status} ${response.statusText}`);
     }
-    // else console.log("Chat messages fetched successfully");
-    //  console.log("----------------------INI DARI UTILS GETCHATMESSAGES ----------------------");
     const data = await response.json();
     // console.log("Data:", data);
     return sortMessageProps(data);
@@ -170,7 +168,7 @@ export const deleteDocumentFromVDB = async (
   collectionName: string
 ) => {
   const res = await fetch(
-    `${process.env.LLM_SERVER_URL}/document/delete?document_id=${documentId}&collection_name=${collectionName}`,
+    `${process.env.NEXT_PUBLIC_LLM_SERVER_URL}/document/delete?document_id=${documentId}&collection_name=${collectionName}`,
     {
       method: "DELETE",
       headers: {
@@ -200,7 +198,7 @@ export const insertDocumentToVDB = async (
   };
 
   const res = await fetch(
-    `${process.env.LLM_SERVER_URL}/document/insert`,
+    `${process.env.NEXT_PUBLIC_LLM_SERVER_URL}/document/insert`,
     {
       method: "POST",
       headers: {

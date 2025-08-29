@@ -27,6 +27,7 @@ import {
 } from "@/lib/utils";
 import useClickOutside from "@/lib/useClickOutside";
 import { Input } from "@/components/ui/input";
+import { table } from "console";
 
 const DocTable = () => {
   const [tableContents, setTableContents] = useState<TableContentProps[]>([]);
@@ -48,12 +49,49 @@ const DocTable = () => {
   const targetRef2 = useRef<HTMLDivElement>(null);
   const targetRef3 = useRef<HTMLDivElement>(null);
 
-  useClickOutside(
-    () => setEditingCell("-1"),
-    targetRef,
-    targetRef2,
-    targetRef3
-  );
+useClickOutside(
+  () => setEditingCell("-1"),
+  targetRef as React.RefObject<HTMLElement>,
+  targetRef2 as React.RefObject<HTMLElement>,
+  targetRef3 as React.RefObject<HTMLElement>
+);
+
+  useEffect(() => {
+    if (!userId) {
+    return; // Keluar dari useEffect kalo userId belum siap
+   }
+    setIsLoading(true);
+    fetch(
+      generateDashboardDocumentsLink(
+        "be",
+        userId,
+        paginationIndex * rowsPerPage,
+        rowsPerPage,
+        searchTerm,
+        tags
+      )
+    ).then(async (res) => {
+      if (!res.ok) {
+        setError("An error has occured when fetching the data");
+      }
+      const newData = await res.json();
+      setTableContents(newData.data.list);
+      setTotalItems(newData.data.docCounts);
+    }).finally(() => setIsLoading(false));
+  }, [paginationIndex, rowsPerPage, searchTerm, tags, userId]);
+
+  useEffect(() => {
+    if (editingCell !== "-1") {
+      // 1. Use .find() to efficiently locate the item
+      const itemToEdit = tableContents.find((item) => item.id === editingCell);
+
+      // 2. Update the state if the item is found
+      if (itemToEdit) {
+        setInputTitle(itemToEdit.title);
+        setInputTopic(itemToEdit.topic);
+      }
+    }
+  }, [editingCell, tableContents]);
 
   const handleUpdateMisc = (documentId: string) => {
     const newContents = tableContents.map((item) =>
@@ -104,39 +142,6 @@ const DocTable = () => {
     }
   };
 
-  useEffect(() => {
-    setIsLoading(true);
-    fetch(
-      generateDashboardDocumentsLink(
-        "be",
-        userId || "",
-        paginationIndex * rowsPerPage,
-        rowsPerPage,
-        searchTerm,
-        tags
-      )
-    ).then(async (res) => {
-      if (!res.ok) {
-        setError("An error has occured when fetching the data");
-      }
-      const newData = await res.json();
-      setTableContents(newData.data.list);
-      setTotalItems(newData.data.docCounts);
-    }).finally(() => setIsLoading(false));
-  }, [paginationIndex, rowsPerPage, searchTerm, tags, userId]);
-
-  useEffect(() => {
-    if (editingCell !== "-1") {
-      // 1. Use .find() to efficiently locate the item
-      const itemToEdit = tableContents.find((item) => item.id === editingCell);
-
-      // 2. Update the state if the item is found
-      if (itemToEdit) {
-        setInputTitle(itemToEdit.title);
-        setInputTopic(itemToEdit.topic);
-      }
-    }
-  }, [editingCell]);
 
   if (isLoading) {
     return (

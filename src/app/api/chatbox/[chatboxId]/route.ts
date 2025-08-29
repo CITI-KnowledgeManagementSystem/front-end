@@ -8,8 +8,8 @@ import { prisma } from "@/db";
 // import { DocumentProps } from "@/types";
 
 export async function GET(
-  request: NextRequest,
-  context: { params: { chatboxId: string } }
+  _request: NextRequest,
+  context: { params: Promise<{ chatboxId: string }> }
 ) {
   try {
     // --- Bagian verifikasi & otentikasi (ini tetep sama dan udah bener) ---
@@ -20,10 +20,9 @@ export async function GET(
         { status: 401 }
       );
      }
-    const { params } = context;
-    const awaitedParams = await params;
-    const chatboxId = parseInt(awaitedParams.chatboxId);
-    if (!chatboxId) { /* ... */ }
+    const { chatboxId } = await context.params;
+    const chatboxIdNum = parseInt(chatboxId);
+    if (!chatboxIdNum) { /* ... */ }
     const chatbox = await prisma.chatBox.findFirst({ /* ... */ });
     if (!chatbox) { /* ... */ }
 
@@ -31,7 +30,7 @@ export async function GET(
     // TANPA `select`, Prisma akan mengambil SEMUA kolom, termasuk skor.
     const messages = await prisma.message.findMany({
       where: {
-        chatBoxId: chatboxId,
+        chatBoxId: chatboxIdNum,
       },
       select: {
     id: true,

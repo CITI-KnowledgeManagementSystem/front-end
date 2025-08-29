@@ -283,6 +283,7 @@ useEffect(() => {
   }
 
   const transformer = new Transformer();
+
   const { root } = transformer.transform(mindMapData);
 
   const svgEl = refSvg.current;
@@ -760,7 +761,7 @@ const handleGenerateNewMindmap = async (query: any) => {
                         {getStatusBadge('ready')}
                       </div>
                       <p className={"text-xs line-clamp-2 text-gray-600"}>
-                        Visual representation of your documents' structure and relationships.
+                        Visual representation of your documents structure and relationships.
                       </p>
                     </div>
                   </div>

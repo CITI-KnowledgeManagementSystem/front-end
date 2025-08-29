@@ -5,7 +5,7 @@ import { auth } from "@clerk/nextjs/server";
 
 export async function GET(
   request: Request,
-  { params }: { params: { messageId: string } }
+  context: { params: Promise<{ messageId: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -13,16 +13,17 @@ export async function GET(
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const awaitedParams = await params;
-    const messageId = parseInt(awaitedParams.messageId);
-    if (isNaN(messageId)) {
+    const { messageId } = await context.params;
+    const messageIdNum = parseInt(messageId);
+
+    if (isNaN(messageIdNum)) {
       return NextResponse.json({ message: "Invalid Message ID" }, { status: 400 });
     }
 
     // Cari pesan di DB berdasarkan ID-nya
     const message = await prisma.message.findUnique({
       where: {
-        id: messageId,
+        id: messageIdNum,
         // Tambahin cek userId biar aman, user gak bisa liat chat orang lain
         userId: userId, 
       },

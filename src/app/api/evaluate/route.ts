@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 
-const LLM_SERVICE_URL = process.env.LLM_SERVER_URL + "/llm/evaluate";
+const LLM_SERVICE_URL = process.env.NEXT_PUBLIC_LLM_SERVER_URL + "/llm/evaluate";
 
 export async function POST(request: NextRequest) {
   const { userId } = await auth();

@@ -43,7 +43,7 @@ const ChatName = ({ id, name }: Props) => {
     return void 0;
   };
 
-  useClickOutside(() => setIsRenaming(false), targetRef);
+useClickOutside(() => setIsRenaming(false), targetRef as React.RefObject<HTMLElement>);
   useEffect(() => setChatName(name), [name]);
 
   return (

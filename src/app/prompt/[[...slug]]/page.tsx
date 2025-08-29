@@ -7,7 +7,7 @@ import { MessageProps } from "@/types";
 import { getChatMessages } from "@/lib/utils";
 import { redirect } from "next/navigation";
 
-const Page = async ({ params }: { params: { slug: string } }) => {
+const Page = async ({ params }: { params: Promise<{ slug: string[] }> }) => {
   const { userId, getToken } = await auth();
   const token = await getToken();
 
